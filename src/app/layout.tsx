@@ -24,54 +24,65 @@ const specialElite = Special_Elite({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboardtuitions.in"
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
     template: "%s | Chalkboard Tuitions",
   },
   description:
-    "Expert tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar. Max 8 students per batch. CBSE, ICSE & State Board covered. Book your FREE demo class today.",
+    "Expert tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bangalore. Max 8 students per batch. CBSE, ICSE & Karnataka State Board covered. Book your FREE demo class today.",
   keywords: [
     "tuitions near me",
     "tuition centre Kammanahalli",
     "Kalyan Nagar tuitions",
     "CBSE tuitions Bangalore",
     "ICSE coaching Bangalore",
-    "small batch tuitions",
-    "home tuitions Bangalore",
-    "10th board coaching Bangalore",
+    "Karnataka State Board tuitions",
+    "small batch tuitions Bangalore",
+    "grade 10 board coaching Bangalore",
     "KSEEB coaching",
+    "daily tuitions Bangalore",
   ],
   authors: [{ name: "Chalkboard Tuitions" }],
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
-    title: "Chalkboard Tuitions | Small-Batch Daily Tuitions",
+    title: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
     description:
       "Expert tuitions for Grades 1–10. Max 8 students per batch. 5 days a week. CBSE, ICSE & State Board. Kammanahalli & Kalyan Nagar, Bangalore.",
     type: "website",
+    url: SITE_URL,
     locale: "en_IN",
     siteName: "Chalkboard Tuitions",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        url: "/logo-dark.png",
+        width: 1080,
+        height: 1080,
         alt: "Chalkboard Tuitions — Small Batch Tuitions Bangalore",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Chalkboard Tuitions | Small-Batch Daily Tuitions",
+    title: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
     description:
-      "Expert tuitions for Grades 1–10. Max 8 students. Kammanahalli & Kalyan Nagar, Bangalore.",
+      "Expert tuitions for Grades 1–10. Max 8 students per batch. Kammanahalli & Kalyan Nagar, Bangalore.",
+    images: ["/logo-dark.png"],
+  },
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+    shortcut: "/icon.png",
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true },
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
 };
 

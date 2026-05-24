@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase";
-import { resend, FROM_EMAIL, ADMIN_EMAIL, buildConfirmationEmail, buildAdminEmail } from "@/lib/resend";
+import { getResend, FROM_EMAIL, ADMIN_EMAIL, buildConfirmationEmail, buildAdminEmail } from "@/lib/resend";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    const resend = getResend();
 
     // Send confirmation email to the lead
     const confirmation = buildConfirmationEmail(name, child_grade);
