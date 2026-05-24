@@ -31,6 +31,7 @@ module.exports = {
           "repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,0,0,0.02) 27px, rgba(0,0,0,0.02) 28px)",
       },
       animation: {
+        shimmer2: "shimmer2 2s infinite linear",
         "fade-up": "fadeUp 0.6s ease-out forwards",
         "fade-in": "fadeIn 0.5s ease-out forwards",
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
@@ -72,6 +73,10 @@ module.exports = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        shimmer2: {
+          "0%": { backgroundPosition: "0% 0%" },
+          "100%": { backgroundPosition: "-200% 0%" },
         },
       },
     },

@@ -4,8 +4,10 @@ export function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+// Resend requires a verified sender domain. Until chalkboardtuitions.in is verified,
+// use onboarding@resend.dev which works on all Resend accounts out of the box.
 export const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "noreply@chalkboardtuitions.in";
+  process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 export const ADMIN_EMAIL = process.env.RESEND_TO_EMAIL || process.env.ADMIN_EMAIL || "admin@chalkboardtuitions.in";
 
 export function buildConfirmationEmail(name: string, grade: string) {

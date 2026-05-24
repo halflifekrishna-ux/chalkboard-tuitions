@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans, Special_Elite } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -98,7 +99,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <WhatsAppFab />
+        </ThemeProvider>
       </body>
     </html>
   );
