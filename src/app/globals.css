@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --board: #1e3a2f;
+    --forest: #2d6a4f;
+    --chalk: #f5f0e8;
+    --chalk-yellow: #f4c430;
+    --chalk-orange: #e8784d;
+    --cream: #fdf6e3;
+    --chalk-dark: #1a1a2e;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream text-chalk-dark transition-colors duration-300;
+    @apply dark:bg-chalk-dark dark:text-chalk;
+  }
+
+  h1, h2, h3, h4, h5 {
+    @apply font-playfair;
+  }
+
+  p, span, li, td, th, label, input, textarea {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
+           bg-chalk-yellow text-chalk-dark font-semibold text-sm
+           hover:bg-yellow-400 active:scale-95
+           transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
+           border-2 border-chalk/40 text-chalk font-semibold text-sm
+           hover:border-chalk-yellow hover:text-chalk-yellow
+           transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
+           border-2 border-board text-board font-semibold text-sm
+           hover:bg-board hover:text-chalk
+           dark:border-chalk/30 dark:text-chalk dark:hover:bg-board dark:hover:text-chalk
+           transition-all duration-200;
+  }
+
+  .section-label {
+    @apply inline-block text-xs font-semibold tracking-[0.15em] uppercase
+           text-chalk-yellow bg-board/10 dark:bg-chalk/10 px-3 py-1 rounded-full mb-4;
+  }
+
+  .chalk-card {
+    @apply bg-white dark:bg-board/40 border border-gray-100 dark:border-chalk/10
+           rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-chalk-dark/70 dark:text-chalk/70
+           hover:text-chalk-dark dark:hover:text-chalk
+           transition-colors duration-150;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { @apply bg-cream dark:bg-chalk-dark; }
+::-webkit-scrollbar-thumb { @apply bg-board/30 dark:bg-chalk/20 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-board/60 dark:bg-chalk/40; }
+
+/* Chalk texture overlay for dark backgrounds */
+.chalk-bg {
+  background-color: #1e3a2f;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 27px,
+    rgba(255,255,255,0.04) 27px,
+    rgba(255,255,255,0.04) 28px
+  );
+}
+
+/* Smooth section transitions */
+section { @apply scroll-mt-20; }
