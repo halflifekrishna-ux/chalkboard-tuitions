@@ -1,11 +1,11 @@
 "use client";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { Check, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 
 const WHATSAPP = "917411446381";
 
-/* ── Types ─────────────────────────────────────────────────────────────────── */
 type BoardTab = "icse-cbse" | "state-board";
 
 interface PackData {
@@ -17,7 +17,7 @@ interface PackData {
   highlight?: boolean;
 }
 
-/* ── ICSE / CBSE packages ───────────────────────────────────────────────────── */
+/* ── Data ───────────────────────────────────────────────────────────────────── */
 const icseCbsePacks: PackData[] = [
   {
     name: "Foundation Pack",
@@ -70,7 +70,6 @@ const icseCbsePacks: PackData[] = [
   },
 ];
 
-/* ── State Board packages ────────────────────────────────────────────────────── */
 const stateBoardPacks: PackData[] = [
   {
     name: "Foundation Pack",
@@ -125,7 +124,7 @@ const stateBoardPacks: PackData[] = [
   },
 ];
 
-/* ── Pack Card ──────────────────────────────────────────────────────────────── */
+/* ── Glass Pack Card ────────────────────────────────────────────────────────── */
 function PackCard({
   card,
   i,
@@ -139,86 +138,85 @@ function PackCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 32 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: i * 0.08, duration: 0.5, ease: "easeOut" }}
-      className={`relative rounded-2xl border-2 p-6 flex flex-col transition-all duration-300
-        hover:-translate-y-1 hover:shadow-xl
-        ${card.highlight
-          ? "border-chalk-yellow bg-board text-chalk shadow-lg shadow-board/20"
-          : "border-gray-100 dark:border-chalk/10 bg-white dark:bg-board/20"
-        }`}
+      transition={{ delay: i * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className="relative flex flex-col rounded-2xl transition-all duration-300 hover:-translate-y-1"
+      style={{
+        background: card.highlight
+          ? "rgba(22, 45, 36, 0.85)"
+          : "rgba(22, 45, 36, 0.60)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        border: card.highlight
+          ? "1.5px solid rgba(244, 196, 48, 0.55)"
+          : "1px solid rgba(201, 162, 39, 0.25)",
+        boxShadow: card.highlight
+          ? "0 0 40px rgba(244,196,48,0.12), 0 8px 32px rgba(0,0,0,0.35)"
+          : "0 4px 24px rgba(0,0,0,0.25)",
+        padding: "1.5rem",
+      }}
     >
+      {/* Badge */}
       {card.badge && (
         <div
-          className={`absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-bold ${
-            card.highlight
-              ? "bg-chalk-yellow text-chalk-dark"
-              : "bg-board text-chalk-yellow"
-          }`}
+          className="absolute -top-3 left-5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
+          style={{ background: "#c9a227", color: "#162d24" }}
         >
           {card.badge}
         </div>
       )}
 
-      <div className="mb-4">
-        <h3
-          className={`font-playfair text-xl font-bold mb-1 ${
-            card.highlight ? "text-chalk" : "text-chalk-dark dark:text-chalk"
-          }`}
-        >
+      {/* Package name + grade */}
+      <div className="mb-3 mt-1">
+        <h3 className="font-playfair text-xl font-bold mb-1" style={{ color: "#f5f0e8" }}>
           {card.name}
         </h3>
-        <p
-          className={`text-sm font-medium ${
-            card.highlight ? "text-chalk-yellow" : "text-forest dark:text-chalk/60"
-          }`}
-        >
-          {card.grade}
+        <p className="text-sm font-medium" style={{ color: "rgba(245,240,232,0.55)" }}>
+          {card.grade} &nbsp;·&nbsp; {card.duration}
         </p>
       </div>
 
+      {/* Divider */}
+      <div
+        className="mb-4 h-px w-full"
+        style={{ background: "linear-gradient(to right, rgba(201,162,39,0.4), transparent)" }}
+      />
+
       {/* Contact us for pricing */}
-      <p
-        className={`text-sm font-semibold mb-1 ${
-          card.highlight ? "text-chalk-yellow" : "text-board dark:text-chalk-yellow"
-        }`}
-      >
+      <p className="text-sm font-medium mb-5" style={{ color: "#c9a227", letterSpacing: "0.01em" }}>
         Contact us for pricing
       </p>
-      <p className={`text-xs mb-5 ${card.highlight ? "text-chalk/50" : "text-gray-400"}`}>
-        {card.duration}
-      </p>
 
+      {/* Features */}
       <ul className="space-y-2.5 flex-1 mb-6">
         {card.features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <Check
-              size={15}
-              className={`flex-shrink-0 mt-0.5 ${
-                card.highlight ? "text-chalk-yellow" : "text-forest dark:text-chalk-yellow"
-              }`}
-            />
+          <li key={f} className="flex items-start gap-2.5">
             <span
-              className={`text-sm ${
-                card.highlight ? "text-chalk/80" : "text-gray-600 dark:text-chalk/70"
-              }`}
+              className="flex-shrink-0 leading-none mt-[5px] text-[8px]"
+              style={{ color: "#c9a227" }}
             >
+              ●
+            </span>
+            <span className="text-sm leading-relaxed" style={{ color: "#f5f0e8" }}>
               {f}
             </span>
           </li>
         ))}
       </ul>
 
+      {/* CTA */}
       <a
         href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className={`flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-semibold text-sm transition-all duration-200 ${
-          card.highlight
-            ? "bg-chalk-yellow text-chalk-dark hover:bg-yellow-400"
-            : "bg-board/10 dark:bg-chalk/10 text-board dark:text-chalk hover:bg-board hover:text-chalk dark:hover:bg-board"
-        }`}
+        className="flex items-center justify-center gap-2 py-3 px-5 rounded-full font-bold text-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+        style={{
+          background: "#c9a227",
+          color: "#162d24",
+        }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#f4c430")}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#c9a227")}
       >
         Book Free Demo
         <ArrowRight size={14} />
@@ -227,11 +225,11 @@ function PackCard({
   );
 }
 
-/* ── Main Section ───────────────────────────────────────────────────────────── */
+/* ── Main Pricing Section ───────────────────────────────────────────────────── */
 export function Pricing() {
   const [boardTab, setBoardTab] = useState<BoardTab>("icse-cbse");
-  const ref    = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
 
   const isStatBoard = boardTab === "state-board";
   const cards = isStatBoard ? stateBoardPacks : icseCbsePacks;
@@ -242,115 +240,177 @@ export function Pricing() {
   };
 
   return (
-    <section id="pricing" className="py-24 bg-white dark:bg-board/10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <section id="pricing">
+      <BackgroundGradientAnimation
+        gradientBackgroundStart="rgb(30, 58, 47)"
+        gradientBackgroundEnd="rgb(22, 45, 36)"
+        firstColor="30, 58, 47"
+        secondColor="201, 162, 39"
+        thirdColor="42, 80, 64"
+        fourthColor="244, 196, 48"
+        fifthColor="22, 45, 36"
+        pointerColor="201, 162, 39"
+        size="70%"
+        blendingValue="hard-light"
+        interactive={true}
+        containerClassName="min-h-0 h-auto w-full"
+        className="relative z-10"
+      >
+        {/* Chalk-line texture overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(245,240,232,0.025) 27px, rgba(245,240,232,0.025) 28px)",
+          }}
+        />
 
-        {/* ── Header ── */}
-        <div className="text-center mb-10">
-          <span className="section-label">Our Packages</span>
-          <h2 className="font-playfair text-4xl sm:text-5xl font-bold text-board dark:text-chalk mb-4">
-            Great value. Contact us for fees.
-          </h2>
-          <p className="text-gray-500 dark:text-chalk/60 text-lg mb-8 max-w-lg mx-auto">
-            All packages include workbooks, weekly parent updates, and structured daily classes.
-            Pick your board to explore the right package.
-          </p>
+        {/* Content */}
+        <div className="relative z-10 py-16 sm:py-24 max-w-6xl mx-auto px-4 sm:px-6">
 
-          {/* ── Board type toggle ── */}
-          <div className="inline-flex bg-gray-100 dark:bg-board/30 rounded-2xl p-1.5 gap-1 mb-5">
-            {(["icse-cbse", "state-board"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setBoardTab(tab)}
-                className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  boardTab === tab
-                    ? "text-chalk"
-                    : "text-gray-500 dark:text-chalk/50 hover:text-gray-700 dark:hover:text-chalk"
-                }`}
-              >
-                {boardTab === tab && (
-                  <motion.div
-                    layoutId="board-pill"
-                    className="absolute inset-0 rounded-xl bg-board shadow-md"
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                  />
-                )}
-                <span className="relative z-10">
-                  {tab === "icse-cbse" ? "ICSE / CBSE" : "State Board"}
-                </span>
-              </button>
-            ))}
-          </div>
+          {/* ── Header ── */}
+          <div className="text-center mb-10 sm:mb-14">
+            <span
+              className="block mb-4 font-semibold uppercase tracking-[4px]"
+              style={{ fontSize: "10px", color: "#f4c430" }}
+            >
+              Our Packages
+            </span>
 
-          {/* State board note */}
-          <AnimatePresence>
-            {isStatBoard && (
-              <motion.p
-                key="sb-note"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs text-gray-400 dark:text-chalk/40 mt-1"
-              >
-                Karnataka State Board (KSEEB)
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
+            <h2
+              className="font-playfair text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight"
+              style={{ color: "#f5f0e8" }}
+            >
+              Great value.{" "}
+              <span style={{ color: "#f4c430" }}>Contact us for fees.</span>
+            </h2>
 
-        {/* ── Cards grid ── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={boardTab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
-          >
-            <div ref={ref} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {cards.map((card, i) => (
-                <PackCard
-                  key={`${card.name}-${boardTab}`}
-                  card={card}
-                  i={i}
-                  inView={inView}
-                  waMsg={buildWaMsg(card)}
-                />
+            <p
+              className="text-base sm:text-lg max-w-lg mx-auto mb-8 leading-relaxed"
+              style={{ color: "rgba(245,240,232,0.55)" }}
+            >
+              All packages include workbooks, weekly parent updates, and structured daily classes.
+              Pick your board to explore the right package.
+            </p>
+
+            {/* Board toggle */}
+            <div
+              className="inline-flex rounded-2xl p-1.5 gap-1"
+              style={{
+                background: "rgba(22,45,36,0.55)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(201,162,39,0.2)",
+              }}
+            >
+              {(["icse-cbse", "state-board"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setBoardTab(tab)}
+                  className="relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                  style={{
+                    color:
+                      boardTab === tab ? "#162d24" : "rgba(245,240,232,0.5)",
+                  }}
+                >
+                  {boardTab === tab && (
+                    <motion.div
+                      layoutId="board-pill-v2"
+                      className="absolute inset-0 rounded-xl"
+                      style={{ background: "#c9a227" }}
+                      transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {tab === "icse-cbse" ? "ICSE / CBSE" : "State Board"}
+                  </span>
+                </button>
               ))}
             </div>
-          </motion.div>
-        </AnimatePresence>
 
-        {/* ── Annual savings callout ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.45, duration: 0.5 }}
-          className="mt-6 bg-chalk-yellow/10 dark:bg-chalk-yellow/5 border border-chalk-yellow/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles size={20} className="text-chalk-yellow flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-chalk-dark dark:text-chalk text-sm">
-                Save more than ₹6,000 on annual plans
-              </p>
-              <p className="text-gray-500 dark:text-chalk/60 text-sm">
-                Annual enrolment locks in your seat for the full academic year and offers significant savings over monthly billing. WhatsApp us to know more.
-              </p>
-            </div>
+            {/* State board note */}
+            <AnimatePresence>
+              {isStatBoard && (
+                <motion.p
+                  key="sb-note"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs mt-2"
+                  style={{ color: "rgba(245,240,232,0.35)" }}
+                >
+                  Karnataka State Board (KSEEB)
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
-          <a
-            href={`https://wa.me/${WHATSAPP}?text=Hi! I'd like to know more about the annual plan pricing at Chalkboard Tuitions.`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-chalk-yellow text-sm font-semibold hover:underline whitespace-nowrap flex-shrink-0"
-          >
-            Ask us →
-          </a>
-        </motion.div>
 
-      </div>
+          {/* ── Cards grid ── */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={boardTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* Mobile: single column stacked, tablet: 2-col, desktop: 4-col */}
+              <div
+                ref={ref}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+              >
+                {cards.map((card, i) => (
+                  <PackCard
+                    key={`${card.name}-${boardTab}`}
+                    card={card}
+                    i={i}
+                    inView={inView}
+                    waMsg={buildWaMsg(card)}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* ── Annual savings callout ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mt-5 sm:mt-6 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            style={{
+              background: "rgba(22,45,36,0.60)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(201,162,39,0.3)",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <Sparkles size={20} className="flex-shrink-0 mt-0.5" style={{ color: "#f4c430" }} />
+              <div>
+                <p className="font-semibold text-sm mb-0.5" style={{ color: "#f5f0e8" }}>
+                  Save more than ₹6,000 on annual plans
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(245,240,232,0.55)" }}>
+                  Annual enrolment locks in your seat for the full academic year and offers
+                  significant savings over monthly billing. WhatsApp us to know more.
+                </p>
+              </div>
+            </div>
+            <a
+              href={`https://wa.me/${WHATSAPP}?text=Hi! I'd like to know more about the annual plan pricing at Chalkboard Tuitions.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold hover:underline whitespace-nowrap flex-shrink-0 transition-colors"
+              style={{ color: "#f4c430" }}
+            >
+              Ask us →
+            </a>
+          </motion.div>
+
+        </div>
+      </BackgroundGradientAnimation>
     </section>
   );
 }
