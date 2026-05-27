@@ -123,7 +123,7 @@ const localBusiness = {
           name: "How do you communicate with parents?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Three ways: weekly WhatsApp updates covering topics taught and homework assigned; monthly printed progress cards after formal tests; and a direct WhatsApp line to reach us anytime.",
+            text: "Three ways: weekly WhatsApp updates covering topics taught and homework assigned; monthly printed progress cards for Grades 8–10 after formal tests; and a direct WhatsApp line to reach us anytime.",
           },
         },
         {

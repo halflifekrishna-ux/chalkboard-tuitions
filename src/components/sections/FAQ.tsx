@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "How do you communicate with parents?",
-    a: "Three ways: weekly WhatsApp updates covering topics taught and homework assigned; monthly printed progress cards after formal tests; and a direct WhatsApp line to reach us anytime with questions.",
+    a: "Three ways: weekly WhatsApp updates covering topics taught and homework assigned; monthly printed progress cards for Grades 8–10 after formal tests; and a direct WhatsApp line to reach us anytime with questions.",
   },
   {
     q: "Is there a registration or admission fee?",

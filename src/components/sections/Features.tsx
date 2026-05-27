@@ -39,8 +39,8 @@ const features = [
   },
   {
     icon: BarChart2,
-    title: "Monthly Progress Cards",
-    description: "Formal monthly tests. Printed report cards. Parents always know exactly where their child stands.",
+    title: "Monthly Progress Cards (Grades 8–10)",
+    description: "Formal monthly tests for all students. Printed report cards for Grades 8–10. Parents always know exactly where their child stands.",
     gradient: "from-board-deep/90 to-board/80",
     iconColor: "text-chalk-blue",
     iconBg: "bg-chalk-blue/10",

@@ -17,7 +17,7 @@ const values = [
   {
     icon: TrendingUp,
     title: "Measurable Progress",
-    description: "Monthly tests, printed report cards, and parent calls — you always know exactly where your child stands.",
+    description: "Monthly tests for all students. Printed report cards for Grades 8–10, and parent calls — you always know exactly where your child stands.",
   },
 ];
 

@@ -1,30 +1,27 @@
 "use client";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Sparkles } from "lucide-react";
 
 const WHATSAPP = "917411446381";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 type BoardTab = "icse-cbse" | "state-board";
-type Period   = "monthly" | "annual";
 
-interface PriceCardData {
+interface PackData {
   name: string;
   grade: string;
-  price: number;
   duration: string;
   features: string[];
   badge?: string;
   highlight?: boolean;
 }
 
-/* ── ICSE / CBSE data ───────────────────────────────────────────────────────── */
-const icseCbseMonthly: PriceCardData[] = [
+/* ── ICSE / CBSE packages ───────────────────────────────────────────────────── */
+const icseCbsePacks: PackData[] = [
   {
     name: "Foundation Pack",
     grade: "Grades 1–4",
-    price: 3200,
     duration: "5 days/week · 1 hr",
     features: [
       "Daily structured class",
@@ -36,19 +33,17 @@ const icseCbseMonthly: PriceCardData[] = [
   {
     name: "Growth Pack",
     grade: "Grades 5–7",
-    price: 4500,
     duration: "5 days/week · 1.25 hr",
     features: [
       "Daily structured class",
       "Workbook included",
-      "Monthly test & progress card",
+      "Monthly test",
       "Weekly parent updates",
     ],
   },
   {
     name: "Core Pack",
     grade: "Grades 8–9",
-    price: 5500,
     duration: "5 days/week · 1.5 hr",
     features: [
       "Daily structured class",
@@ -63,7 +58,6 @@ const icseCbseMonthly: PriceCardData[] = [
   {
     name: "Board Prep",
     grade: "Grade 10",
-    price: 6500,
     duration: "5 days/week · 1.5 hr",
     features: [
       "Daily structured classes",
@@ -76,65 +70,11 @@ const icseCbseMonthly: PriceCardData[] = [
   },
 ];
 
-const icseCbseAnnual: PriceCardData[] = [
-  {
-    name: "Annual Core",
-    grade: "Grade 9",
-    price: 32000,
-    duration: "Full academic year",
-    features: [
-      "Everything in Core Pack",
-      "₹2,000 savings vs monthly",
-      "Locked-in pricing for the year",
-      "Priority seat reservation",
-    ],
-  },
-  {
-    name: "Annual Board",
-    grade: "Grade 10",
-    price: 42000,
-    duration: "Full academic year",
-    features: [
-      "Everything in Board Prep",
-      "₹6,000 savings vs monthly",
-      "Full mock exam series",
-      "Monthly parent progress call",
-    ],
-    badge: "Best Value",
-    highlight: true,
-  },
-  {
-    name: "ICSE Premium",
-    grade: "Grades 9–10",
-    price: 38000,
-    duration: "Full academic year",
-    features: [
-      "ICSE-specific curriculum",
-      "High-score prep methodology",
-      "Intensive mock series",
-      "Dedicated ICSE workbooks",
-    ],
-  },
-  {
-    name: "CBSE Excellence",
-    grade: "Grades 9–10",
-    price: 32000,
-    duration: "Full academic year",
-    features: [
-      "NCERT mastery focus",
-      "CBSE sample paper series",
-      "Chapter-wise tests",
-      "Board-ready by March",
-    ],
-  },
-];
-
-/* ── State Board data (monthly only) ────────────────────────────────────────── */
-const stateBoardMonthly: PriceCardData[] = [
+/* ── State Board packages ────────────────────────────────────────────────────── */
+const stateBoardPacks: PackData[] = [
   {
     name: "Foundation Pack",
     grade: "Grades 1–4",
-    price: 1500,
     duration: "5 days/week · 1 hr",
     features: [
       "Daily structured class",
@@ -147,20 +87,18 @@ const stateBoardMonthly: PriceCardData[] = [
   {
     name: "Growth Pack",
     grade: "Grades 5–7",
-    price: 2000,
     duration: "5 days/week · 1.25 hr",
     features: [
       "Daily structured class",
       "State Board syllabus coverage",
       "Workbook included",
-      "Monthly test & progress card",
+      "Monthly test",
       "Weekly parent updates",
     ],
   },
   {
     name: "Core Pack",
     grade: "Grades 8–9",
-    price: 2500,
     duration: "5 days/week · 1.5 hr",
     features: [
       "Daily structured class",
@@ -175,7 +113,6 @@ const stateBoardMonthly: PriceCardData[] = [
   {
     name: "Board Prep",
     grade: "Grade 10",
-    price: 3500,
     duration: "5 days/week · 1.5 hr",
     features: [
       "Daily structured classes",
@@ -188,23 +125,20 @@ const stateBoardMonthly: PriceCardData[] = [
   },
 ];
 
-/* ── Price Card ─────────────────────────────────────────────────────────────── */
-function PriceCard({
+/* ── Pack Card ──────────────────────────────────────────────────────────────── */
+function PackCard({
   card,
   i,
   inView,
-  suffix,
   waMsg,
 }: {
-  card: PriceCardData;
+  card: PackData;
   i: number;
   inView: boolean;
-  suffix: string;
   waMsg: string;
 }) {
   return (
     <motion.div
-      key={`${card.name}-${i}`}
       initial={{ opacity: 0, y: 28 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: i * 0.08, duration: 0.5, ease: "easeOut" }}
@@ -244,18 +178,14 @@ function PriceCard({
         </p>
       </div>
 
-      <div className="mb-2 flex items-end gap-1">
-        <span
-          className={`font-playfair text-4xl font-black leading-none ${
-            card.highlight ? "text-chalk-yellow" : "text-board dark:text-chalk"
-          }`}
-        >
-          ₹{card.price.toLocaleString("en-IN")}
-        </span>
-        <span className={`text-sm mb-0.5 ${card.highlight ? "text-chalk/60" : "text-gray-400"}`}>
-          /{suffix}
-        </span>
-      </div>
+      {/* Contact us for pricing */}
+      <p
+        className={`text-sm font-semibold mb-1 ${
+          card.highlight ? "text-chalk-yellow" : "text-board dark:text-chalk-yellow"
+        }`}
+      >
+        Contact us for pricing
+      </p>
       <p className={`text-xs mb-5 ${card.highlight ? "text-chalk/50" : "text-gray-400"}`}>
         {card.duration}
       </p>
@@ -300,25 +230,15 @@ function PriceCard({
 /* ── Main Section ───────────────────────────────────────────────────────────── */
 export function Pricing() {
   const [boardTab, setBoardTab] = useState<BoardTab>("icse-cbse");
-  const [period, setPeriod]     = useState<Period>("monthly");
   const ref    = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
-  /* Derive cards + labels from state */
   const isStatBoard = boardTab === "state-board";
+  const cards = isStatBoard ? stateBoardPacks : icseCbsePacks;
 
-  const cards: PriceCardData[] = isStatBoard
-    ? stateBoardMonthly
-    : period === "monthly"
-      ? icseCbseMonthly
-      : icseCbseAnnual;
-
-  const priceSuffix = isStatBoard ? "month" : period === "monthly" ? "month" : "year";
-
-  const buildWaMsg = (card: PriceCardData) => {
+  const buildWaMsg = (card: PackData) => {
     const boardLabel = isStatBoard ? "State Board" : "ICSE / CBSE";
-    const periodLabel = isStatBoard || period === "monthly" ? "month" : "year";
-    return `Hi! I'm interested in the ${card.name} (${card.grade}, ${boardLabel}) at ₹${card.price.toLocaleString("en-IN")}/${periodLabel}. Can I book a free demo?`;
+    return `Hi! I'm interested in the ${card.name} (${card.grade}, ${boardLabel}). Can I book a free demo?`;
   };
 
   return (
@@ -327,21 +247,21 @@ export function Pricing() {
 
         {/* ── Header ── */}
         <div className="text-center mb-10">
-          <span className="section-label">Transparent Pricing</span>
+          <span className="section-label">Our Packages</span>
           <h2 className="font-playfair text-4xl sm:text-5xl font-bold text-board dark:text-chalk mb-4">
-            Clear fees. No surprises.
+            Great value. Contact us for fees.
           </h2>
           <p className="text-gray-500 dark:text-chalk/60 text-lg mb-8 max-w-lg mx-auto">
-            All packages include workbooks, progress cards, and parent updates.
-            Pick your board to see the right pricing.
+            All packages include workbooks, weekly parent updates, and structured daily classes.
+            Pick your board to explore the right package.
           </p>
 
-          {/* ── Level 1: Board type toggle ── */}
+          {/* ── Board type toggle ── */}
           <div className="inline-flex bg-gray-100 dark:bg-board/30 rounded-2xl p-1.5 gap-1 mb-5">
             {(["icse-cbse", "state-board"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => { setBoardTab(tab); setPeriod("monthly"); }}
+                onClick={() => setBoardTab(tab)}
                 className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   boardTab === tab
                     ? "text-chalk"
@@ -362,41 +282,6 @@ export function Pricing() {
             ))}
           </div>
 
-          {/* ── Level 2: Monthly / Annual (ICSE/CBSE only) ── */}
-          <AnimatePresence>
-            {!isStatBoard && (
-              <motion.div
-                key="period-toggle"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex justify-center"
-              >
-                <div className="inline-flex bg-gray-100 dark:bg-board/30 rounded-xl p-1 gap-1">
-                  {(["monthly", "annual"] as const).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPeriod(p)}
-                      className={`relative px-5 py-2 rounded-lg text-sm font-semibold capitalize transition-all duration-200 ${
-                        period === p
-                          ? "bg-white dark:bg-board/60 text-board dark:text-chalk shadow-sm"
-                          : "text-gray-400 dark:text-chalk/50 hover:text-gray-600 dark:hover:text-chalk"
-                      }`}
-                    >
-                      {p === "annual" ? (
-                        <span className="flex items-center gap-1.5">
-                          Annual
-                          <span className="text-chalk-yellow text-[11px] font-bold">Save ₹6k</span>
-                        </span>
-                      ) : "Monthly"}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* State board note */}
           <AnimatePresence>
             {isStatBoard && (
@@ -408,7 +293,7 @@ export function Pricing() {
                 transition={{ duration: 0.2 }}
                 className="text-xs text-gray-400 dark:text-chalk/40 mt-1"
               >
-                Karnataka State Board (KSEEB) · Monthly billing
+                Karnataka State Board (KSEEB)
               </motion.p>
             )}
           </AnimatePresence>
@@ -417,7 +302,7 @@ export function Pricing() {
         {/* ── Cards grid ── */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${boardTab}-${period}`}
+            key={boardTab}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -425,18 +310,45 @@ export function Pricing() {
           >
             <div ref={ref} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {cards.map((card, i) => (
-                <PriceCard
-                  key={`${card.name}-${boardTab}-${period}`}
+                <PackCard
+                  key={`${card.name}-${boardTab}`}
                   card={card}
                   i={i}
                   inView={inView}
-                  suffix={priceSuffix}
                   waMsg={buildWaMsg(card)}
                 />
               ))}
             </div>
           </motion.div>
         </AnimatePresence>
+
+        {/* ── Annual savings callout ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="mt-6 bg-chalk-yellow/10 dark:bg-chalk-yellow/5 border border-chalk-yellow/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-3">
+            <Sparkles size={20} className="text-chalk-yellow flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-chalk-dark dark:text-chalk text-sm">
+                Save more than ₹6,000 on annual plans
+              </p>
+              <p className="text-gray-500 dark:text-chalk/60 text-sm">
+                Annual enrolment locks in your seat for the full academic year and offers significant savings over monthly billing. WhatsApp us to know more.
+              </p>
+            </div>
+          </div>
+          <a
+            href={`https://wa.me/${WHATSAPP}?text=Hi! I'd like to know more about the annual plan pricing at Chalkboard Tuitions.`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-chalk-yellow text-sm font-semibold hover:underline whitespace-nowrap flex-shrink-0"
+          >
+            Ask us →
+          </a>
+        </motion.div>
 
       </div>
     </section>
