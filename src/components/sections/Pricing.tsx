@@ -141,22 +141,30 @@ function PackCard({
       initial={{ opacity: 0, y: 32 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: i * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex flex-col rounded-2xl transition-all duration-300 hover:-translate-y-1"
+      className="relative flex flex-col rounded-2xl transition-all duration-300 hover:-translate-y-2"
       style={{
         background: card.highlight
-          ? "rgba(22, 45, 36, 0.85)"
-          : "rgba(22, 45, 36, 0.60)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
+          ? "rgba(28, 55, 40, 0.92)"
+          : "rgba(22, 45, 36, 0.55)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
         border: card.highlight
-          ? "1.5px solid rgba(244, 196, 48, 0.55)"
-          : "1px solid rgba(201, 162, 39, 0.25)",
+          ? "2px solid rgba(244, 196, 48, 0.75)"
+          : "1px solid rgba(201, 162, 39, 0.22)",
         boxShadow: card.highlight
-          ? "0 0 40px rgba(244,196,48,0.12), 0 8px 32px rgba(0,0,0,0.35)"
-          : "0 4px 24px rgba(0,0,0,0.25)",
-        padding: "1.5rem",
+          ? "0 0 0 4px rgba(244,196,48,0.08), 0 0 60px rgba(244,196,48,0.18), 0 12px 48px rgba(0,0,0,0.5)"
+          : "0 4px 24px rgba(0,0,0,0.3)",
+        padding: card.highlight ? "1.75rem" : "1.5rem",
       }}
     >
+      {/* Gold top accent bar on highlighted card */}
+      {card.highlight && (
+        <div
+          className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl"
+          style={{ background: "linear-gradient(90deg, transparent, #f4c430, transparent)" }}
+        />
+      )}
+
       {/* Badge */}
       {card.badge && (
         <div
@@ -242,15 +250,15 @@ export function Pricing() {
   return (
     <section id="pricing">
       <BackgroundGradientAnimation
-        gradientBackgroundStart="rgb(30, 58, 47)"
-        gradientBackgroundEnd="rgb(22, 45, 36)"
-        firstColor="30, 58, 47"
+        gradientBackgroundStart="rgb(22, 45, 36)"
+        gradientBackgroundEnd="rgb(16, 29, 24)"
+        firstColor="55, 100, 72"
         secondColor="201, 162, 39"
-        thirdColor="42, 80, 64"
+        thirdColor="80, 140, 100"
         fourthColor="244, 196, 48"
-        fifthColor="22, 45, 36"
-        pointerColor="201, 162, 39"
-        size="70%"
+        fifthColor="40, 75, 55"
+        pointerColor="244, 196, 48"
+        size="90%"
         blendingValue="hard-light"
         interactive={true}
         containerClassName="min-h-0 h-auto w-full"
@@ -266,7 +274,7 @@ export function Pricing() {
         />
 
         {/* Content */}
-        <div className="relative z-10 py-16 sm:py-24 max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="relative z-10 py-20 sm:py-28 max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* ── Header ── */}
           <div className="text-center mb-10 sm:mb-14">

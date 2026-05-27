@@ -99,9 +99,10 @@ export const BackgroundGradientAnimation = ({
 
       <div className={cn("", className)}>{children}</div>
 
+      {/* absolute inset-0 so the orbs fill the section height (not viewport height) */}
       <div
         className={cn(
-          "gradients-container h-full w-full blur-lg",
+          "gradients-container absolute inset-0 blur-lg",
           isSafari ? "blur-2xl" : "[filter:url(#blurMe)_blur(40px)]"
         )}
       >
