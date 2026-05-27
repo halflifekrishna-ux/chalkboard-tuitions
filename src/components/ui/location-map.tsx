@@ -12,7 +12,7 @@ import {
 
 // Kammanahalli & Kalyan Nagar, Bangalore
 const MAPS_URL =
-  "https://www.google.com/maps/search/Kammanahalli+Bangalore+Karnataka+India";
+  "https://maps.app.goo.gl/GUPsuattjnL3HrsT7";
 
 interface LocationMapProps {
   location?: string;

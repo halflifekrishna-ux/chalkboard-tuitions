@@ -19,7 +19,7 @@ const localBusiness = {
       paymentAccepted: "Cash, UPI, Bank Transfer",
       openingHours: "Mo-Fr 16:00-20:00",
       sameAs: ["https://www.instagram.com/chalkboard.tuitions/"],
-      hasMap: "https://www.google.com/maps/search/Kammanahalli+Bangalore+Karnataka+India",
+      hasMap: "https://maps.app.goo.gl/GUPsuattjnL3HrsT7",
       location: [
         {
           "@type": "Place",
