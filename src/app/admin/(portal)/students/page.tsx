@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { UserPlus, Search, GraduationCap } from "lucide-react";
 import { createServerSupabase } from "@/lib/os/supabase-server";
-import { BOARD_LABELS, STATUS_LABELS, type Board, type StudentStatus } from "@/lib/os/types";
+import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
+import { Avatar } from "@/components/admin/Avatar";
+import { BOARD_LABELS, STATUS_LABELS, STATUS_COLORS, type Board, type StudentStatus } from "@/lib/os/types";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_COLORS: Record<StudentStatus, string> = {
-  active: "#7dc98f",
-  trial: "#f4c430",
-  paused: "#e8a090",
-  alumni: "#9db4c9",
-  dropped: "rgba(245,240,232,0.35)",
-};
 
 export default async function StudentsPage({
   searchParams,
@@ -23,14 +17,17 @@ export default async function StudentsPage({
 
   let query = supabase
     .from("students")
-    .select("id, student_code, full_name, grade, board, status, parent:parents(full_name, phone)")
+    .select("id, student_code, admission_number, photo_path, full_name, grade, board, status, parent:parents(full_name, phone)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (q) query = query.or(`full_name.ilike.%${q}%,student_code.ilike.%${q}%`);
+  if (q) query = query.or(`full_name.ilike.%${q}%,student_code.ilike.%${q}%,admission_number.ilike.%${q}%`);
 
   const { data: students } = await query;
+  const photoUrls = await Promise.all(
+    (students ?? []).map((s) => signedUrl(PHOTO_BUCKET, s.photo_path))
+  );
 
   return (
     <div className="space-y-5">
@@ -81,7 +78,7 @@ export default async function StudentsPage({
         </div>
       ) : (
         <ul className="space-y-2.5">
-          {students.map((s) => {
+          {students.map((s, i) => {
             const parent = s.parent as unknown as { full_name: string; phone: string } | null;
             return (
               <li key={s.id}>
@@ -90,14 +87,17 @@ export default async function StudentsPage({
                   className="flex items-center justify-between gap-3 rounded-2xl p-4 active:scale-[0.99] transition-transform"
                   style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: "#f5f0e8" }}>
-                      {s.full_name}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: "rgba(245,240,232,0.45)" }}>
-                      {s.student_code} · Grade {s.grade} · {BOARD_LABELS[s.board as Board]}
-                      {parent ? ` · ${parent.full_name}` : ""}
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar name={s.full_name} photoUrl={photoUrls[i]} size={42} />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate" style={{ color: "#f5f0e8" }}>
+                        {s.full_name}
+                      </p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(245,240,232,0.45)" }}>
+                        {s.admission_number ?? s.student_code} · Grade {s.grade} · {BOARD_LABELS[s.board as Board]}
+                        {parent ? ` · ${parent.full_name}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <span
                     className="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap"

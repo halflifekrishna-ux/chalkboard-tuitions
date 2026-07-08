@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Wallet,
   BarChart3,
+  Settings,
   LogOut,
 } from "lucide-react";
 import type { FeatureFlags } from "@/lib/os/flags";
@@ -20,7 +21,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  flag: keyof FeatureFlags;
+  flag?: keyof FeatureFlags; // no flag = always visible
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, flag: "whatsapp" },
   { href: "/admin/fees", label: "Fees", icon: Wallet, flag: "fees" },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3, flag: "analytics" },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminNav({
@@ -43,7 +45,7 @@ export function AdminNav({
   logoutAction: () => Promise<void>;
 }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((i) => flags[i.flag]);
+  const items = NAV_ITEMS.filter((i) => !i.flag || flags[i.flag]);
   // Bottom bar fits 5 comfortably on a phone; overflow lives in the sidebar.
   const mobileItems = items.slice(0, 5);
 

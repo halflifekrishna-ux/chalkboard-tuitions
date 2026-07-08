@@ -115,16 +115,27 @@ export function StudentForm({
         <Field label="Status" error={errors.status?.message}>
           <select {...register("status")} className={inputCls} style={inputStyle}>
             <option value="active" style={{ color: "#162d24" }}>Active</option>
-            <option value="trial" style={{ color: "#162d24" }}>Trial</option>
-            <option value="paused" style={{ color: "#162d24" }}>Paused</option>
-            <option value="alumni" style={{ color: "#162d24" }}>Alumni</option>
+            <option value="inactive" style={{ color: "#162d24" }}>Inactive</option>
+            <option value="graduated" style={{ color: "#162d24" }}>Graduated</option>
             <option value="dropped" style={{ color: "#162d24" }}>Dropped</option>
+            <option value="transferred" style={{ color: "#162d24" }}>Transferred</option>
+            <option value="archived" style={{ color: "#162d24" }}>Archived</option>
           </select>
         </Field>
         <Field label="School (optional)" error={errors.school_name?.message}>
           <input {...register("school_name")} className={inputCls} style={inputStyle} />
         </Field>
       </div>
+
+      <Field label="Profile photo (optional, under 5 MB)">
+        <input
+          type="file"
+          name="photo"
+          accept="image/*"
+          className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-4 file:py-2 file:text-xs file:font-bold"
+          style={{ color: "rgba(245,240,232,0.6)" }}
+        />
+      </Field>
 
       <SectionTitle>Parent / Guardian</SectionTitle>
 

@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
   const supabase = createServerSupabase();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [students, sessions, attendance, activity] = await Promise.all([
+  const [students, sessions, attendance, activity, messages, pendingHomework, pendingFees] = await Promise.all([
     supabase
       .from("students")
       .select("id", { count: "exact", head: true })
@@ -42,6 +42,21 @@ export default async function AdminDashboard() {
       .order("start_time"),
     supabase.from("attendance").select("status, session:class_sessions!inner(session_date)").eq("session.session_date", today),
     supabase.from("activity_logs").select("id, summary, created_at").order("created_at", { ascending: false }).limit(8),
+    supabase
+      .from("communications")
+      .select("id", { count: "exact", head: true })
+      .eq("direction", "outgoing")
+      .gte("occurred_at", `${today}T00:00:00`),
+    supabase
+      .from("homework")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .gte("due_date", today),
+    supabase
+      .from("fees")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["due", "partially_paid", "overdue"])
+      .is("deleted_at", null),
   ]);
 
   const att = attendance.data ?? [];
@@ -93,6 +108,10 @@ export default async function AdminDashboard() {
           <StatCard label="Present" value={present} />
           <StatCard label="Absent" value={absent} />
           <StatCard label="Late" value={late} />
+          <StatCard label="Classes Today" value={todaySessions.length} />
+          <StatCard label="Messages Sent" value={messages.count ?? 0} />
+          <StatCard label="Pending Homework" value={pendingHomework.count ?? 0} />
+          <StatCard label="Pending Fees" value={pendingFees.count ?? 0} />
         </div>
       </section>
 

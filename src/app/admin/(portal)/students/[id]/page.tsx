@@ -2,8 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Phone, MessageCircle, QrCode, Archive } from "lucide-react";
 import { createServerSupabase } from "@/lib/os/supabase-server";
+import { signedUrl, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
+import { Avatar } from "@/components/admin/Avatar";
+import { CommunicationLog, type CommEntry } from "@/components/admin/CommunicationLog";
+import { DocumentsSection, type DocEntry } from "@/components/admin/DocumentsSection";
 import { BOARD_LABELS, STATUS_LABELS, type Board, type StudentStatus } from "@/lib/os/types";
-import { archiveStudent } from "../actions";
+import { archiveStudent, logCommunication, uploadDocument } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,19 +23,11 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
   const supabase = createServerSupabase();
 
-  const [{ data: student }, { data: timeline }] = await Promise.all([
-    supabase
-      .from("students")
-      .select("*, parent:parents(*)")
-      .eq("id", params.id)
-      .is("deleted_at", null)
-      .maybeSingle(),
-    supabase
-      .from("activity_logs")
-      .select("id, action, summary, created_at")
-      .eq("student_id", params.id)
-      .order("created_at", { ascending: false })
-      .limit(30),
+  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }] = await Promise.all([
+    supabase.from("students").select("*, parent:parents(*)").eq("id", params.id).is("deleted_at", null).maybeSingle(),
+    supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
+    supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
+    supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
   ]);
 
   if (!student) notFound();
@@ -43,8 +39,24 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     relationship: string | null;
   } | null;
 
+  const [photoUrl, ...docUrls] = await Promise.all([
+    signedUrl(PHOTO_BUCKET, student.photo_path),
+    ...(docs ?? []).map((d) => signedUrl(DOCS_BUCKET, d.storage_path)),
+  ]);
+
+  const docEntries: DocEntry[] = (docs ?? []).map((d, i) => ({
+    id: d.id,
+    file_name: d.file_name,
+    kind: d.kind,
+    size_bytes: d.size_bytes,
+    created_at: d.created_at,
+    url: docUrls[i],
+  }));
+
   const waNumber = (parent?.whatsapp_number || parent?.phone || "").replace(/[^0-9]/g, "");
   const archiveWithId = archiveStudent.bind(null, student.id);
+  const logCommWithId = logCommunication.bind(null, student.id);
+  const uploadDocWithId = uploadDocument.bind(null, student.id);
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -53,19 +65,22 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
           <ArrowLeft size={14} /> Students
         </Link>
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-playfair text-2xl sm:text-3xl font-bold" style={{ color: "#f5f0e8" }}>
-              {student.full_name}
-            </h1>
-            <p className="text-sm mt-1 flex items-center gap-2" style={{ color: "rgba(245,240,232,0.45)" }}>
-              <QrCode size={14} style={{ color: "#c9a227" }} />
-              {student.student_code} · Grade {student.grade} · {BOARD_LABELS[student.board as Board]} ·{" "}
-              {STATUS_LABELS[student.status as StudentStatus]}
-            </p>
+          <div className="flex items-center gap-4 min-w-0">
+            <Avatar name={student.full_name} photoUrl={photoUrl} size={64} />
+            <div className="min-w-0">
+              <h1 className="font-playfair text-2xl sm:text-3xl font-bold truncate" style={{ color: "#f5f0e8" }}>
+                {student.full_name}
+              </h1>
+              <p className="text-sm mt-1 flex items-center gap-2 flex-wrap" style={{ color: "rgba(245,240,232,0.45)" }}>
+                <QrCode size={14} style={{ color: "#c9a227" }} />
+                {student.admission_number ?? student.student_code} · Grade {student.grade} ·{" "}
+                {BOARD_LABELS[student.board as Board]} · {STATUS_LABELS[student.status as StudentStatus]}
+              </p>
+            </div>
           </div>
           <Link
             href={`/admin/students/${student.id}/edit`}
-            className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-bold text-sm whitespace-nowrap"
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-bold text-sm whitespace-nowrap flex-shrink-0"
             style={{ background: "rgba(201,162,39,0.15)", color: "#f4c430", border: "1px solid rgba(201,162,39,0.3)" }}
           >
             <Pencil size={14} /> Edit
@@ -100,6 +115,8 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
         className="rounded-2xl px-4 divide-y"
         style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}
       >
+        <InfoRow label="Admission no." value={student.admission_number ?? "—"} />
+        <InfoRow label="Internal code" value={student.student_code} />
         <InfoRow label="Parent" value={parent ? `${parent.full_name} (${parent.relationship ?? "parent"})` : "—"} />
         <InfoRow label="Parent phone" value={parent?.phone ?? "—"} />
         <InfoRow label="Parent email" value={parent?.email ?? "—"} />
@@ -117,6 +134,10 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
           <p className="text-sm leading-relaxed" style={{ color: "rgba(245,240,232,0.8)" }}>{student.notes}</p>
         </section>
       )}
+
+      <CommunicationLog entries={(comms ?? []) as CommEntry[]} action={logCommWithId} />
+
+      <DocumentsSection docs={docEntries} action={uploadDocWithId} />
 
       {/* Timeline */}
       <section>

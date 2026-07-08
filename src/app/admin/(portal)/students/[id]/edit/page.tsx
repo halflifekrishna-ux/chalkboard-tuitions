@@ -27,6 +27,11 @@ export default async function EditStudentPage({ params }: { params: { id: string
 
   const updateWithId = updateStudent.bind(null, student.id);
 
+  // Legacy statuses from before the status expansion map to their nearest new value.
+  const LEGACY_STATUS: Record<string, string> = { trial: "active", paused: "inactive", alumni: "graduated" };
+  const status = (LEGACY_STATUS[student.status] ?? student.status) as
+    "active" | "inactive" | "graduated" | "dropped" | "transferred" | "archived";
+
   return (
     <div className="space-y-5 max-w-xl">
       <header>
@@ -49,7 +54,7 @@ export default async function EditStudentPage({ params }: { params: { id: string
           full_name: student.full_name,
           grade: student.grade,
           board: student.board,
-          status: student.status,
+          status,
           school_name: student.school_name ?? "",
           emergency_contact: student.emergency_contact ?? "",
           notes: student.notes ?? "",
