@@ -19,7 +19,7 @@ All tables already exist (migrations 0001/0002). Roles of each:
 |---|---|---|
 | `classes` | Recurring batch, e.g. "Grade 6 Maths · 5 PM" | branch, subject, teacher, grade, start/end time, `days[]`, capacity, room, `online_link` |
 | `class_students` | Enrolment (who belongs to the batch) | unique (class_id, student_id) |
-| `class_sessions` | One concrete occurrence of a class on a date | unique (class_id, session_date, start_time); status scheduled → in_progress → completed |
+| `class_sessions` | One concrete occurrence of a class on a date | unique (class_id, session_date, start_time); status scheduled → in_progress → completed; **class notes**: `topic_covered`, `homework_assigned`, `teacher_notes` (migration 0003) |
 | `attendance` | One row per student per session | unique (session_id, student_id); status present/absent/late/excused; `marked_by`, `marked_at` |
 | `attendance_logs` | Immutable edit history | old_status → new_status, changed_by, timestamp |
 | `communications` + `whatsapp_logs` | Parent notification record | template_key, provider_id, delivery status |
@@ -34,7 +34,13 @@ Because a session is unique per (class, date, time), **multiple classes per day 
 1. **Attendance tab** → list of today's classes (derived from `classes.days` matching today's weekday), each showing time, enrolled count, and a Done/Pending chip.
 2. Tap a class → session upserted → roster screen: one large row per enrolled student (photo, name), four big touch targets: **Present / Absent / Late / Excused**. Default pre-selection: Present (one tap flips the exceptions — fastest path).
 3. Optimistic UI — taps update instantly, writes happen in the background.
-4. Tap **Finish Class** → in one server action:
+4. Tap **Finish Class** → a compact **Class Notes** sheet appears (all fields optional, skippable in one tap):
+   - **Today's Topic** — e.g. "Force and Motion"
+   - **Homework** — e.g. "Exercise 5"
+   - **Teacher Notes** — e.g. "Excellent participation today."
+
+   Then, in one server action:
+   - class notes saved on the session (`topic_covered`, `homework_assigned`, `teacher_notes`)
    - all attendance rows saved (`marked_by` = Nanditha)
    - session marked `completed` (`completed_at`, `completed_by`)
    - one `activity_logs` entry per student
@@ -73,7 +79,7 @@ Finish Class
 ## 6. What gets built on approval
 
 1. `/admin/classes` — CRUD for classes (name, subject, grade, teacher, days, times, capacity, room) + enrol/remove students.
-2. `/admin/attendance` — today view → roster screen → Finish Class action (as above).
+2. `/admin/attendance` — today view → roster screen → Finish Class with Class Notes sheet (as above). Notes are **not** sent to parents yet; they accumulate per session so weekly reports (attendance % + topics + homework + remarks) and AI summaries can be generated later with zero backfill.
 3. WhatsApp dispatcher (`src/lib/os/whatsapp.ts`) + env-var wiring + dev mode.
 4. Dashboard hookup — Today's Classes/Present/Absent/Late tiles go fully live.
 
