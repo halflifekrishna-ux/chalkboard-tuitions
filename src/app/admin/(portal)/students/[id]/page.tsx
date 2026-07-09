@@ -7,6 +7,7 @@ import { Avatar } from "@/components/admin/Avatar";
 import { CommunicationLog, type CommEntry } from "@/components/admin/CommunicationLog";
 import { DocumentsSection, type DocEntry } from "@/components/admin/DocumentsSection";
 import { AttendanceHistory, type AttendanceRecord } from "@/components/admin/AttendanceHistory";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { BOARD_LABELS, STATUS_LABELS, type Board, type StudentStatus } from "@/lib/os/types";
 import { archiveStudent, logCommunication, uploadDocument } from "../actions";
 
@@ -202,16 +203,19 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
         </div>
       </section>
 
-      {/* Archive (soft delete) */}
-      <form action={archiveWithId} className="pt-2 pb-6">
-        <button
-          type="submit"
+      {/* Archive (soft delete) — confirmed */}
+      <div className="pt-2 pb-6">
+        <ConfirmButton
+          action={archiveWithId}
+          triggerLabel="Archive student"
+          triggerIcon={<Archive size={14} />}
+          title="Archive this student?"
+          body={`${student.full_name} will be hidden from active lists and removed from attendance. Their history is kept and this can be reversed by support.`}
+          confirmLabel="Archive"
           className="flex items-center gap-2 text-xs font-semibold"
           style={{ color: "rgba(232,160,144,0.8)" }}
-        >
-          <Archive size={14} /> Archive student
-        </button>
-      </form>
+        />
+      </div>
     </div>
   );
 }

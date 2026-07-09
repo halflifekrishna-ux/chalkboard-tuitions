@@ -28,7 +28,7 @@ export default async function NewBatchPage() {
           No academic year found. Run migration 0005 to seed the current academic year.
         </p>
       ) : (
-        <BatchForm action={createBatch} academicYears={years} submitLabel="Create Batch" />
+        <BatchForm action={createBatch} academicYears={years} submitLabel="Create Batch" draftKey="new-batch" />
       )}
     </div>
   );

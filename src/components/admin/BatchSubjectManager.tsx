@@ -111,6 +111,7 @@ function EditForm({
   onDone: () => void;
 }) {
   const update = updateAction.bind(null, row.id);
+  const [confirming, setConfirming] = useState(false);
   const [st, act] = useFormState<ActionState, FormData>(async (p, fd) => {
     const res = await update(p, fd);
     if (!res.error) onDone();
@@ -123,7 +124,15 @@ function EditForm({
       <div className="flex items-center gap-2">
         <SubmitButton label="Save" />
         <button type="button" onClick={onDone} className="text-xs font-semibold" style={{ color: "rgba(245,240,232,0.5)" }}>Cancel</button>
-        <button type="button" onClick={() => archiveAction(row.id)} className="ml-auto text-xs font-semibold" style={{ color: "rgba(232,160,144,0.8)" }}>Remove</button>
+        {confirming ? (
+          <span className="ml-auto flex items-center gap-2">
+            <span className="text-[11px]" style={{ color: "rgba(245,240,232,0.5)" }}>Remove?</span>
+            <button type="button" onClick={() => archiveAction(row.id)} className="text-xs font-bold" style={{ color: "#e8a090" }}>Yes</button>
+            <button type="button" onClick={() => setConfirming(false)} className="text-xs font-semibold" style={{ color: "rgba(245,240,232,0.5)" }}>No</button>
+          </span>
+        ) : (
+          <button type="button" onClick={() => setConfirming(true)} className="ml-auto text-xs font-semibold" style={{ color: "rgba(232,160,144,0.8)" }}>Remove</button>
+        )}
       </div>
     </form>
   );

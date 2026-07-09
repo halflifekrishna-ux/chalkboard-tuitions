@@ -96,7 +96,7 @@ export function SubjectsManager({ subjects }: { subjects: SubjectRow[] }) {
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search subjects…" className="w-full rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={{ ...inputStyle, border: "1px solid rgba(201,162,39,0.15)" }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} type="search" aria-label="Search subjects" placeholder="Search subjects…" className="w-full rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={{ ...inputStyle, border: "1px solid rgba(201,162,39,0.15)" }} />
         </div>
         <button onClick={() => setShowArchived((v) => !v)} className="text-xs font-semibold rounded-lg px-3 py-2.5 whitespace-nowrap" style={{ background: showArchived ? "rgba(201,162,39,0.15)" : "rgba(245,240,232,0.05)", color: showArchived ? "#f4c430" : "rgba(245,240,232,0.5)" }}>
           {showArchived ? "Hiding none" : "Show archived"}

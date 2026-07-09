@@ -15,6 +15,17 @@ export default async function StudentsPage({
   const supabase = createServerSupabase();
   const q = searchParams.q?.trim() ?? "";
 
+  // Also match on parent name/phone: find matching parent ids first, then OR them in.
+  let parentIds: string[] = [];
+  if (q) {
+    const { data: parents } = await supabase
+      .from("parents")
+      .select("id")
+      .or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,whatsapp_number.ilike.%${q}%`)
+      .limit(100);
+    parentIds = (parents ?? []).map((p) => p.id);
+  }
+
   let query = supabase
     .from("students")
     .select("id, student_code, admission_number, photo_path, full_name, grade, board, status, parent:parents(full_name, phone)")
@@ -22,7 +33,11 @@ export default async function StudentsPage({
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (q) query = query.or(`full_name.ilike.%${q}%,student_code.ilike.%${q}%,admission_number.ilike.%${q}%`);
+  if (q) {
+    const clauses = [`full_name.ilike.%${q}%`, `student_code.ilike.%${q}%`, `admission_number.ilike.%${q}%`];
+    if (parentIds.length) clauses.push(`parent_id.in.(${parentIds.join(",")})`);
+    query = query.or(clauses.join(","));
+  }
 
   const { data: students } = await query;
   const photoUrls = await Promise.all(
@@ -49,8 +64,10 @@ export default async function StudentsPage({
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
         <input
           name="q"
+          type="search"
           defaultValue={q}
-          placeholder="Search by name or student ID…"
+          placeholder="Search name, ID, or parent phone…"
+          aria-label="Search students"
           className="w-full rounded-xl pl-11 pr-4 py-3 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]"
           style={{ background: "rgba(22,45,36,0.7)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }}
         />

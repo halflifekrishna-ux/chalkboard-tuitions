@@ -1,18 +1,22 @@
 import Link from "next/link";
-import { Plus, Users, BookOpen, Layers, Tag } from "lucide-react";
+import { Plus, Users, BookOpen, Layers, Tag, Search } from "lucide-react";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { BOARD_LABELS, type Board } from "@/lib/os/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function BatchesPage() {
+export default async function BatchesPage({ searchParams }: { searchParams: { q?: string } }) {
   const supabase = createServerSupabase();
+  const q = searchParams.q?.trim() ?? "";
 
-  const { data: batches } = await supabase
+  let query = supabase
     .from("batches")
     .select("id, name, grade, board, capacity, status, academic_year:academic_years(name), batch_students(count), batch_subjects(count)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+  if (q) query = query.ilike("name", `%${q}%`);
+
+  const { data: batches } = await query;
 
   return (
     <div className="space-y-5">
@@ -28,15 +32,31 @@ export default async function BatchesPage() {
         </div>
       </header>
 
+      {/* Search */}
+      <form method="GET" className="relative">
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
+        <input
+          name="q"
+          type="search"
+          defaultValue={q}
+          placeholder="Search batches…"
+          aria-label="Search batches"
+          className="w-full rounded-xl pl-11 pr-4 py-3 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]"
+          style={{ background: "rgba(22,45,36,0.7)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }}
+        />
+      </form>
+
       {!batches?.length ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
           <Layers size={32} className="mx-auto mb-3" style={{ color: "rgba(245,240,232,0.25)" }} />
           <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>
-            No batches yet. Create your first — e.g. “Grade 8 Foundation”, then add subjects and enrol students.
+            {q ? `No batches match “${q}”.` : "No batches yet. Create your first — e.g. “Grade 8 Foundation”, then add subjects and enrol students."}
           </p>
-          <Link href="/admin/batches/new" className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
-            <Plus size={16} /> Add Batch
-          </Link>
+          {!q && (
+            <Link href="/admin/batches/new" className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
+              <Plus size={16} /> Add Batch
+            </Link>
+          )}
         </div>
       ) : (
         <ul className="space-y-2.5">

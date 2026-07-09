@@ -1,6 +1,15 @@
-# Chalkboard Tuitions — Landing Page
+# Chalkboard Tuitions — Marketing Site + Chalkboard OS
 
-Production-ready Next.js 14 landing page for Chalkboard Tuitions, Bangalore.
+Two products in one Next.js repo:
+
+1. **Marketing site** (`/`) — the public landing page for Chalkboard Tuitions, Bangalore.
+2. **Chalkboard OS** (`/admin`) — the internal tuition-management system (students,
+   batches, attendance, WhatsApp queue). Currently at **v0.3.1** (Release Candidate).
+
+> 📖 Deep docs: [Chalkboard OS overview](docs/CHALKBOARD_OS.md) ·
+> [Architecture & ER diagram](docs/ARCHITECTURE.md) ·
+> [Operations: deploy / backup / recovery](docs/OPERATIONS.md) ·
+> [Attendance architecture](docs/ATTENDANCE_ARCHITECTURE.md)
 
 ---
 
@@ -8,12 +17,33 @@ Production-ready Next.js 14 landing page for Chalkboard Tuitions, Bangalore.
 
 | Layer | Tool |
 |---|---|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 14 (App Router), TypeScript (strict) |
 | Styling | Tailwind CSS + Framer Motion |
-| Database | Supabase (lead storage) |
-| Email | Resend (confirmation + admin notification) |
+| Database | Supabase (Postgres + RLS) |
+| Auth | Supabase Auth (cookie sessions via `@supabase/ssr`) |
+| Storage | Supabase Storage (private buckets, signed URLs) |
+| Forms | React Hook Form + Zod |
+| Email | Resend (lead confirmation + admin notification) |
+| Messaging | Meta WhatsApp Cloud API (queued) |
 | Hosting | Vercel |
-| Dark Mode | next-themes |
+
+---
+
+## Chalkboard OS at a glance
+
+```
+Organization → Branch → Academic Year → Batch → Batch Subject
+             → Session → Attendance → Communication → Reports
+```
+
+- **Admin portal** at `/admin` (Super Admin only today; role enum already covers
+  teacher / reception / parent / student for future portals).
+- **Attendance in under 20s**: Today's Sessions → Start → Present-by-default roster
+  → Finish → Class Notes. WhatsApp messages are **queued**, never blocking.
+- **Developer panel** (`/admin/developer`) surfaces env health, queue, migrations,
+  DB/storage size, version and commit hash.
+- Run database migrations in order from `supabase/migrations/` (see
+  [OPERATIONS.md](docs/OPERATIONS.md)).
 
 ---
 

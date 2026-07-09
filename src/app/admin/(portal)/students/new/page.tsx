@@ -20,7 +20,7 @@ export default function NewStudentPage() {
         </p>
       </header>
 
-      <StudentForm action={createStudent} submitLabel="Add Student" />
+      <StudentForm action={createStudent} submitLabel="Add Student" draftKey="new-student" />
     </div>
   );
 }

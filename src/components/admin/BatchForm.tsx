@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { Save } from "lucide-react";
 import type { ActionState } from "@/app/admin/(portal)/batches/actions";
+import { useFormDraft } from "@/lib/os/useFormDraft";
 
 const inputCls = "w-full rounded-xl px-4 py-3 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]";
 const inputStyle = { background: "rgba(245,240,232,0.08)", color: "#f5f0e8" };
@@ -40,16 +41,24 @@ export function BatchForm({
   academicYears,
   defaults,
   submitLabel,
+  draftKey,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   academicYears: { id: string; name: string }[];
   defaults?: BatchDefaults;
   submitLabel: string;
+  draftKey?: string;
 }) {
   const [state, formAction] = useFormState<ActionState, FormData>(action, {});
+  const { formRef, restored, clear } = useFormDraft(draftKey ?? "batch-disabled");
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form ref={draftKey ? formRef : undefined} action={formAction} onSubmit={() => draftKey && clear()} className="space-y-5">
+      {draftKey && restored && (
+        <p className="text-xs rounded-lg px-3 py-2" style={{ background: "rgba(244,196,48,0.1)", color: "#f4c430" }}>
+          Draft restored from your last unsaved entry.
+        </p>
+      )}
       <div>
         <h2 className="text-xs uppercase tracking-widest font-semibold mb-3" style={{ color: "#c9a227" }}>General</h2>
         <div className="space-y-4">

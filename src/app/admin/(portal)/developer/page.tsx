@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle, Database, GitCommit, Package, ListChecks } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Database, GitCommit, Package, ListChecks, HardDrive } from "lucide-react";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { checkEnvironment, type HealthState } from "@/lib/os/health";
 import { APP_VERSION, commitHash, deployEnv } from "@/lib/os/version";
@@ -6,6 +6,13 @@ import { FlagToggle } from "@/components/admin/FlagToggle";
 import { requireSuperAdmin } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function fmtBytes(n: number) {
+  if (!n) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+  return `${(n / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
 
 const STATE_ICON: Record<HealthState, React.ReactNode> = {
   ok: <CheckCircle2 size={16} style={{ color: "#7dc98f" }} />,
@@ -30,15 +37,18 @@ export default async function DeveloperPage() {
   await requireSuperAdmin();
   const supabase = createServerSupabase();
 
-  const [env, { data: queue }, { data: failed }, { data: migrations }, { data: flags }] = await Promise.all([
+  const [env, { data: queue }, { data: failed }, { data: migrations }, { data: flags }, statsRes] = await Promise.all([
     checkEnvironment(),
     supabase.from("communication_queue").select("status"),
     supabase.from("communication_queue").select("id, template_key, to_number, last_error, retry_count, updated_at").eq("status", "failed").order("updated_at", { ascending: false }).limit(10),
     supabase.from("schema_migrations").select("version, applied_at").order("version"),
     supabase.from("feature_flags").select("key, label, enabled").order("label"),
+    supabase.rpc("get_system_stats"),
   ]);
 
   const tally = (queue ?? []).reduce((a, r) => ({ ...a, [r.status]: (a[r.status] ?? 0) + 1 }), {} as Record<string, number>);
+  const stats = (statsRes.data ?? {}) as Record<string, number>;
+  const latestMigration = migrations?.length ? migrations[migrations.length - 1].version : "—";
 
   return (
     <div className="space-y-6 pb-6">
@@ -67,6 +77,40 @@ export default async function DeveloperPage() {
           <p className="text-sm font-bold capitalize" style={{ color: "#f5f0e8" }}>{deployEnv()}</p>
         </div>
       </div>
+
+      {/* System stats */}
+      <Card title="System" icon={<HardDrive size={13} />}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
+          {[
+            ["Database", stats.db_size_bytes != null ? fmtBytes(stats.db_size_bytes) : "—"],
+            ["Storage", stats.storage_bytes != null ? fmtBytes(stats.storage_bytes) : "—"],
+            ["Queue size", String(stats.queue_total ?? tally.pending ?? 0)],
+            ["Files", String(stats.storage_objects ?? 0)],
+            ["Students", String(stats.students ?? 0)],
+            ["Batches", String(stats.batches ?? 0)],
+            ["Sessions", String(stats.sessions ?? 0)],
+            ["Attendance", String(stats.attendance_rows ?? 0)],
+          ].map(([label, value]) => (
+            <div key={label} className="p-3">
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(245,240,232,0.4)" }}>{label}</p>
+              <p className="font-playfair text-lg font-bold" style={{ color: "#f5f0e8" }}>{value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid rgba(201,162,39,0.1)" }}>
+          <span className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>Latest migration</span>
+          <span className="text-xs font-mono" style={{ color: "#f5f0e8" }}>{latestMigration}</span>
+        </div>
+        <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid rgba(201,162,39,0.1)" }}>
+          <span className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>Latest deployment</span>
+          <span className="text-xs font-mono" style={{ color: "#f5f0e8" }}>{commitHash()} · {deployEnv()}</span>
+        </div>
+        {statsRes.error && (
+          <p className="px-4 py-2 text-[11px]" style={{ color: "#f4c430" }}>
+            Live DB/storage sizes need migration 0007 (get_system_stats). Counts shown are best-effort.
+          </p>
+        )}
+      </Card>
 
       {/* Environment status */}
       <Card title="Environment" icon={<Database size={13} />}>

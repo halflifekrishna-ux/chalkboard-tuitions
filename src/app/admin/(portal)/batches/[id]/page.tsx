@@ -5,6 +5,7 @@ import { createServerSupabase } from "@/lib/os/supabase-server";
 import { EnrolmentList, type EnrolCandidate } from "@/components/admin/EnrolmentList";
 import { BatchSubjectManager, type BatchSubjectRow } from "@/components/admin/BatchSubjectManager";
 import { Tabs } from "@/components/admin/Tabs";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { BOARD_LABELS, type Board } from "@/lib/os/types";
 import { fmtTime } from "@/lib/os/attendance";
 import { archiveBatch, setBatchEnrolment, addBatchSubject, updateBatchSubject, archiveBatchSubject } from "../actions";
@@ -155,11 +156,18 @@ export default async function BatchDetailPage({ params }: { params: { id: string
         ]}
       />
 
-      <form action={archiveWithId} className="pt-2 pb-6">
-        <button type="submit" className="flex items-center gap-2 text-xs font-semibold" style={{ color: "rgba(232,160,144,0.8)" }}>
-          <Archive size={14} /> Archive batch
-        </button>
-      </form>
+      <div className="pt-2 pb-6">
+        <ConfirmButton
+          action={archiveWithId}
+          triggerLabel="Archive batch"
+          triggerIcon={<Archive size={14} />}
+          title="Archive this batch?"
+          body={`"${batch.name}" and its subjects will be hidden and stop appearing in Today's Sessions. Attendance history is preserved.`}
+          confirmLabel="Archive"
+          className="flex items-center gap-2 text-xs font-semibold"
+          style={{ color: "rgba(232,160,144,0.8)" }}
+        />
+      </div>
     </div>
   );
 }

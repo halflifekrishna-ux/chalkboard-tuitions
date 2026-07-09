@@ -191,7 +191,7 @@ export function AttendanceScreen({
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search student…" className="w-full rounded-xl pl-9 pr-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={{ background: "rgba(22,45,36,0.9)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} type="search" aria-label="Search students" placeholder="Search student…" className="w-full rounded-xl pl-9 pr-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={{ background: "rgba(22,45,36,0.9)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }} />
           </div>
           <button onClick={() => bulkSet("present")} className="text-[11px] font-bold rounded-lg px-2.5 py-2 whitespace-nowrap" style={{ background: "rgba(125,201,143,0.14)", color: "#7dc98f" }}>All present</button>
           <button onClick={() => bulkSet("absent")} className="text-[11px] font-bold rounded-lg px-2.5 py-2 whitespace-nowrap" style={{ background: "rgba(220,80,60,0.14)", color: "#e8a090" }}>All absent</button>
