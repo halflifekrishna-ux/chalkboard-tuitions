@@ -8,6 +8,7 @@ import { createServerSupabase } from "@/lib/os/supabase-server";
 const subjectSchema = z.object({
   name: z.string().min(2, "Subject name is required"),
   short_code: z.string().max(8).optional(),
+  colour: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
 });
 
 export interface SubjectState {
@@ -20,13 +21,14 @@ export async function createSubject(_prev: SubjectState, formData: FormData): Pr
   const parsed = subjectSchema.safeParse({
     name: formData.get("name"),
     short_code: formData.get("short_code") || undefined,
+    colour: formData.get("colour") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("subjects")
-    .insert({ name: parsed.data.name.trim(), short_code: parsed.data.short_code?.toUpperCase() || null })
+    .insert({ name: parsed.data.name.trim(), short_code: parsed.data.short_code?.toUpperCase() || null, colour: parsed.data.colour ?? "#c9a227" })
     .select("id, name")
     .single();
 
@@ -43,13 +45,14 @@ export async function updateSubject(id: string, _prev: SubjectState, formData: F
   const parsed = subjectSchema.safeParse({
     name: formData.get("name"),
     short_code: formData.get("short_code") || undefined,
+    colour: formData.get("colour") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = createServerSupabase();
   const { error } = await supabase
     .from("subjects")
-    .update({ name: parsed.data.name.trim(), short_code: parsed.data.short_code?.toUpperCase() || null })
+    .update({ name: parsed.data.name.trim(), short_code: parsed.data.short_code?.toUpperCase() || null, ...(parsed.data.colour ? { colour: parsed.data.colour } : {}) })
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/subjects");

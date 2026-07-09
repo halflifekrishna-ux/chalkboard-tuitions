@@ -24,13 +24,18 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
   const supabase = createServerSupabase();
 
-  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }] = await Promise.all([
+  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }, { data: batchLinks }] = await Promise.all([
     supabase.from("students").select("*, parent:parents(*)").eq("id", params.id).is("deleted_at", null).maybeSingle(),
     supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("attendance").select("status, session:sessions!inner(session_date, batch_subject:batch_subjects(subject:subjects(name), batch:batches(name)))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
+    supabase.from("batch_students").select("batch:batches(id, name, grade, status, deleted_at)").eq("student_id", params.id),
   ]);
+
+  const batches = (batchLinks ?? [])
+    .map((l) => l.batch as unknown as { id: string; name: string; grade: number; status: string; deleted_at: string | null } | null)
+    .filter((b): b is NonNullable<typeof b> => !!b && !b.deleted_at);
 
   if (!student) notFound();
 
@@ -129,6 +134,20 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
       >
         <InfoRow label="Admission no." value={student.admission_number ?? "—"} />
         <InfoRow label="Internal code" value={student.student_code} />
+        <div className="flex justify-between gap-4 py-2.5 items-center">
+          <span className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>Batch</span>
+          <span className="text-sm font-medium text-right flex flex-wrap gap-1.5 justify-end">
+            {batches.length === 0 ? (
+              <span style={{ color: "rgba(245,240,232,0.5)" }}>Not enrolled</span>
+            ) : (
+              batches.map((b) => (
+                <Link key={b.id} href={`/admin/batches/${b.id}`} className="rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: "rgba(201,162,39,0.15)", color: "#f4c430" }}>
+                  {b.name}
+                </Link>
+              ))
+            )}
+          </span>
+        </div>
         <InfoRow label="Parent" value={parent ? `${parent.full_name} (${parent.relationship ?? "parent"})` : "—"} />
         <InfoRow label="Parent phone" value={parent?.phone ?? "—"} />
         <InfoRow label="Parent email" value={parent?.email ?? "—"} />

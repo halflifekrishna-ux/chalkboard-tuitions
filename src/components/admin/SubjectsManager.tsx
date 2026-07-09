@@ -9,11 +9,27 @@ export interface SubjectRow {
   id: string;
   name: string;
   short_code: string | null;
+  colour: string;
   is_active: boolean;
   in_use: number;
 }
 
 const inputStyle = { background: "rgba(245,240,232,0.08)", color: "#f5f0e8" };
+const COLOURS = ["#c9a227", "#4a9eca", "#7dc98f", "#e8784d", "#e8a0b4", "#9d7cd8", "#4ec9b0"] as const;
+
+function ColourPicker({ name, value }: { name: string; value: string }) {
+  const [colour, setColour] = useState(value);
+  return (
+    <>
+      <input type="hidden" name={name} value={colour} />
+      <div className="flex gap-1.5">
+        {COLOURS.map((c) => (
+          <button key={c} type="button" onClick={() => setColour(c)} aria-label={`Colour ${c}`} className="h-6 w-6 rounded-full" style={{ background: c, outline: colour === c ? "2px solid #f5f0e8" : "none", outlineOffset: 2 }} />
+        ))}
+      </div>
+    </>
+  );
+}
 
 function CreateButton() {
   const { pending } = useFormStatus();
@@ -32,11 +48,14 @@ function InlineEdit({ subject, onDone }: { subject: SubjectRow; onDone: () => vo
     return r;
   }, {});
   return (
-    <form action={action} className="flex items-center gap-2 flex-1">
-      <input name="name" defaultValue={subject.name} required className="flex-1 rounded-lg px-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
-      <input name="short_code" defaultValue={subject.short_code ?? ""} placeholder="CODE" className="w-16 rounded-lg px-2 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
-      <button type="submit" aria-label="Save" className="p-2 rounded-lg" style={{ background: "#c9a227", color: "#162d24" }}><Check size={15} /></button>
-      <button type="button" onClick={onDone} aria-label="Cancel" className="p-2" style={{ color: "rgba(245,240,232,0.5)" }}><X size={15} /></button>
+    <form action={action} className="flex flex-col gap-2 flex-1">
+      <div className="flex items-center gap-2">
+        <input name="name" defaultValue={subject.name} required className="flex-1 rounded-lg px-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
+        <input name="short_code" defaultValue={subject.short_code ?? ""} placeholder="CODE" className="w-16 rounded-lg px-2 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
+        <button type="submit" aria-label="Save" className="p-2 rounded-lg" style={{ background: "#c9a227", color: "#162d24" }}><Check size={15} /></button>
+        <button type="button" onClick={onDone} aria-label="Cancel" className="p-2" style={{ color: "rgba(245,240,232,0.5)" }}><X size={15} /></button>
+      </div>
+      <ColourPicker name="colour" value={subject.colour} />
       {state.error && <span className="text-[11px]" style={{ color: "#e8a090" }}>{state.error}</span>}
     </form>
   );
@@ -60,13 +79,16 @@ export function SubjectsManager({ subjects }: { subjects: SubjectRow[] }) {
   return (
     <div className="space-y-4">
       {/* Inline create */}
-      <form action={createAction} className="flex items-end gap-2">
-        <div className="flex-1">
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(245,240,232,0.6)" }}>New subject</label>
-          <input name="name" required placeholder="e.g. Biology" className="w-full rounded-xl px-4 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
+      <form action={createAction} className="space-y-2.5">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(245,240,232,0.6)" }}>New subject</label>
+            <input name="name" required placeholder="e.g. Biology" className="w-full rounded-xl px-4 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
+          </div>
+          <input name="short_code" placeholder="BIO" className="w-20 rounded-xl px-3 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
+          <CreateButton />
         </div>
-        <input name="short_code" placeholder="BIO" className="w-20 rounded-xl px-3 py-2.5 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={inputStyle} />
-        <CreateButton />
+        <ColourPicker name="colour" value={COLOURS[0]} />
       </form>
       {createState.error && <p className="text-xs" style={{ color: "#e8a090" }}>{createState.error}</p>}
 
@@ -89,6 +111,7 @@ export function SubjectsManager({ subjects }: { subjects: SubjectRow[] }) {
               <InlineEdit subject={s} onDone={() => setEditing(null)} />
             ) : (
               <>
+                <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ background: s.colour }} />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-semibold" style={{ color: "#f5f0e8" }}>{s.name}</span>
                   {s.short_code && <span className="ml-2 text-[10px] font-bold rounded px-1.5 py-0.5" style={{ background: "rgba(201,162,39,0.15)", color: "#c9a227" }}>{s.short_code}</span>}

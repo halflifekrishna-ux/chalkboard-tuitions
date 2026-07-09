@@ -16,7 +16,7 @@ export default async function AdminPortalLayout({ children }: { children: React.
 
   return (
     <div className="min-h-screen" style={{ background: "#101d18" }}>
-      <AdminNav flags={flags} adminName={admin.full_name} logoutAction={logout} />
+      <AdminNav flags={flags} adminName={admin.full_name} role={admin.role} logoutAction={logout} />
       {/* pb clears the mobile tab bar; pl clears the desktop sidebar */}
       <main className="lg:pl-60 pb-24 lg:pb-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">{children}</div>

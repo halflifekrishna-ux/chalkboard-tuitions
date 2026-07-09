@@ -54,6 +54,7 @@ const markSchema = z.object({
   topic: z.string().optional(),
   homework: z.string().optional(),
   teacherNotes: z.string().optional(),
+  rating: z.number().int().min(1).max(5).optional(),
 });
 
 export interface FinishResult {
@@ -74,7 +75,7 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
   const admin = await requireAdmin();
   const parsed = markSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { batchSubjectId, sessionDate, startTime, endTime, marks, topic, homework, teacherNotes } = parsed.data;
+  const { batchSubjectId, sessionDate, startTime, endTime, marks, topic, homework, teacherNotes, rating } = parsed.data;
 
   const supabase = createServerSupabase();
 
@@ -91,6 +92,7 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
         topic_covered: topic || null,
         homework_assigned: homework || null,
         teacher_notes: teacherNotes || null,
+        rating: rating ?? null,
         completed_at: new Date().toISOString(),
         completed_by: admin.id,
       },

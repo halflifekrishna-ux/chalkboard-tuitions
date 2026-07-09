@@ -9,7 +9,7 @@ export default async function SubjectsPage() {
   const supabase = createServerSupabase();
 
   const [{ data: subjects }, { data: usage }] = await Promise.all([
-    supabase.from("subjects").select("id, name, short_code, is_active").order("name"),
+    supabase.from("subjects").select("id, name, short_code, colour, is_active").order("name"),
     supabase.from("batch_subjects").select("subject_id").is("deleted_at", null),
   ]);
 
@@ -20,6 +20,7 @@ export default async function SubjectsPage() {
     id: s.id,
     name: s.name,
     short_code: s.short_code,
+    colour: s.colour ?? "#c9a227",
     is_active: s.is_active,
     in_use: useCount.get(s.id) ?? 0,
   }));
