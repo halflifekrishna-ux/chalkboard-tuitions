@@ -39,11 +39,11 @@ export default async function AdminDashboard() {
       .eq("status", "active")
       .is("deleted_at", null),
     supabase
-      .from("class_sessions")
-      .select("id, status, start_time, class:classes(name)")
+      .from("sessions")
+      .select("id, status, start_time, batch_subject:batch_subjects(subject:subjects(name), batch:batches(name))")
       .eq("session_date", today)
       .order("start_time"),
-    supabase.from("attendance").select("status, session:class_sessions!inner(session_date)").eq("session.session_date", today),
+    supabase.from("attendance").select("status, session:sessions!inner(session_date)").eq("session.session_date", today),
     supabase.from("activity_logs").select("id, summary, created_at").order("created_at", { ascending: false }).limit(8),
     supabase
       .from("communications")
@@ -65,10 +65,10 @@ export default async function AdminDashboard() {
       .select("id", { count: "exact", head: true })
       .in("status", ["pending", "processing", "failed"]),
     supabase
-      .from("classes")
+      .from("batch_subjects")
       .select("id", { count: "exact", head: true })
       .is("deleted_at", null)
-      .eq("is_active", true)
+      .eq("status", "active")
       .contains("days", [todayKey]),
   ]);
 
@@ -123,7 +123,7 @@ export default async function AdminDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Active Students" value={students.count ?? 0} accent />
           <StatCard label="Attendance %" value={markedToday ? `${attendancePct}%` : "—"} accent />
-          <StatCard label="Classes Done" value={`${completedSessions}/${todayClassCount}`} />
+          <StatCard label="Sessions Done" value={`${completedSessions}/${todayClassCount}`} />
           <StatCard label="Marked Today" value={markedToday} />
           <StatCard label="Present" value={present} />
           <StatCard label="Absent" value={absent} />
@@ -132,11 +132,14 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      {/* Today's classes */}
+      {/* Today's sessions */}
       <section>
-        <h2 className="text-xs uppercase tracking-widest font-semibold mb-3" style={{ color: "rgba(245,240,232,0.4)" }}>
-          Today&apos;s Classes
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-widest font-semibold" style={{ color: "rgba(245,240,232,0.4)" }}>
+            Today&apos;s Sessions
+          </h2>
+          <Link href="/admin/attendance" className="text-xs font-semibold" style={{ color: "#f4c430" }}>Open →</Link>
+        </div>
         <div
           className="rounded-2xl divide-y"
           style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}
@@ -145,22 +148,25 @@ export default async function AdminDashboard() {
             <div className="p-6 flex items-center gap-3">
               <CalendarClock size={18} style={{ color: "rgba(245,240,232,0.3)" }} />
               <p className="text-sm" style={{ color: "rgba(245,240,232,0.45)" }}>
-                No classes scheduled today. Sessions appear here once Classes are set up.
+                No sessions started yet today. Open Attendance to start today&apos;s sessions.
               </p>
             </div>
           ) : (
-            todaySessions.map((s) => (
-              <div key={s.id} className="p-4 flex items-center justify-between" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "#f5f0e8" }}>
-                    {(s.class as unknown as { name: string } | null)?.name ?? "Class"}
-                  </p>
-                  <p className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>
-                    {s.start_time?.slice(0, 5) ?? "—"} · {s.status.replace("_", " ")}
-                  </p>
+            todaySessions.map((s) => {
+              const bsub = s.batch_subject as unknown as { subject: { name: string } | null; batch: { name: string } | null } | null;
+              return (
+                <div key={s.id} className="p-4 flex items-center justify-between" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "#f5f0e8" }}>
+                      {bsub?.batch?.name ?? "Batch"} · {bsub?.subject?.name ?? "Subject"}
+                    </p>
+                    <p className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>
+                      {s.start_time?.slice(0, 5) ?? "—"} · {s.status.replace("_", " ")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>

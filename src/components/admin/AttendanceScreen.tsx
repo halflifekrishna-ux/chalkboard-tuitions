@@ -18,9 +18,10 @@ export interface RosterStudent {
 const STATUSES: AttendanceStatus[] = ["present", "absent", "late", "excused"];
 
 interface FinishArgs {
-  classId: string;
+  batchSubjectId: string;
   sessionDate: string;
   startTime: string | null;
+  endTime: string | null;
   marks: { studentId: string; status: AttendanceStatus }[];
   topic?: string;
   homework?: string;
@@ -80,17 +81,19 @@ function StudentRow({
 }
 
 export function AttendanceScreen({
-  classId,
+  batchSubjectId,
   sessionDate,
   startTime,
+  endTime,
   roster,
   existingNotes,
   alreadyCompleted,
   finishAction,
 }: {
-  classId: string;
+  batchSubjectId: string;
   sessionDate: string;
   startTime: string | null;
+  endTime: string | null;
   roster: RosterStudent[];
   existingNotes: { topic: string; homework: string; teacherNotes: string };
   alreadyCompleted: boolean;
@@ -126,9 +129,10 @@ export function AttendanceScreen({
     startTransition(async () => {
       try {
         const res = await finishAction({
-          classId,
+          batchSubjectId,
           sessionDate,
           startTime,
+          endTime,
           marks: roster.map((s) => ({ studentId: s.id, status: marks[s.id] })),
           topic,
           homework,

@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, flag: "dashboard" },
   { href: "/admin/students", label: "Students", icon: Users, flag: "students" },
   { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, flag: "attendance" },
-  { href: "/admin/classes", label: "Classes", icon: BookOpen, flag: "classes" },
+  { href: "/admin/batches", label: "Batches", icon: BookOpen, flag: "classes" },
   { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, flag: "whatsapp" },
   { href: "/admin/fees", label: "Fees", icon: Wallet, flag: "fees" },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3, flag: "analytics" },

@@ -29,17 +29,18 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
-    supabase.from("attendance").select("status, session:class_sessions!inner(session_date, class:classes(name))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
+    supabase.from("attendance").select("status, session:sessions!inner(session_date, batch_subject:batch_subjects(subject:subjects(name), batch:batches(name)))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
   ]);
 
   if (!student) notFound();
 
   const attendanceRecords: AttendanceRecord[] = (attendance ?? []).map((a) => {
-    const session = a.session as unknown as { session_date: string; class: { name: string } | null } | null;
+    const session = a.session as unknown as { session_date: string; batch_subject: { subject: { name: string } | null; batch: { name: string } | null } | null } | null;
+    const bsub = session?.batch_subject;
     return {
       date: session?.session_date ?? "",
       status: a.status as AttendanceRecord["status"],
-      className: session?.class?.name ?? "Class",
+      className: bsub ? `${bsub.batch?.name ?? ""} · ${bsub.subject?.name ?? ""}`.trim() : "Session",
     };
   });
   const parent = student.parent as {
