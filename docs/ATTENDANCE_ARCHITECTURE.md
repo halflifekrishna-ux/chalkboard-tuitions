@@ -1,6 +1,6 @@
 # Attendance Architecture — Chalkboard OS Phase 2
 
-Status: **awaiting approval** — no attendance code will be written until this is signed off.
+Status: **BUILT (Phase 2 complete)** — this document was approved and implemented. See "Phase 2 delivery" at the bottom for the shipped file map.
 
 ## 1. Database
 
@@ -83,4 +83,20 @@ Finish Class
 3. WhatsApp dispatcher (`src/lib/os/whatsapp.ts`) + env-var wiring + dev mode.
 4. Dashboard hookup — Today's Classes/Present/Absent/Late tiles go fully live.
 
-**Reply "approved" and Phase 2 implementation starts with Classes, then Attendance, then WhatsApp.**
+---
+
+## Phase 2 delivery (shipped)
+
+**Migration**: `0004_communication_queue.sql` — `communication_queue` (pending/processing/sent/failed, retry_count, payload, provider_id, timestamps) + `queue_status` enum + RLS.
+
+**Service layer**: `src/lib/os/whatsapp.ts` — 7 templates (present/absent/late/excused/homework/weekly_report/fee_reminder), `enqueueMessages` (insert-only), `processQueue` (claim → send → log, skips cleanly without Meta creds), `requeueFailed`. `src/lib/os/attendance.ts` — status metadata, weekday/date helpers, template mapping.
+
+**Classes module**: `/admin/classes` (list, new, `[id]` with tap-to-enrol, `[id]/edit`) + `actions.ts` + `schema.ts` + `ClassForm`, `EnrolmentList`.
+
+**Attendance module**: `/admin/attendance` (Today's Classes), `/admin/attendance/[classId]` (marking screen) + `actions.ts` (`finishClass`). Components: `AttendanceScreen` (optimistic marking, sticky Finish, Class Notes sheet, offline-safe), `AttendanceHistory` (%, counts, month calendar, recent sessions).
+
+**Save ordering** (in `finishClass`): session upsert → attendance upsert → attendance_logs (diffs) → activity_logs → session completed → **then** enqueue → best-effort dispatch. Attendance is durable before any messaging.
+
+**WhatsApp ops**: `/admin/whatsapp` — queue tally, per-row status/errors, Retry Failed action.
+
+**Dashboard**: live Attendance %, Classes Done, Marked Today, Present/Absent, Messages Sent/Queued.

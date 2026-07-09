@@ -6,6 +6,7 @@ import { signedUrl, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
 import { CommunicationLog, type CommEntry } from "@/components/admin/CommunicationLog";
 import { DocumentsSection, type DocEntry } from "@/components/admin/DocumentsSection";
+import { AttendanceHistory, type AttendanceRecord } from "@/components/admin/AttendanceHistory";
 import { BOARD_LABELS, STATUS_LABELS, type Board, type StudentStatus } from "@/lib/os/types";
 import { archiveStudent, logCommunication, uploadDocument } from "../actions";
 
@@ -23,14 +24,24 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
   const supabase = createServerSupabase();
 
-  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }] = await Promise.all([
+  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }] = await Promise.all([
     supabase.from("students").select("*, parent:parents(*)").eq("id", params.id).is("deleted_at", null).maybeSingle(),
     supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
+    supabase.from("attendance").select("status, session:class_sessions!inner(session_date, class:classes(name))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
   ]);
 
   if (!student) notFound();
+
+  const attendanceRecords: AttendanceRecord[] = (attendance ?? []).map((a) => {
+    const session = a.session as unknown as { session_date: string; class: { name: string } | null } | null;
+    return {
+      date: session?.session_date ?? "",
+      status: a.status as AttendanceRecord["status"],
+      className: session?.class?.name ?? "Class",
+    };
+  });
   const parent = student.parent as {
     full_name: string;
     phone: string;
@@ -134,6 +145,8 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
           <p className="text-sm leading-relaxed" style={{ color: "rgba(245,240,232,0.8)" }}>{student.notes}</p>
         </section>
       )}
+
+      <AttendanceHistory records={attendanceRecords} />
 
       <CommunicationLog entries={(comms ?? []) as CommEntry[]} action={logCommWithId} />
 

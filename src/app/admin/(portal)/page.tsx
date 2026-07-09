@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users, ClipboardCheck, UserPlus, CalendarClock, Activity } from "lucide-react";
 import { requireAdmin } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
+import { weekdayKey } from "@/lib/os/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,11 @@ function StatCard({ label, value, accent }: { label: string; value: string | num
 export default async function AdminDashboard() {
   const admin = await requireAdmin();
   const supabase = createServerSupabase();
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const todayKey = weekdayKey(now);
 
-  const [students, sessions, attendance, activity, messages, pendingHomework, pendingFees] = await Promise.all([
+  const [students, sessions, attendance, activity, messages, pendingHomework, pendingFees, messagesQueued, todayClasses] = await Promise.all([
     supabase
       .from("students")
       .select("id", { count: "exact", head: true })
@@ -57,6 +60,16 @@ export default async function AdminDashboard() {
       .select("id", { count: "exact", head: true })
       .in("status", ["due", "partially_paid", "overdue"])
       .is("deleted_at", null),
+    supabase
+      .from("communication_queue")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pending", "processing", "failed"]),
+    supabase
+      .from("classes")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("is_active", true)
+      .contains("days", [todayKey]),
   ]);
 
   const att = attendance.data ?? [];
@@ -64,6 +77,10 @@ export default async function AdminDashboard() {
   const absent = att.filter((a) => a.status === "absent").length;
   const late = att.filter((a) => a.status === "late").length;
   const todaySessions = sessions.data ?? [];
+  const markedToday = att.length;
+  const attendancePct = markedToday ? Math.round(((present + late) / markedToday) * 100) : 0;
+  const completedSessions = todaySessions.filter((s) => s.status === "completed").length;
+  const todayClassCount = todayClasses.count ?? 0;
 
   const firstName = admin.full_name.split(" ")[0];
   const hour = new Date().getHours();
@@ -105,13 +122,13 @@ export default async function AdminDashboard() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Active Students" value={students.count ?? 0} accent />
+          <StatCard label="Attendance %" value={markedToday ? `${attendancePct}%` : "—"} accent />
+          <StatCard label="Classes Done" value={`${completedSessions}/${todayClassCount}`} />
+          <StatCard label="Marked Today" value={markedToday} />
           <StatCard label="Present" value={present} />
           <StatCard label="Absent" value={absent} />
-          <StatCard label="Late" value={late} />
-          <StatCard label="Classes Today" value={todaySessions.length} />
           <StatCard label="Messages Sent" value={messages.count ?? 0} />
-          <StatCard label="Pending Homework" value={pendingHomework.count ?? 0} />
-          <StatCard label="Pending Fees" value={pendingFees.count ?? 0} />
+          <StatCard label="Messages Queued" value={messagesQueued.count ?? 0} />
         </div>
       </section>
 
