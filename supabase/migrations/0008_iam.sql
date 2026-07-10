@@ -1,11 +1,23 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- CHALKBOARD OS — Migration 0008: Identity & Access Management
+-- CHALKBOARD OS — Migration 0008: Identity & Access Management  (corrected)
 --
 -- Role hierarchy: super_admin > admin > teacher > reception > parent > student.
--- Adds auth-tracking columns, role-aware SQL helpers, role-gated RLS on
--- sensitive tables, a last-super-admin guard, an auth-event logger, and seeds
--- the two real users safely (no lockout). Idempotent; run after 0007.
+--
+-- COMPATIBILITY NOTE: migration 0001 created admin_role WITHOUT an 'admin'
+-- value (it used 'branch_admin'). The app + IAM use 'admin', so we ADD it.
+-- Postgres forbids USING a newly-added enum value in the same transaction that
+-- added it, and the Supabase SQL Editor runs a script as one transaction — so
+-- we add the value and COMMIT it before anything references 'admin'. The legacy
+-- 'branch_admin' value is preserved and treated as the same tier as 'admin'.
+--
+-- Idempotent · backwards compatible · preserves all users and permissions.
+-- Run after 0007.
 -- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── 0. Ensure the enum has 'admin', then COMMIT so it becomes usable below ──
+alter type public.admin_role add value if not exists 'admin';
+commit;   -- makes 'admin' durable + usable in the statements that follow
+begin;    -- run the remainder atomically (fresh transaction)
 
 -- ── admins (users) columns ──────────────────────────────────────────────────
 alter table public.admins add column if not exists phone                text;
@@ -20,7 +32,6 @@ alter table public.admins add column if not exists invited_at           timestam
 create index if not exists idx_admins_role on public.admins (role) where deleted_at is null;
 
 -- ── Role helpers (SECURITY DEFINER so RLS policies can call them) ───────────
--- Current user's role, or null. Matched by auth uid OR jwt email.
 create or replace function public.current_admin_role()
 returns admin_role language sql stable security definer set search_path = public as $$
   select a.role from public.admins a
@@ -34,15 +45,13 @@ returns boolean language sql stable security definer set search_path = public as
   select public.current_admin_role() = 'super_admin';
 $$;
 
--- admin OR super_admin (the "manage core data" tier).
+-- admin OR super_admin (legacy branch_admin counts as admin tier).
 create or replace function public.is_admin_tier()
 returns boolean language sql stable security definer set search_path = public as $$
-  select public.current_admin_role() in ('super_admin', 'admin');
+  select public.current_admin_role() in ('super_admin', 'admin', 'branch_admin');
 $$;
 
 -- ── Last-super-admin guard ──────────────────────────────────────────────────
--- Blocks any change that would leave zero active super admins (demote/disable/
--- soft-delete the final one). Enforced in the database, not just the app.
 create or replace function public.guard_last_super_admin()
 returns trigger language plpgsql as $$
 declare remaining int;
@@ -65,7 +74,6 @@ create trigger trg_guard_last_super_admin before update on public.admins
 for each row execute function public.guard_last_super_admin();
 
 -- ── Auth-event logger (callable pre-auth for failed logins) ─────────────────
--- SECURITY DEFINER + granted to anon so the login screen can record attempts.
 create or replace function public.log_auth_event(p_email text, p_action text, p_summary text)
 returns void language plpgsql security definer set search_path = public as $$
 declare aid uuid;
@@ -79,8 +87,6 @@ grant execute on function public.log_auth_event(text, text, text) to anon, authe
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- ROLE-GATED RLS
--- Baseline read stays broad (is_active_admin); writes on sensitive tables are
--- restricted by role. Future teacher/parent portals tighten further.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- admins (users): everyone signed-in can read. Writes are allowed for
@@ -132,11 +138,6 @@ end $$;
 -- SEED THE REAL USERS (lockout-safe)
 --   Super Admin — Sreejith P Krishna <Sreejithpkrishna@outlook.com>
 --   Admin       — Nanditha           <nandithaskrishna2000@gmail.com>
---
--- We ADD Sreejith as super_admin and set Nanditha → admin. Because a temporary
--- window with no logged-in-able super admin is possible until Sreejith's auth
--- user exists, the demotion of Nanditha is deferred to a guarded step below
--- that only runs once a super admin OTHER than Nanditha is present.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- 1. Ensure Sreejith exists as super_admin (auth_user_id binds on first login).
@@ -145,14 +146,13 @@ select 'Sreejith P Krishna', 'Sreejithpkrishna@outlook.com', 'super_admin', b.id
 from public.branches b where b.is_active order by b.created_at limit 1
 on conflict (email) do update set role = 'super_admin', full_name = excluded.full_name, is_active = true, deleted_at = null;
 
--- 2. Rename/adopt the seeded Nanditha row and set her email to the real one.
---    (Role change to admin happens in step 3, guarded.)
+-- 2. Adopt the seeded Nanditha row and set her real email.
 update public.admins
 set full_name = 'Nanditha', email = 'nandithaskrishna2000@gmail.com'
 where lower(email) = 'nanditha@chalkboardtuitions.in';
 
 -- 3. Demote Nanditha to admin ONLY if another active super_admin exists
---    (Sreejith does), so we never lose super-admin access.
+--    (Sreejith does), so super-admin access is never lost.
 do $$
 begin
   if exists (
@@ -167,3 +167,5 @@ end $$;
 
 insert into public.schema_migrations (version) values ('0008_iam')
 on conflict (version) do nothing;
+
+commit;   -- close the remainder transaction
