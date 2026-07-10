@@ -8,37 +8,47 @@ import {
   type LucideIcon,
   LayoutDashboard,
   Users,
+  Contact,
   ClipboardCheck,
   BookOpen,
+  Tag,
+  FileBarChart,
   MessageCircle,
   Wallet,
   BarChart3,
   Settings,
+  ShieldCheck,
   Terminal,
   MoreHorizontal,
   LogOut,
   X,
 } from "lucide-react";
 import type { FeatureFlags } from "@/lib/os/flags";
+import { can, type Capability } from "@/lib/os/permissions";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  flag?: keyof FeatureFlags; // no flag = always visible
-  superAdmin?: boolean;
+  flag?: keyof FeatureFlags;    // feature-flag gate
+  caps?: Capability[];          // any-of capability gate (omitted = any signed-in admin)
 }
 
+// Order matters: first 4 (post-filter) become the mobile bottom bar.
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, flag: "dashboard" },
-  { href: "/admin/students", label: "Students", icon: Users, flag: "students" },
-  { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, flag: "attendance" },
-  { href: "/admin/batches", label: "Batches", icon: BookOpen, flag: "classes" },
-  { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, flag: "whatsapp" },
-  { href: "/admin/fees", label: "Fees", icon: Wallet, flag: "fees" },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, flag: "analytics" },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/developer", label: "Developer", icon: Terminal, superAdmin: true },
+  { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, flag: "attendance", caps: ["attendance.mark"] },
+  { href: "/admin/students", label: "Students", icon: Users, flag: "students", caps: ["students.view"] },
+  { href: "/admin/batches", label: "Batches", icon: BookOpen, flag: "classes", caps: ["batches.manage", "batches.viewAssigned"] },
+  { href: "/admin/parents", label: "Parents", icon: Contact, caps: ["parents.manage"] },
+  { href: "/admin/subjects", label: "Subjects", icon: Tag, caps: ["subjects.manage"] },
+  { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, flag: "whatsapp", caps: ["communications.manage"] },
+  { href: "/admin/reports", label: "Reports", icon: FileBarChart, caps: ["reports.view"] },
+  { href: "/admin/fees", label: "Fees", icon: Wallet, flag: "fees", caps: ["fees.manage"] },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, flag: "analytics", caps: ["analytics.view"] },
+  { href: "/admin/users", label: "Users", icon: ShieldCheck, caps: ["users.manage"] },
+  { href: "/admin/settings", label: "Settings", icon: Settings, caps: ["settings.manage"] },
+  { href: "/admin/developer", label: "Developer", icon: Terminal, caps: ["developer.view"] },
 ];
 
 export function AdminNav({
@@ -55,7 +65,9 @@ export function AdminNav({
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const items = NAV_ITEMS.filter((i) => (!i.flag || flags[i.flag]) && (!i.superAdmin || role === "super_admin"));
+  const items = NAV_ITEMS.filter(
+    (i) => (!i.flag || flags[i.flag]) && (!i.caps || i.caps.some((c) => can(role, c)))
+  );
   // Bottom bar shows 4 primary items + a "More" button for the rest.
   const primary = items.slice(0, 4);
   const overflow = items.slice(4);

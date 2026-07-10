@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Plus, Users, BookOpen, Layers, Tag, Search } from "lucide-react";
+import { requireAnyCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { BOARD_LABELS, type Board } from "@/lib/os/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function BatchesPage({ searchParams }: { searchParams: { q?: string } }) {
+  await requireAnyCapability(["batches.manage", "batches.viewAssigned"]);
   const supabase = createServerSupabase();
   const q = searchParams.q?.trim() ?? "";
 

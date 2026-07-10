@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/os/auth";
 import { getFeatureFlags } from "@/lib/os/flags";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -19,6 +20,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPortalLayout({ children }: { children: React.ReactNode }) {
   const [admin, flags] = await Promise.all([requireAdmin(), getFeatureFlags()]);
+
+  // Force password change before any portal access.
+  if (admin.must_change_password) redirect("/admin/change-password");
 
   return (
     <div className="admin-scope min-h-screen" style={{ background: "#101d18" }}>

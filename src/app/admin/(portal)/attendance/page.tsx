@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlayCircle, CalendarDays } from "lucide-react";
 import { getSessionsForDate, groupByTime } from "@/lib/os/sessions";
+import { requireCapability } from "@/lib/os/auth";
 import { isoDate, fmtTime } from "@/lib/os/attendance";
 import { SessionCard } from "@/components/admin/SessionCard";
 import { startSession } from "./actions";
@@ -8,6 +9,7 @@ import { startSession } from "./actions";
 export const dynamic = "force-dynamic";
 
 export default async function TodaysSessionsPage() {
+  await requireCapability("attendance.mark");
   const now = new Date();
   const today = isoDate(now);
   const sessions = await getSessionsForDate(now);

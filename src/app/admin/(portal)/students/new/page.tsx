@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { StudentForm } from "@/components/admin/StudentForm";
 import { createStudent } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default function NewStudentPage() {
+export default async function NewStudentPage() {
+  await requireCapability("students.manage");
   return (
     <div className="space-y-5 max-w-xl">
       <header>

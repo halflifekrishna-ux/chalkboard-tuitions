@@ -1,4 +1,5 @@
 import { MessageCircle, RefreshCw, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { TEMPLATES } from "@/lib/os/whatsapp";
 import { retryQueue } from "./actions";
@@ -13,6 +14,7 @@ const STATUS_META: Record<string, { label: string; color: string; icon: React.Re
 };
 
 export default async function WhatsAppPage() {
+  await requireCapability("communications.manage");
   const supabase = createServerSupabase();
 
   const [{ data: rows }, counts] = await Promise.all([

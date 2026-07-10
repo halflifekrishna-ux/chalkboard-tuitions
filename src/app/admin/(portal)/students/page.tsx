@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserPlus, Search, GraduationCap } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
@@ -12,6 +13,7 @@ export default async function StudentsPage({
 }: {
   searchParams: { q?: string };
 }) {
+  await requireCapability("students.view");
   const supabase = createServerSupabase();
   const q = searchParams.q?.trim() ?? "";
 

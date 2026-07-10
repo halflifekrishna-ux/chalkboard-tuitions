@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { StudentForm } from "@/components/admin/StudentForm";
 import { updateStudent } from "../../actions";
@@ -8,6 +9,7 @@ import { updateStudent } from "../../actions";
 export const dynamic = "force-dynamic";
 
 export default async function EditStudentPage({ params }: { params: { id: string } }) {
+  await requireCapability("students.manage");
   const supabase = createServerSupabase();
   const { data: student } = await supabase
     .from("students")

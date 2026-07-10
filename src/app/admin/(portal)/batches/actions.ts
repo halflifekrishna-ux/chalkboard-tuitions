@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/os/auth";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { batchSchema, batchSubjectSchema } from "./schema";
 
@@ -18,7 +18,7 @@ async function branchId(supabase: ReturnType<typeof createServerSupabase>) {
 }
 
 export async function createBatch(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const parsed = batchSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -53,7 +53,7 @@ export async function createBatch(_prev: ActionState, formData: FormData): Promi
 }
 
 export async function updateBatch(batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const parsed = batchSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -80,7 +80,7 @@ export async function updateBatch(batchId: string, _prev: ActionState, formData:
 }
 
 export async function archiveBatch(batchId: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const supabase = createServerSupabase();
   const { data: batch } = await supabase.from("batches").select("name").eq("id", batchId).single();
   await supabase.from("batches").update({ deleted_at: new Date().toISOString(), status: "archived" }).eq("id", batchId);
@@ -93,7 +93,7 @@ export async function archiveBatch(batchId: string): Promise<void> {
 }
 
 export async function setBatchEnrolment(batchId: string, studentId: string, enrolled: boolean): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const supabase = createServerSupabase();
 
   if (enrolled) {
@@ -135,7 +135,7 @@ async function upsertTeacher(
 }
 
 export async function addBatchSubject(batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const parsed = batchSubjectSchema.safeParse({
     ...Object.fromEntries(formData.entries()),
     days: formData.getAll("days"),
@@ -166,7 +166,7 @@ export async function addBatchSubject(batchId: string, _prev: ActionState, formD
 }
 
 export async function updateBatchSubject(batchSubjectId: string, batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("batches.manage");
   const parsed = batchSubjectSchema.safeParse({
     ...Object.fromEntries(formData.entries()),
     days: formData.getAll("days"),
@@ -191,7 +191,7 @@ export async function updateBatchSubject(batchSubjectId: string, batchId: string
 }
 
 export async function archiveBatchSubject(batchSubjectId: string, batchId: string): Promise<void> {
-  await requireAdmin();
+  await requireCapability("batches.manage");
   const supabase = createServerSupabase();
   await supabase.from("batch_subjects").update({ deleted_at: new Date().toISOString(), status: "archived" }).eq("id", batchSubjectId);
   revalidatePath(`/admin/batches/${batchId}`);

@@ -1,3 +1,4 @@
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { BranchesSettings, AcademicYearsSettings, type BranchRow, type YearRow } from "@/components/admin/SettingsExtras";
@@ -18,6 +19,7 @@ const DEFAULT_ORG: OrgSettings = {
 };
 
 export default async function SettingsPage() {
+  await requireCapability("settings.manage");
   const supabase = createServerSupabase();
 
   const [{ data: setting }, { data: branches }, { data: years }] = await Promise.all([

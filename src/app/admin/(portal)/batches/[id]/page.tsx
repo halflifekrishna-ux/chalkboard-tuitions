@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Archive, Users, BookOpen } from "lucide-react";
+import { requireAnyCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { EnrolmentList, type EnrolCandidate } from "@/components/admin/EnrolmentList";
 import { BatchSubjectManager, type BatchSubjectRow } from "@/components/admin/BatchSubjectManager";
@@ -13,6 +14,7 @@ import { archiveBatch, setBatchEnrolment, addBatchSubject, updateBatchSubject, a
 export const dynamic = "force-dynamic";
 
 export default async function BatchDetailPage({ params }: { params: { id: string } }) {
+  await requireAnyCapability(["batches.manage", "batches.viewAssigned"]);
   const supabase = createServerSupabase();
 
   const { data: batch } = await supabase

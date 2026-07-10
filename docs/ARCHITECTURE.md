@@ -186,12 +186,40 @@ messaging is attempted:
 
 WhatsApp being down or unconfigured can never lose attendance.
 
-## Security model
+## Identity & Access Management (v0.4.0)
 
-- **RLS on every table** via `is_active_admin()` — a single policy today; future
-  portals add narrower per-role policies without schema changes.
-- **Roles**: `super_admin | branch_admin | teacher | reception | parent | student`
-  (only super_admin active now).
+Authorization is a central **capability model** in `src/lib/os/permissions.ts` —
+the single source of truth used by nav, page guards and every Server Action.
+
+- **Roles** (descending authority): `super_admin > admin > teacher > reception >
+  parent > student`. Parent/Student are reserved for future read-only portals.
+- **Capabilities** (e.g. `students.manage`, `attendance.mark`, `users.manage`)
+  map to roles in `ROLE_CAPABILITIES`. `can(role, cap)` is the only check.
+- **Enforced in four layers** (never hidden buttons):
+  1. **Middleware** — session guard on `/admin`.
+  2. **Page guards** — `requireCapability(cap)` / `requireAnyCapability([...])`
+     at the top of every server page; unauthorized → redirect to `/admin`.
+  3. **Server Actions** — every mutation calls `requireCapability(...)` first.
+  4. **Database RLS** — role-aware policies: `admins`/`feature_flags`/
+     `system_settings` writes are `super_admin`-only (`is_super_admin()`);
+     users may update their own row but a trigger blocks role/status escalation.
+- **Auth tracking**: `last_login_at`, `last_seen_at` (throttled), `last_device`.
+- **Audit**: login, logout, failed/denied login, user created/disabled/enabled,
+  role changed, password reset/changed → `activity_logs`.
+- **Safety**: `must_change_password` (forced change page), disable, soft-delete,
+  and a DB trigger (`guard_last_super_admin`) that makes it impossible to remove
+  the last active Super Admin. Super Admin transfer promotes a target first,
+  then optionally steps the actor down — never leaving zero super admins.
+- **User creation** uses the Supabase Admin API (service role, server-only) to
+  mint the auth user with a one-time temporary password, then links the
+  `admins` row; the auth user is rolled back if the row insert fails.
+
+## Security model (baseline)
+
+- **RLS on every table**; broad read via `is_active_admin()`, sensitive writes
+  gated by role helpers (`is_super_admin`, `is_admin_tier`, `current_admin_role`).
+- **Roles**: `super_admin | admin | teacher | reception | parent | student`
+  (super_admin + admin active now).
 - **Storage**: `student-photos` and `student-documents` are private; the app
   serves short-lived signed URLs.
 - **Secrets**: only `NEXT_PUBLIC_SUPABASE_*` (safe) reach the client; service-role

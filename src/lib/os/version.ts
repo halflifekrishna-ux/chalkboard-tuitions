@@ -1,5 +1,5 @@
 /** App version — bump on each shipped sprint. Surfaced in the Developer panel. */
-export const APP_VERSION = "0.3.1";
+export const APP_VERSION = "0.4.0";
 
 /** Build commit hash (Vercel injects VERCEL_GIT_COMMIT_SHA at build time). */
 export function commitHash(): string {

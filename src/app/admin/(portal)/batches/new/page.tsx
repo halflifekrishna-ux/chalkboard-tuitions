@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { BatchForm } from "@/components/admin/BatchForm";
 import { createBatch } from "../actions";
@@ -7,6 +8,7 @@ import { createBatch } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function NewBatchPage() {
+  await requireCapability("batches.manage");
   const supabase = createServerSupabase();
   const { data: years } = await supabase
     .from("academic_years")

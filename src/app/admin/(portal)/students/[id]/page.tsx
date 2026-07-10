@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Phone, MessageCircle, QrCode, Archive } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
@@ -23,6 +24,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
+  await requireCapability("students.view");
   const supabase = createServerSupabase();
 
   const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }, { data: batchLinks }] = await Promise.all([

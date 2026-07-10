@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/os/auth";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 
 const orgSchema = z.object({
@@ -21,7 +21,7 @@ export interface SettingsState {
 }
 
 export async function saveOrgSettings(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("settings.manage");
   const parsed = orgSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -56,7 +56,7 @@ const branchSchema = z.object({
 });
 
 export async function updateBranch(branchId: string, _prev: SettingsState, formData: FormData): Promise<SettingsState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("settings.manage");
   const parsed = branchSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -78,7 +78,7 @@ export async function updateBranch(branchId: string, _prev: SettingsState, formD
 /* ── Academic years ────────────────────────────────────────────────────────── */
 
 export async function addAcademicYear(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("settings.manage");
   const name = String(formData.get("name") ?? "").trim();
   if (!/^\d{4}-\d{2}$/.test(name)) return { error: "Format: 2026-27" };
 
@@ -99,7 +99,7 @@ export async function addAcademicYear(_prev: SettingsState, formData: FormData):
 }
 
 export async function setCurrentAcademicYear(yearId: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("settings.manage");
   const supabase = createServerSupabase();
 
   const { data: year } = await supabase.from("academic_years").select("branch_id, name").eq("id", yearId).single();

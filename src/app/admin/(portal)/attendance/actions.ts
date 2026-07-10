@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/os/auth";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { enqueueMessages, processQueue, type QueueItem, type TemplateKey } from "@/lib/os/whatsapp";
 import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "@/lib/os/attendance";
@@ -15,7 +15,7 @@ import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "@/lib/os/attendance";
  * navigates to the marking screen. Idempotent per (batch_subject, date, time).
  */
 export async function startSession(batchSubjectId: string, sessionDate: string, startTime: string | null, endTime: string | null): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("attendance.mark");
   const supabase = createServerSupabase();
 
   const { data: existing } = await supabase
@@ -72,7 +72,7 @@ export interface FinishResult {
  * attendance_logs (diffs) → activity_logs → completed → THEN enqueue → dispatch.
  */
 export async function finishSession(input: unknown): Promise<FinishResult> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("attendance.mark");
   const parsed = markSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const { batchSubjectId, sessionDate, startTime, endTime, marks, topic, homework, teacherNotes, rating } = parsed.data;

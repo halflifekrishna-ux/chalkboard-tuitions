@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { SubjectsManager, type SubjectRow } from "@/components/admin/SubjectsManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubjectsPage() {
+  await requireCapability("subjects.manage");
   const supabase = createServerSupabase();
 
   const [{ data: subjects }, { data: usage }] = await Promise.all([

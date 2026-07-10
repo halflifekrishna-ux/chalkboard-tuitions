@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/os/auth";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 
 const subjectSchema = z.object({
@@ -17,7 +17,7 @@ export interface SubjectState {
 }
 
 export async function createSubject(_prev: SubjectState, formData: FormData): Promise<SubjectState> {
-  await requireAdmin();
+  await requireCapability("subjects.manage");
   const parsed = subjectSchema.safeParse({
     name: formData.get("name"),
     short_code: formData.get("short_code") || undefined,
@@ -41,7 +41,7 @@ export async function createSubject(_prev: SubjectState, formData: FormData): Pr
 }
 
 export async function updateSubject(id: string, _prev: SubjectState, formData: FormData): Promise<SubjectState> {
-  await requireAdmin();
+  await requireCapability("subjects.manage");
   const parsed = subjectSchema.safeParse({
     name: formData.get("name"),
     short_code: formData.get("short_code") || undefined,
@@ -60,7 +60,7 @@ export async function updateSubject(id: string, _prev: SubjectState, formData: F
 }
 
 export async function toggleArchiveSubject(id: string, archive: boolean): Promise<void> {
-  await requireAdmin();
+  await requireCapability("subjects.manage");
   const supabase = createServerSupabase();
   await supabase.from("subjects").update({ is_active: !archive }).eq("id", id);
   revalidatePath("/admin/subjects");

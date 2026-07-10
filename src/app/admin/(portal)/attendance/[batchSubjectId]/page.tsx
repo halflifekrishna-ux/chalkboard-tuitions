@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
 import { isoDate, fmtTime, type AttendanceStatus } from "@/lib/os/attendance";
@@ -10,6 +11,7 @@ import { finishSession } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function MarkAttendancePage({ params }: { params: { batchSubjectId: string } }) {
+  await requireCapability("attendance.mark");
   const supabase = createServerSupabase();
   const today = isoDate(new Date());
 

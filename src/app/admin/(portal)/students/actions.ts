@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/os/auth";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { uploadFile, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
 import { studentSchema, communicationSchema, documentSchema, type StudentFormValues } from "./schema";
@@ -76,7 +76,7 @@ async function maybeUploadPhoto(formData: FormData, studentKey: string): Promise
 }
 
 export async function createStudent(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("students.manage");
   const parsed = parseForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -121,7 +121,7 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
 }
 
 export async function updateStudent(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("students.manage");
   const parsed = parseForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -162,7 +162,7 @@ export async function updateStudent(studentId: string, _prev: ActionState, formD
 }
 
 export async function logCommunication(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("students.manage");
   const parsed = communicationSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -196,7 +196,7 @@ export async function logCommunication(studentId: string, _prev: ActionState, fo
 }
 
 export async function uploadDocument(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("documents.manage");
   const parsed = documentSchema.safeParse({ kind: formData.get("kind") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -236,7 +236,7 @@ export async function uploadDocument(studentId: string, _prev: ActionState, form
 }
 
 export async function archiveStudent(studentId: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireCapability("students.manage");
   const supabase = createServerSupabase();
 
   const { data: student } = await supabase.from("students").select("full_name").eq("id", studentId).single();

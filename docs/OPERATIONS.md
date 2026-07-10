@@ -47,17 +47,42 @@ idempotent and safe to re-run.
 | `0005_batches_refactor` | Batches / batch subjects / sessions (data-migrating) |
 | `0006_polish` | Session rating, subject colour, migrations registry |
 | `0007_system_stats` | `get_system_stats()` RPC for the Developer panel |
+| `0008_iam` | IAM: role helpers, auth tracking, role-gated RLS, seeds users |
 
 After running, confirm in the Developer panel → **Database Migrations** that the
 latest version appears.
 
 ### First-time setup
 
-1. Run `0001` … `0007` in order.
-2. Supabase → Authentication → Users → add the Super Admin
-   (email `nanditha@chalkboardtuitions.in`, a strong password, auto-confirm ON).
-   The seed already created the matching `admins` row; it binds on first login.
-3. Confirm the two storage buckets exist (Developer panel → Environment → Storage).
+1. Run `0001` … `0008` in order.
+2. Confirm the two storage buckets exist (Developer panel → Environment → Storage).
+
+### IAM initial users (migration 0008)
+
+The migration seeds two `admins` rows lockout-safely:
+
+| Role | Name | Email |
+|---|---|---|
+| Super Admin | Sreejith P Krishna | `Sreejithpkrishna@outlook.com` |
+| Admin | Nanditha | `nandithaskrishna2000@gmail.com` |
+
+Because migrations can't create Supabase **auth** users, create the login
+accounts once in Supabase → Authentication → Users (auto-confirm ON):
+
+1. Add `Sreejithpkrishna@outlook.com` with a strong password. On first sign-in
+   it binds to the seeded Super Admin row.
+2. Add `nandithaskrishna2000@gmail.com` similarly (Admin).
+
+New users created later go through **Users → Add** in the app — that mints the
+auth account + temp password automatically (no dashboard step needed).
+
+### Super Admin transfer (avoid lockout)
+
+To hand over Super Admin: open the target user → **Transfer Super Admin** →
+either "Promote (keep mine)" or "Promote & step me down". The target is promoted
+first; a database trigger guarantees at least one active Super Admin always
+remains, so accidental lockout is impossible. The last Super Admin can never be
+disabled or removed.
 
 ## Backups
 

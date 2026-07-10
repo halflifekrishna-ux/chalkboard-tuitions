@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { BatchForm } from "@/components/admin/BatchForm";
 import { updateBatch } from "../../actions";
@@ -8,6 +9,7 @@ import { updateBatch } from "../../actions";
 export const dynamic = "force-dynamic";
 
 export default async function EditBatchPage({ params }: { params: { id: string } }) {
+  await requireCapability("batches.manage");
   const supabase = createServerSupabase();
 
   const [{ data: batch }, { data: years }] = await Promise.all([
