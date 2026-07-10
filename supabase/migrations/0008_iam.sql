@@ -151,10 +151,29 @@ select 'Sreejith P Krishna', 'Sreejithpkrishna@outlook.com', 'super_admin', b.id
 from public.branches b where b.is_active order by b.created_at limit 1
 on conflict (email) do update set role = 'super_admin', full_name = excluded.full_name, is_active = true, deleted_at = null;
 
--- 2. Adopt the seeded Nanditha row and set her real email (no role change here).
-update public.admins
-set full_name = 'Nanditha', email = 'nandithaskrishna2000@gmail.com'
-where lower(email) = 'nanditha@chalkboardtuitions.in';
+-- 2. Establish Nanditha's Gmail row idempotently, handling BOTH scenarios:
+--    (a) fresh DB — only the legacy nanditha@chalkboardtuitions.in row exists,
+--    (b) already-fixed DB — a nandithaskrishna2000@gmail.com row already exists.
+--    If the Gmail row exists we ADOPT it untouched (preserving auth_user_id,
+--    role, created_by and activity history) and never rename the legacy row,
+--    so we can never hit the admins_email unique constraint.
+do $$
+begin
+  if exists (select 1 from public.admins where lower(email) = 'nandithaskrishna2000@gmail.com') then
+    -- (b) Adopt the existing Gmail row. Leave email/role/auth_user_id/created_by
+    --     intact; only fill in the display name if it is missing.
+    update public.admins
+    set full_name = 'Nanditha'
+    where lower(email) = 'nandithaskrishna2000@gmail.com'
+      and (full_name is null or btrim(full_name) = '');
+  else
+    -- (a) No Gmail row yet: rename the legacy row in place (keeps its id,
+    --     auth_user_id, role, created_by and history).
+    update public.admins
+    set full_name = 'Nanditha', email = 'nandithaskrishna2000@gmail.com'
+    where lower(email) = 'nanditha@chalkboardtuitions.in';
+  end if;
+end $$;
 
 insert into public.schema_migrations (version) values ('0008_iam')
 on conflict (version) do nothing;
