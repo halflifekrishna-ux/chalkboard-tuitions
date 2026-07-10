@@ -48,6 +48,12 @@ idempotent and safe to re-run.
 | `0006_polish` | Session rating, subject colour, migrations registry |
 | `0007_system_stats` | `get_system_stats()` RPC for the Developer panel |
 | `0008_iam` | IAM: role helpers, auth tracking, role-gated RLS, seeds users |
+| `0009_demote_nanditha` | Sets Nanditha's role to Admin (separate txn — uses the enum value 0008 added) |
+
+> **Run 0008 and 0009 as two separate executions** (two clicks in the SQL
+> Editor, or `supabase db push` which runs each file in its own transaction).
+> They must not share a transaction: 0008 adds the `admin` enum value and
+> Postgres forbids using a new enum value in the same transaction that added it.
 
 After running, confirm in the Developer panel → **Database Migrations** that the
 latest version appears.

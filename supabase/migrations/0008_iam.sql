@@ -1,23 +1,25 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- CHALKBOARD OS — Migration 0008: Identity & Access Management  (corrected)
+-- CHALKBOARD OS — Migration 0008: Identity & Access Management
 --
 -- Role hierarchy: super_admin > admin > teacher > reception > parent > student.
 --
--- COMPATIBILITY NOTE: migration 0001 created admin_role WITHOUT an 'admin'
--- value (it used 'branch_admin'). The app + IAM use 'admin', so we ADD it.
--- Postgres forbids USING a newly-added enum value in the same transaction that
--- added it, and the Supabase SQL Editor runs a script as one transaction — so
--- we add the value and COMMIT it before anything references 'admin'. The legacy
--- 'branch_admin' value is preserved and treated as the same tier as 'admin'.
+-- COMPATIBILITY: migration 0001 created admin_role WITHOUT 'admin' (it used
+-- 'branch_admin'). The app + IAM use 'admin', so we ADD it here.
+--
+-- No explicit COMMIT/BEGIN is needed. `ALTER TYPE ... ADD VALUE` runs fine in a
+-- transaction on Postgres 12+. Postgres only forbids USING a newly-added enum
+-- value in the SAME transaction that added it, so this migration never writes
+-- 'admin' to a row and never casts the literal 'admin' to the enum type:
+--   • role comparisons use ::text (plain string comparison, no enum cast)
+--   • the one statement that WRITES role='admin' (Nanditha's demotion) lives in
+--     migration 0009, which runs in a later transaction where 'admin' exists.
 --
 -- Idempotent · backwards compatible · preserves all users and permissions.
 -- Run after 0007.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- ── 0. Ensure the enum has 'admin', then COMMIT so it becomes usable below ──
+-- ── 0. Ensure the enum has 'admin' (legacy 'branch_admin' is preserved) ─────
 alter type public.admin_role add value if not exists 'admin';
-commit;   -- makes 'admin' durable + usable in the statements that follow
-begin;    -- run the remainder atomically (fresh transaction)
 
 -- ── admins (users) columns ──────────────────────────────────────────────────
 alter table public.admins add column if not exists phone                text;
@@ -32,6 +34,8 @@ alter table public.admins add column if not exists invited_at           timestam
 create index if not exists idx_admins_role on public.admins (role) where deleted_at is null;
 
 -- ── Role helpers (SECURITY DEFINER so RLS policies can call them) ───────────
+-- Comparisons use ::text so no reference casts the (possibly same-transaction)
+-- 'admin' literal to the enum type.
 create or replace function public.current_admin_role()
 returns admin_role language sql stable security definer set search_path = public as $$
   select a.role from public.admins a
@@ -42,13 +46,13 @@ $$;
 
 create or replace function public.is_super_admin()
 returns boolean language sql stable security definer set search_path = public as $$
-  select public.current_admin_role() = 'super_admin';
+  select public.current_admin_role()::text = 'super_admin';
 $$;
 
 -- admin OR super_admin (legacy branch_admin counts as admin tier).
 create or replace function public.is_admin_tier()
 returns boolean language sql stable security definer set search_path = public as $$
-  select public.current_admin_role() in ('super_admin', 'admin', 'branch_admin');
+  select public.current_admin_role()::text in ('super_admin', 'admin', 'branch_admin');
 $$;
 
 -- ── Last-super-admin guard ──────────────────────────────────────────────────
@@ -56,12 +60,12 @@ create or replace function public.guard_last_super_admin()
 returns trigger language plpgsql as $$
 declare remaining int;
 begin
-  if old.role = 'super_admin'
-     and (new.role is distinct from 'super_admin'
+  if old.role::text = 'super_admin'
+     and (new.role::text is distinct from 'super_admin'
           or new.is_active = false
           or new.deleted_at is not null) then
     select count(*) into remaining from public.admins
-    where role = 'super_admin' and is_active and deleted_at is null and id <> old.id;
+    where role::text = 'super_admin' and is_active and deleted_at is null and id <> old.id;
     if remaining = 0 then
       raise exception 'Cannot remove the last active Super Admin';
     end if;
@@ -135,37 +139,22 @@ begin
 end $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- SEED THE REAL USERS (lockout-safe)
+-- SEED USERS (part 1 — no 'admin' write here; that is 0009)
 --   Super Admin — Sreejith P Krishna <Sreejithpkrishna@outlook.com>
 --   Admin       — Nanditha           <nandithaskrishna2000@gmail.com>
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- 1. Ensure Sreejith exists as super_admin (auth_user_id binds on first login).
+--    'super_admin' already existed before this migration, so this is safe here.
 insert into public.admins (full_name, email, role, branch_id)
 select 'Sreejith P Krishna', 'Sreejithpkrishna@outlook.com', 'super_admin', b.id
 from public.branches b where b.is_active order by b.created_at limit 1
 on conflict (email) do update set role = 'super_admin', full_name = excluded.full_name, is_active = true, deleted_at = null;
 
--- 2. Adopt the seeded Nanditha row and set her real email.
+-- 2. Adopt the seeded Nanditha row and set her real email (no role change here).
 update public.admins
 set full_name = 'Nanditha', email = 'nandithaskrishna2000@gmail.com'
 where lower(email) = 'nanditha@chalkboardtuitions.in';
 
--- 3. Demote Nanditha to admin ONLY if another active super_admin exists
---    (Sreejith does), so super-admin access is never lost.
-do $$
-begin
-  if exists (
-    select 1 from public.admins
-    where role = 'super_admin' and is_active and deleted_at is null
-      and lower(email) <> 'nandithaskrishna2000@gmail.com'
-  ) then
-    update public.admins set role = 'admin'
-    where lower(email) = 'nandithaskrishna2000@gmail.com' and role = 'super_admin';
-  end if;
-end $$;
-
 insert into public.schema_migrations (version) values ('0008_iam')
 on conflict (version) do nothing;
-
-commit;   -- close the remainder transaction
