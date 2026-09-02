@@ -30,8 +30,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuition
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
-    template: "%s | Chalkboard Tuitions",
+    default: "Chalkboard — Personalised Learning in Bangalore",
+    template: "%s | Chalkboard",
   },
   description:
     "Expert tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bangalore. Max 8 students per batch. CBSE, ICSE & Karnataka State Board covered. Book your FREE demo class today.",
