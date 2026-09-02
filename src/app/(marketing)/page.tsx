@@ -48,10 +48,11 @@ export default function HomePage() {
       >
         <Container className="relative z-10 w-full">
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Statement (asymmetric left) */}
-            <div className="lg:col-span-5">
+            {/* Statement (asymmetric left). min-w-0 lets the grid track shrink
+                to the viewport instead of expanding to the headline's width. */}
+            <div className="lg:col-span-5 min-w-0">
               <span className="text-xs font-semibold uppercase tracking-[0.22em] text-chalk-yellow">Welcome to Chalkboard</span>
-              <h1 className="mt-4 font-playfair font-black tracking-tight leading-[1.02] text-5xl sm:text-6xl lg:text-7xl">
+              <h1 className="mt-4 font-playfair font-black tracking-tight leading-[1.05] break-words text-[2.5rem] sm:text-6xl lg:text-7xl">
                 Learning,{" "}
                 <span className="italic font-bold text-chalk-yellow">differently.</span>
               </h1>
@@ -61,7 +62,7 @@ export default function HomePage() {
             </div>
 
             {/* Pathways (right / stacked on mobile) */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 min-w-0">
               <p className="mb-4 font-playfair text-xl sm:text-2xl text-chalk/80">What brings you here?</p>
               <Pathways />
             </div>
