@@ -92,6 +92,17 @@
 /* Smooth section transitions */
 section { @apply scroll-mt-20; }
 
+/* Site-wide reduced-motion guard (accessibility) — neutralises CSS motion for
+   visitors who ask for it. Framer Motion honours the same preference itself. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Admin portal (RC): accessibility + dark form controls ─────────────────── */
 /* Visible focus ring for keyboard users across the admin portal. */
 .admin-scope :focus-visible {

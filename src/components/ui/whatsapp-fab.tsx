@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -23,13 +24,19 @@ function WhatsAppIcon({ size = 24 }: { size?: number }) {
 }
 
 export function WhatsAppFab() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [showLabel, setShowLabel] = useState(false);
+
+  // The ecosystem front door stays clean — no WhatsApp CTA on the homepage.
+  const hidden = pathname === "/";
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  if (hidden) return null;
 
   return (
     <AnimatePresence>
