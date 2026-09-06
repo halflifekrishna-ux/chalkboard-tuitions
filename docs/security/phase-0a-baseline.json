@@ -1,0 +1,111 @@
+{
+  "artifact": "chalkboard-os-phase-0a-security-baseline",
+  "schema_version": 1,
+  "status": "NOT_CAPTURED",
+  "status_reason": "Blocked on credentials. Re-verified 2026-09-06: .env.local Supabase values are empty strings; Supabase CLI absent with no ~/.supabase or personal access token; Vercel CLI installed but unauthenticated so env pull is unavailable; no psql/pg_dump/Docker; no Supabase or Postgres references in shell config, .pgpass or .netrc. A scratch project cannot be created without an authenticated Supabase account. Production preflight also not run (no connection details). Production destructive probes deliberately never attempted.",
+  "harness_fix_applied": "01_baseline_probes.sql: added 'grant usage on schema pg_temp_N to public' after the probe_results grant. A temp schema's default ACL grants USAGE to the owner only and permission checks use the current role, so writes to probe_results and calls to pg_temp.probe() would have failed with 'permission denied for schema pg_temp_N' immediately after 'set local role authenticated'. Probe logic unchanged.",
+  "environment": {
+    "captured_at_utc": null,
+    "captured_by": null,
+    "database_ref": null,
+    "schema_migrations_max": null,
+    "repo_commit": "0bda44b",
+    "preflight": {
+      "CHK_1_sessions_class_id_nullable": null,
+      "CHK_2_admins_email_unique_constraint": null,
+      "CHK_3_unique_lower_email_index": null,
+      "CHK_4_admin_role_enum_values": null,
+      "CHK_5_storage_buckets": null,
+      "CHK_6_tables_with_blanket_admin_all": null
+    }
+  },
+  "harness": {
+    "preflight_sql": "supabase/tests/security/00_preflight_schema_snapshot.sql",
+    "probes_sql": "supabase/tests/security/01_baseline_probes.sql",
+    "runbook": "docs/security/README.md",
+    "transactional": true,
+    "rolls_back": true,
+    "creates_persistent_objects": false
+  },
+  "classification_legend": {
+    "EXPECTED CURRENT BEHAVIOR": "System behaves as intended.",
+    "KNOWN SECURITY DEFECT": "Permitted today; Phase 0A requires it to be denied eventually.",
+    "REGRESSION-SENSITIVE": "Permitted today and MUST remain permitted; a live workflow depends on it.",
+    "SANITY": "Identity-simulation check. Failure voids that role's results."
+  },
+  "note_on_results": "Every 'actual_result' below is null because the harness has not been executed. 'expected_baseline' holds the Phase 0A prediction only and must not be cited as evidence.",
+  "results": [
+    { "test_id": "S01", "role": "super_admin", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "Voids P01* if false" },
+    { "test_id": "S02", "role": "admin", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "Voids P02*/P03 if false" },
+    { "test_id": "S03", "role": "teacher", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "Voids P04*-P07*/P17 if false" },
+    { "test_id": "S04", "role": "reception", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "Voids P08*/P09 if false" },
+    { "test_id": "S05", "role": "bd-proxy", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "PROXY for future bd role; role=parent, zero capabilities in permissions.ts" },
+    { "test_id": "S06", "role": "escalator", "target": "identity", "operation": "is_active_admin()", "expected_baseline": "true", "actual_result": null, "classification": "SANITY", "notes": "Voids P12-P14 if false" },
+
+    { "test_id": "P01a", "role": "super_admin", "target": "students", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "" },
+    { "test_id": "P01b", "role": "super_admin", "target": "feature_flags", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "" },
+    { "test_id": "P01c", "role": "super_admin", "target": "feature_flags", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "Developer panel toggle" },
+    { "test_id": "P01d", "role": "super_admin", "target": "system_settings", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "Settings module" },
+    { "test_id": "P01e", "role": "super_admin", "target": "get_system_stats()", "operation": "EXECUTE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "Developer panel" },
+
+    { "test_id": "P02a", "role": "admin", "target": "students", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P02b", "role": "admin", "target": "students", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "saveStudent" },
+    { "test_id": "P02c", "role": "admin", "target": "parents", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P02d", "role": "admin", "target": "batches", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P02e", "role": "admin", "target": "batch_subjects", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "getSessionsForDate" },
+    { "test_id": "P02f", "role": "admin", "target": "attendance", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 2" },
+    { "test_id": "P03", "role": "admin", "target": "feature_flags", "operation": "UPDATE", "expected_baseline": "DENIED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "Migration 0008 super-admin gate" },
+
+    { "test_id": "P04a", "role": "teacher", "target": "fees", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-2", "notes": "teacher has no fees capability" },
+    { "test_id": "P04b", "role": "teacher", "target": "payments", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-2", "notes": "" },
+    { "test_id": "P04c", "role": "teacher", "target": "fees", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-2", "notes": "write access, not just read" },
+
+    { "test_id": "P05a", "role": "teacher", "target": "sessions", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 1" },
+    { "test_id": "P05b", "role": "teacher", "target": "attendance", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 2 - durable core" },
+    { "test_id": "P05c", "role": "teacher", "target": "attendance_logs", "operation": "INSERT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 3" },
+    { "test_id": "P05d", "role": "teacher", "target": "activity_logs", "operation": "INSERT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 5" },
+    { "test_id": "P05e", "role": "teacher", "target": "students", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 6" },
+    { "test_id": "P05f", "role": "teacher", "target": "parents", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 6 - parent phone" },
+    { "test_id": "P05g", "role": "teacher", "target": "communication_queue", "operation": "INSERT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "finishSession step 7" },
+
+    { "test_id": "P06", "role": "teacher", "target": "activity_logs", "operation": "DELETE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-3", "notes": "audit trail erasable" },
+    { "test_id": "P07a", "role": "teacher", "target": "attendance_logs", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-3", "notes": "immutable history is mutable" },
+    { "test_id": "P07b", "role": "teacher", "target": "documents", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-2", "notes": "" },
+    { "test_id": "P07c", "role": "teacher", "target": "storage.objects", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-2", "notes": "student-documents bucket" },
+    { "test_id": "P17", "role": "teacher", "target": "get_system_stats()", "operation": "EXECUTE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-6", "notes": "company-wide counts" },
+
+    { "test_id": "P08a", "role": "reception", "target": "students", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P08b", "role": "reception", "target": "students", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P08c", "role": "reception", "target": "parents", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "REGRESSION-SENSITIVE", "notes": "" },
+    { "test_id": "P09", "role": "reception", "target": "attendance_logs", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-3", "notes": "reception has no attendance capability" },
+
+    { "test_id": "P10a", "role": "bd-proxy", "target": "students", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST - Guru would read all student PII" },
+    { "test_id": "P10b", "role": "bd-proxy", "target": "parents", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+    { "test_id": "P10c", "role": "bd-proxy", "target": "fees", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+    { "test_id": "P10d", "role": "bd-proxy", "target": "documents", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+    { "test_id": "P10e", "role": "bd-proxy", "target": "storage.objects", "operation": "SELECT", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+    { "test_id": "P11a", "role": "bd-proxy", "target": "attendance", "operation": "UPDATE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+    { "test_id": "P11b", "role": "bd-proxy", "target": "activity_logs", "operation": "DELETE", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-4", "notes": "PROXY TEST" },
+
+    { "test_id": "P14", "role": "non-super-admin", "target": "admins", "operation": "UPDATE own role to super_admin", "expected_baseline": "DENIED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "guard_admin_self_escalation trigger" },
+    { "test_id": "P12", "role": "non-super-admin", "target": "admins", "operation": "INSERT self-row role=super_admin", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-1", "severity": "CRITICAL", "notes": "case-variant email dodges case-sensitive UNIQUE; no BEFORE INSERT trigger" },
+    { "test_id": "P12b", "role": "non-super-admin", "target": "current_admin_role()", "operation": "effective role after INSERT", "expected_baseline": "super_admin (non-deterministic)", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-1", "severity": "CRITICAL", "notes": "LIMIT 1 without ORDER BY" },
+    { "test_id": "P13", "role": "non-super-admin", "target": "admins", "operation": "DELETE own row", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-1", "severity": "CRITICAL", "notes": "no BEFORE DELETE guard" },
+    { "test_id": "P13b", "role": "non-super-admin", "target": "current_admin_role()", "operation": "effective role after DELETE", "expected_baseline": "super_admin", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-1", "severity": "CRITICAL", "notes": "proves deterministic takeover" },
+
+    { "test_id": "P15", "role": "anon", "target": "log_auth_event()", "operation": "EXECUTE with forged input", "expected_baseline": "ALLOWED", "actual_result": null, "classification": "KNOWN SECURITY DEFECT", "finding": "H-5", "notes": "SECURITY DEFINER granted to anon" },
+    { "test_id": "P16a", "role": "anon", "target": "students", "operation": "SELECT", "expected_baseline": "DENIED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "" },
+    { "test_id": "P16b", "role": "anon", "target": "admins", "operation": "SELECT", "expected_baseline": "DENIED", "actual_result": null, "classification": "EXPECTED CURRENT BEHAVIOR", "notes": "" }
+  ],
+  "open_items": [
+    {
+      "id": "DRIFT-1",
+      "severity": "MEDIUM",
+      "title": "sessions.class_id NOT NULL in committed migrations but never written by the app",
+      "detail": "Migration 0001 defines class_sessions.class_id as NOT NULL REFERENCES classes(id); migration 0005 renames the table to sessions and adds batch_subject_id but never relaxes the constraint. startSession/finishSession never set class_id. A database built from the committed migrations cannot create sessions, so production's schema differs from the repo.",
+      "impact": "A scratch project built from 0001-0010 is not a faithful replica of production; a baseline captured on it may diverge.",
+      "fixed_here": false,
+      "detected_by": "preflight CHK-1"
+    }
+  ]
+}

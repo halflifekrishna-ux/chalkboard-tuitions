@@ -50,6 +50,8 @@ idempotent and safe to re-run.
 | `0008_iam` | IAM: role helpers, auth tracking, role-gated RLS, seeds users |
 | `0009_demote_nanditha` | Sets Nanditha's role to Admin (separate txn — uses the enum value 0008 added) |
 | `0010_cleanup_legacy_admin` | Soft-deletes the legacy `nanditha@chalkboardtuitions.in` row (reversible) |
+| `0011_sessions_class_id_nullable` | Makes `sessions.class_id` nullable so new sessions can be created (0005 left the pre-refactor NOT NULL in place) |
+| `0012_admins_privilege_escalation_fix` | Closes H-1: splits the `admins` write policy per command (INSERT/DELETE → Super Admin), adds a last-Super-Admin DELETE guard, unique index on `lower(email)`, deterministic `current_admin_role()`, protects a bound `auth_user_id` |
 
 > **Run 0008 and 0009 as two separate executions** (two clicks in the SQL
 > Editor, or `supabase db push` which runs each file in its own transaction).
