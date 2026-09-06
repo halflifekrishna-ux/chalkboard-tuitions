@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import { ChalkWave } from "@/components/ui/chalk-wave";
+import { CinematicHero } from "@/components/marketing/CinematicHero";
 import { Pathways } from "@/components/marketing/Pathways";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
@@ -39,31 +39,11 @@ export default function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
 
-      {/* ── Poster hero ── */}
-      <section
-        className="relative overflow-hidden bg-board-deep text-chalk flex items-center min-h-[72svh] lg:min-h-[80vh] pt-24 pb-14 sm:pt-28 sm:pb-16"
-        style={{ backgroundImage: "radial-gradient(ellipse 70% 55% at 20% 10%, rgba(244,196,48,0.10), transparent 60%)" }}
-      >
-        <ChalkWave />
-        {/* keep text legible over the wave */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-board-deep via-board-deep/40 to-transparent" />
+      {/* ── Cinematic scroll-pinned front door ── */}
+      <CinematicHero />
 
-        <Container className="relative z-10">
-          <div className="max-w-4xl">
-            <span className="block font-special-elite text-sm sm:text-base uppercase tracking-[0.32em] text-chalk-yellow/90">Chalkboard</span>
-            <h1 className="mt-5 font-playfair font-black tracking-tight break-words leading-[1.02] text-[clamp(2.5rem,8.5vw,6rem)]">
-              Learning,{" "}
-              <span className="italic font-bold text-chalk-yellow">differently.</span>
-            </h1>
-            <p className="mt-6 max-w-md text-lg sm:text-xl text-chalk/60 leading-relaxed">
-              One ecosystem for every stage of learning — from the classroom to the workplace.
-            </p>
-          </div>
-        </Container>
-      </section>
-
-      {/* ── What brings you here? · pathways (continues on the board) ── */}
-      <section className="relative bg-board-deep text-chalk pt-2 pb-16 sm:pb-24">
+      {/* ── What brings you here? · pathways (the real, tappable choices) ── */}
+      <section className="relative bg-board-deep text-chalk pt-10 pb-16 sm:pt-14 sm:pb-24">
         <Container>
           <h2 className="mb-6 font-playfair text-2xl sm:text-3xl font-bold text-chalk">What brings you here?</h2>
           <Pathways />

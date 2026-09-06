@@ -101,6 +101,10 @@ section { @apply scroll-mt-20; }
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  /* Cinematic hero: collapse the scroll-pin so reduced-motion users never
+     scroll through a "stuck" screen — it becomes a normal static hero. */
+  .cinematic-track { height: auto !important; }
+  .cinematic-sticky { position: static !important; height: auto !important; }
 }
 
 /* ── Admin portal (RC): accessibility + dark form controls ─────────────────── */
