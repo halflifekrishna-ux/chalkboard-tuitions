@@ -54,8 +54,18 @@ function PathwayCard({
         className="absolute inset-0 -z-10 rounded-3xl"
         style={
           primary
-            ? { border: "1px solid rgba(244,196,48,0.42)", background: "linear-gradient(140deg, rgba(45,106,79,0.55) 0%, rgba(22,45,36,0.96) 55%)" }
-            : { border: "1px solid rgba(245,240,232,0.14)", background: "rgba(245,240,232,0.045)" }
+            ? {
+                border: "1px solid rgba(244,196,48,0.45)",
+                background: "linear-gradient(140deg, rgba(244,196,48,0.13) 0%, rgba(45,106,79,0.20) 34%, rgba(7,17,13,0.92) 72%)",
+                boxShadow: "0 0 0 1px rgba(244,196,48,0.06), 0 24px 60px -20px rgba(0,0,0,0.8)",
+                backdropFilter: "blur(6px)",
+              }
+            : {
+                border: "1px solid rgba(245,240,232,0.11)",
+                background: "rgba(245,240,232,0.035)",
+                boxShadow: "0 20px 50px -24px rgba(0,0,0,0.7)",
+                backdropFilter: "blur(6px)",
+              }
         }
       />
       {primary && (

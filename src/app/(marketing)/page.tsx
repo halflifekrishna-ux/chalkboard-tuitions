@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { ChevronDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
-import { CinematicHero } from "@/components/marketing/CinematicHero";
+import { LiquidGlow } from "@/components/ui/liquid-glow";
+import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
@@ -36,32 +37,75 @@ const orgSchema = {
 
 export default function HomePage() {
   return (
-    <>
+    <div className="bg-[#07110d] text-chalk">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
+      {/* If JS never runs, reveal everything rather than leaving it transparent. */}
+      <noscript>
+        <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
+      </noscript>
 
-      {/* ── Cinematic scroll-pinned front door ── */}
-      <CinematicHero />
+      {/* ── Hero: living liquid field ── */}
+      <section className="relative flex min-h-[100svh] items-center overflow-hidden">
+        <LiquidGlow />
 
-      {/* ── What brings you here? · pathways (the real, tappable choices) ── */}
-      <section className="relative bg-board-deep text-chalk pt-10 pb-16 sm:pt-14 sm:pb-24">
-        <Container>
-          <h2 className="mb-6 font-playfair text-2xl sm:text-3xl font-bold text-chalk">What brings you here?</h2>
-          <Pathways />
+        {/* legibility scrim + chalk-line texture (decorative) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(95deg, rgba(7,17,13,0.94) 0%, rgba(7,17,13,0.82) 26%, rgba(7,17,13,0.42) 52%, rgba(7,17,13,0.08) 78%, rgba(7,17,13,0) 100%), linear-gradient(180deg, rgba(7,17,13,0.5) 0%, transparent 24%, transparent 74%, rgba(7,17,13,0.85) 100%), repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(245,240,232,0.022) 27px, rgba(245,240,232,0.022) 28px)",
+          }}
+        />
+
+        <Container className="relative z-10">
+          <div className="max-w-4xl">
+            <span className="block font-special-elite text-sm sm:text-base uppercase tracking-[0.34em] text-chalk-yellow/90">
+              Chalkboard
+            </span>
+            <h1 className="mt-5 break-words font-playfair font-black leading-[1.02] tracking-tight text-[clamp(2.75rem,9vw,6.5rem)]">
+              Learning,{" "}
+              <span className="italic font-bold text-chalk-yellow">differently.</span>
+            </h1>
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/65 sm:text-xl">
+              One ecosystem for every stage of learning — from the classroom to the workplace.
+            </p>
+          </div>
+        </Container>
+
+        <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">What brings you here?</span>
+          <ChevronDown size={18} className="animate-bounce" />
+        </div>
+      </section>
+
+      {/* ── Pathways ── */}
+      <section className="relative py-20 sm:py-28">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-64" style={{ background: "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(244,196,48,0.07), transparent 70%)" }} />
+        <Container className="relative z-10">
+          <Reveal>
+            <h2 className="mb-8 font-playfair text-3xl font-bold tracking-tight sm:text-4xl">What brings you here?</h2>
+          </Reveal>
+          <Reveal delay={90}>
+            <Pathways />
+          </Reveal>
         </Container>
       </section>
 
-      {/* ── A small trust moment ── */}
-      <Section bg="cream" size="sm">
+      {/* ── Trust — small, elegant, fades into the footer ── */}
+      <section className="relative pb-24 pt-4" style={{ backgroundImage: "linear-gradient(180deg, transparent 0%, rgba(22,45,36,0.55) 100%)" }}>
         <Container size="narrow">
-          <p className="text-center">
-            <span className="block font-playfair text-xl sm:text-2xl font-bold text-board dark:text-chalk">Built on years of learning experience.</span>
-            <span className="mt-3 block text-base text-gray-600 dark:text-chalk/65 leading-relaxed">
-              <span className="font-semibold text-board dark:text-chalk">Home Tuitions Bangalore</span>, operating since 2018,
-              is the foundation behind Chalkboard Tuitions.
-            </span>
-          </p>
+          <Reveal>
+            <div className="border-t border-chalk/10 pt-10 text-center">
+              <p className="font-playfair text-xl font-bold sm:text-2xl">Built on years of learning experience.</p>
+              <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-chalk/55">
+                <span className="font-semibold text-chalk/85">Home Tuitions Bangalore</span>, operating since 2018, is the
+                foundation behind Chalkboard Tuitions.
+              </p>
+            </div>
+          </Reveal>
         </Container>
-      </Section>
-    </>
+      </section>
+    </div>
   );
 }

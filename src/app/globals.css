@@ -92,6 +92,75 @@
 /* Smooth section transitions */
 section { @apply scroll-mt-20; }
 
+/* ── Liquid glow field (homepage) ──────────────────────────────────────────
+   Pure CSS "metaball" liquid: soft colour blobs are blurred, then a contrast()
+   threshold snaps them into sharp, flowing liquid edges. Zero JS.
+   Contained by .liquid-field { overflow:hidden } so it can never affect layout. */
+.liquid-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #07110d;
+}
+.liquid-field__inner {
+  position: absolute;
+  inset: -30%;
+  background: #07110d;
+  /* mobile: liquid, but a cheaper blur radius for mid-range phones */
+  filter: blur(46px) contrast(3.2) saturate(1.18);
+}
+@media (min-width: 1024px) {
+  /* desktop: full high-contrast liquid metal */
+  .liquid-field__inner { filter: blur(82px) contrast(3.8) saturate(1.22); }
+}
+.liquid-blob {
+  position: absolute;
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+  will-change: transform;
+  transform: translate(-50%, -50%); /* left/top position the blob's centre */
+  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+/* Gold is the single dominant hue (it alone blows out to a luminous liquid);
+   the greens sit at low alpha so they stay deep and elegant, never neon. */
+/* Blobs are positioned by their CENTRE (left/top + translate(-50%,-50%)) so the
+   composition is predictable at every viewport. Gold lives on the right, clear
+   of the left-aligned headline. */
+.liquid-blob--a {
+  width: 72vmax; height: 72vmax; left: 72%; top: 22%;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 196, 48, 0.9) 0%, rgba(244, 196, 48, 0.45) 34%, rgba(244, 196, 48, 0) 64%);
+  animation-name: liquidA; animation-duration: 26s;
+}
+.liquid-blob--b {
+  width: 58vmax; height: 58vmax; left: 90%; top: 64%;
+  background: radial-gradient(circle at 50% 50%, rgba(232, 172, 60, 0.75) 0%, rgba(232, 172, 60, 0.34) 34%, rgba(230, 158, 52, 0) 64%);
+  animation-name: liquidB; animation-duration: 33s;
+}
+.liquid-blob--c {
+  width: 74vmax; height: 74vmax; left: 20%; top: 88%;
+  background: radial-gradient(circle at 50% 50%, rgba(44, 146, 110, 0.6) 0%, rgba(44, 146, 110, 0.28) 34%, rgba(38, 132, 100, 0) 66%);
+  animation-name: liquidC; animation-duration: 29s;
+}
+.liquid-blob--d {
+  display: none;
+  width: 62vmax; height: 62vmax; left: 40%; top: 10%;
+  background: radial-gradient(circle at 50% 50%, rgba(24, 110, 96, 0.5) 0%, rgba(24, 110, 96, 0.24) 34%, rgba(20, 96, 84, 0) 66%);
+  animation-name: liquidD; animation-duration: 37s;
+}
+@media (min-width: 1024px) { .liquid-blob--d { display: block; } }
+
+@keyframes liquidA { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) translate3d(-12%, 14%, 0) scale(1.18); } }
+@keyframes liquidB { from { transform: translate(-50%, -50%) scale(1.05); } to { transform: translate(-50%, -50%) translate3d(-16%, -16%, 0) scale(0.9); } }
+@keyframes liquidC { from { transform: translate(-50%, -50%) scale(0.95); } to { transform: translate(-50%, -50%) translate3d(18%, -14%, 0) scale(1.15); } }
+@keyframes liquidD { from { transform: translate(-50%, -50%) scale(1.1); } to { transform: translate(-50%, -50%) translate3d(14%, 12%, 0) scale(0.92); } }
+
+/* ── Scroll reveal (IntersectionObserver driven) ───────────────────────────── */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1); }
+.reveal--in { opacity: 1; transform: none; }
+
 /* Site-wide reduced-motion guard (accessibility) — neutralises CSS motion for
    visitors who ask for it. Framer Motion honours the same preference itself. */
 @media (prefers-reduced-motion: reduce) {

@@ -38,7 +38,7 @@ for (const route of routes) {
 for (const [w, name] of [[390, "mobile"], [1440, "desktop"]]) {
   const page = await browser.newPage({ viewport: { width: w, height: 900 } });
   await page.goto(base + "/", { waitUntil: "networkidle" });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(2200); // let scroll-reveals resolve before capture
   await page.screenshot({ path: `/tmp/cb-home-${name}.png`, fullPage: true });
   await page.close();
 }
