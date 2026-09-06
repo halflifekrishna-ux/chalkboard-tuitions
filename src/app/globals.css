@@ -92,70 +92,82 @@
 /* Smooth section transitions */
 section { @apply scroll-mt-20; }
 
-/* ── Liquid glow field (homepage) ──────────────────────────────────────────
-   Pure CSS "metaball" liquid: soft colour blobs are blurred, then a contrast()
-   threshold snaps them into sharp, flowing liquid edges. Zero JS.
-   Contained by .liquid-field { overflow:hidden } so it can never affect layout. */
-.liquid-field {
+/* ── Portal field (homepage background) ────────────────────────────────────
+   A luminous, slowly rotating portal arc in Chalkboard gold with an emerald
+   fringe, over a soft ambient haze. Pure CSS — zero JS, no WebGL, no CDN.
+   The arc is a conic-gradient masked into a ring band, then blurred.
+   .portal-field is absolute + overflow-hidden + pointer-events-none, so it can
+   never affect layout width or create horizontal scrolling. Background stays
+   transparent so it blends into the page colour instead of sitting on a panel. */
+.portal-field {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #07110d;
 }
-.liquid-field__inner {
+/* ambient wash that ties the arc into the board colour */
+.portal-field__haze {
   position: absolute;
-  inset: -30%;
-  background: #07110d;
-  /* mobile: liquid, but a cheaper blur radius for mid-range phones */
-  filter: blur(46px) contrast(3.2) saturate(1.18);
+  inset: 0;
+  background:
+    radial-gradient(58% 52% at 72% 34%, rgba(244, 196, 48, 0.20) 0%, rgba(244, 196, 48, 0) 70%),
+    radial-gradient(66% 58% at 16% 96%, rgba(45, 143, 106, 0.18) 0%, rgba(45, 143, 106, 0) 72%);
 }
-@media (min-width: 1024px) {
-  /* desktop: full high-contrast liquid metal */
-  .liquid-field__inner { filter: blur(82px) contrast(3.8) saturate(1.22); }
-}
-.liquid-blob {
+.portal-arc {
   position: absolute;
-  border-radius: 9999px;
+  left: 72%;
+  top: 34%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
   mix-blend-mode: screen;
   will-change: transform;
-  transform: translate(-50%, -50%); /* left/top position the blob's centre */
-  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
+  -webkit-mask-image: radial-gradient(circle, transparent 54%, #000 59%, #000 67%, transparent 72%);
+  mask-image: radial-gradient(circle, transparent 54%, #000 59%, #000 67%, transparent 72%);
 }
-/* Gold is the single dominant hue (it alone blows out to a luminous liquid);
-   the greens sit at low alpha so they stay deep and elegant, never neon. */
-/* Blobs are positioned by their CENTRE (left/top + translate(-50%,-50%)) so the
-   composition is predictable at every viewport. Gold lives on the right, clear
-   of the left-aligned headline. */
-.liquid-blob--a {
-  width: 72vmax; height: 72vmax; left: 72%; top: 22%;
-  background: radial-gradient(circle at 50% 50%, rgba(244, 196, 48, 0.9) 0%, rgba(244, 196, 48, 0.45) 34%, rgba(244, 196, 48, 0) 64%);
-  animation-name: liquidA; animation-duration: 26s;
+.portal-arc--core {
+  width: 116vmin;
+  background: conic-gradient(from 190deg,
+    rgba(244, 196, 48, 0) 0deg,
+    rgba(244, 196, 48, 0.95) 62deg,
+    rgba(255, 226, 138, 1) 104deg,
+    rgba(244, 196, 48, 0.45) 156deg,
+    rgba(244, 196, 48, 0) 224deg);
+  filter: blur(10px);
+  animation: portalSpin 46s linear infinite;
 }
-.liquid-blob--b {
-  width: 58vmax; height: 58vmax; left: 90%; top: 64%;
-  background: radial-gradient(circle at 50% 50%, rgba(232, 172, 60, 0.75) 0%, rgba(232, 172, 60, 0.34) 34%, rgba(230, 158, 52, 0) 64%);
-  animation-name: liquidB; animation-duration: 33s;
+.portal-arc--fringe {
+  width: 152vmin;
+  opacity: 0.8;
+  background: conic-gradient(from 20deg,
+    rgba(45, 143, 106, 0) 0deg,
+    rgba(45, 143, 106, 0.85) 70deg,
+    rgba(76, 184, 140, 0.9) 120deg,
+    rgba(45, 143, 106, 0.35) 180deg,
+    rgba(45, 143, 106, 0) 250deg);
+  filter: blur(26px);
+  animation: portalSpinReverse 72s linear infinite;
 }
-.liquid-blob--c {
-  width: 74vmax; height: 74vmax; left: 20%; top: 88%;
-  background: radial-gradient(circle at 50% 50%, rgba(44, 146, 110, 0.6) 0%, rgba(44, 146, 110, 0.28) 34%, rgba(38, 132, 100, 0) 66%);
-  animation-name: liquidC; animation-duration: 29s;
+/* a soft breathing core so the centre never reads as an empty hole */
+.portal-core {
+  position: absolute;
+  left: 72%;
+  top: 34%;
+  width: 70vmin;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(244, 196, 48, 0.24) 0%, rgba(244, 196, 48, 0.07) 38%, rgba(244, 196, 48, 0) 68%);
+  filter: blur(24px);
+  animation: portalBreathe 14s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
-.liquid-blob--d {
-  display: none;
-  width: 62vmax; height: 62vmax; left: 40%; top: 10%;
-  background: radial-gradient(circle at 50% 50%, rgba(24, 110, 96, 0.5) 0%, rgba(24, 110, 96, 0.24) 34%, rgba(20, 96, 84, 0) 66%);
-  animation-name: liquidD; animation-duration: 37s;
+@media (min-width: 1024px) {
+  .portal-arc--core { filter: blur(14px); }
+  .portal-arc--fringe { filter: blur(34px); }
 }
-@media (min-width: 1024px) { .liquid-blob--d { display: block; } }
-
-@keyframes liquidA { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) translate3d(-12%, 14%, 0) scale(1.18); } }
-@keyframes liquidB { from { transform: translate(-50%, -50%) scale(1.05); } to { transform: translate(-50%, -50%) translate3d(-16%, -16%, 0) scale(0.9); } }
-@keyframes liquidC { from { transform: translate(-50%, -50%) scale(0.95); } to { transform: translate(-50%, -50%) translate3d(18%, -14%, 0) scale(1.15); } }
-@keyframes liquidD { from { transform: translate(-50%, -50%) scale(1.1); } to { transform: translate(-50%, -50%) translate3d(14%, 12%, 0) scale(0.92); } }
+@keyframes portalSpin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes portalSpinReverse { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(-360deg); } }
+@keyframes portalBreathe { from { transform: translate(-50%, -50%) scale(0.94); opacity: 0.75; } to { transform: translate(-50%, -50%) scale(1.12); opacity: 1; } }
 
 /* ── Scroll reveal (IntersectionObserver driven) ───────────────────────────── */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1); }

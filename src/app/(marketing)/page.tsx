@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ChevronDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { LiquidGlow } from "@/components/ui/liquid-glow";
+import { PortalField } from "@/components/ui/portal-field";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
 
@@ -44,9 +44,9 @@ export default function HomePage() {
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
       </noscript>
 
-      {/* ── Hero: living liquid field ── */}
+      {/* ── Hero: portal field ── */}
       <section className="relative flex min-h-[100svh] items-center overflow-hidden">
-        <LiquidGlow />
+        <PortalField />
 
         {/* legibility scrim + chalk-line texture (decorative) */}
         <div
@@ -54,7 +54,7 @@ export default function HomePage() {
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(95deg, rgba(7,17,13,0.94) 0%, rgba(7,17,13,0.82) 26%, rgba(7,17,13,0.42) 52%, rgba(7,17,13,0.08) 78%, rgba(7,17,13,0) 100%), linear-gradient(180deg, rgba(7,17,13,0.5) 0%, transparent 24%, transparent 74%, rgba(7,17,13,0.85) 100%), repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(245,240,232,0.022) 27px, rgba(245,240,232,0.022) 28px)",
+              "linear-gradient(100deg, rgba(7,17,13,0.9) 0%, rgba(7,17,13,0.68) 30%, rgba(7,17,13,0.24) 60%, rgba(7,17,13,0) 100%), linear-gradient(180deg, rgba(7,17,13,0.45) 0%, transparent 26%, transparent 76%, rgba(7,17,13,0.9) 100%), repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(245,240,232,0.022) 27px, rgba(245,240,232,0.022) 28px)",
           }}
         />
 
