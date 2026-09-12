@@ -70,3 +70,6 @@ where bs.id = s.batch_subject_id
 -- batch_subject-keyed index is left in place for historical rows / rollback.
 create unique index if not exists idx_sessions_batch_date_time
   on public.sessions (batch_id, session_date, start_time) where batch_id is not null;
+
+insert into public.schema_migrations (version) values ('0013_batch_slot_simplify')
+on conflict (version) do nothing;

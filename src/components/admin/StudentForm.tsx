@@ -66,6 +66,7 @@ export function StudentForm({
   submitLabel,
   draftKey,
   batches,
+  leadId,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   defaultValues?: Partial<StudentFormValues>;
@@ -73,6 +74,8 @@ export function StudentForm({
   draftKey?: string;
   /** When provided, shows a "Batch" picker so the student is enrolled in one step. */
   batches?: { id: string; name: string; grade: number }[];
+  /** Set when converting a CRM lead — the lead closes as converted on save. */
+  leadId?: string;
 }) {
   const [state, formAction] = useFormState<ActionState, FormData>(action, {});
   const { formRef, restored, clear } = useFormDraft(draftKey ?? "student-disabled");
@@ -98,6 +101,8 @@ export function StudentForm({
           Draft restored from your last unsaved entry.
         </p>
       )}
+      {leadId && <input type="hidden" name="lead_id" value={leadId} />}
+
       <SectionTitle>Student</SectionTitle>
 
       <Field label="Full name" error={errors.full_name?.message}>

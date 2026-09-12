@@ -53,6 +53,7 @@ idempotent and safe to re-run.
 | `0011_sessions_class_id_nullable` | Makes `sessions.class_id` nullable so new sessions can be created (0005 left the pre-refactor NOT NULL in place) |
 | `0012_admins_privilege_escalation_fix` | Closes H-1: splits the `admins` write policy per command (INSERT/DELETE → Super Admin), adds a last-Super-Admin DELETE guard, unique index on `lower(email)`, deterministic `current_admin_role()`, protects a bound `auth_user_id` |
 | `0013_batch_slot_simplify` | Moves the schedule (days/start/end time/room) onto `batches` itself — one dedicated slot per batch, any mix of subjects. `sessions` re-points to `batch_id` and gains `subject_ids` (freely picked per session, not a fixed subject-day rule) |
+| `0014_crm_leads` | CRM: `crm_leads` + `crm_lead_events`, the `marketing` and `bd` roles, `current_admin_id()`, and role-gated RLS (marketing inserts and reads only; BD works only leads assigned to them) |
 
 > **Run 0008 and 0009 as two separate executions** (two clicks in the SQL
 > Editor, or `supabase db push` which runs each file in its own transaction).

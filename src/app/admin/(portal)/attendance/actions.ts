@@ -16,6 +16,12 @@ import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "@/lib/os/attendance";
  */
 export async function startSession(batchId: string, sessionDate: string, startTime: string | null, endTime: string | null): Promise<void> {
   const admin = await requireCapability("attendance.mark");
+
+  // A batch with no slot time can't key a session: sessions are unique per
+  // (batch, date, start_time) and NULLs never collide, so marking twice would
+  // split one day's attendance across duplicate rows. Send them to fix it.
+  if (!startTime) redirect(`/admin/batches/${batchId}/edit`);
+
   const supabase = createServerSupabase();
 
   const { data: existing } = await supabase

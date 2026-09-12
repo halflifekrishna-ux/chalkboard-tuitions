@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, PlayCircle, CalendarClock, AlertCircle } from "lucide-react";
+import { redirect } from "next/navigation";
+import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, PlayCircle, CalendarClock, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { getSessionsForDate } from "@/lib/os/sessions";
 import { isoDate } from "@/lib/os/attendance";
+import { can } from "@/lib/os/permissions";
+import { OPEN_STATUSES } from "@/lib/os/leads";
 import { SessionCard } from "@/components/admin/SessionCard";
 import { startSession } from "./attendance/actions";
 
@@ -31,6 +34,9 @@ function SectionHeader({ title, href, cta }: { title: string; href?: string; cta
 
 export default async function AdminDashboard() {
   const admin = await requireAdmin();
+  // Lead-only users (marketing) have no business on the teaching dashboard.
+  if (!can(admin.role, "students.view") && can(admin.role, "leads.view")) redirect("/admin/leads");
+
   const supabase = createServerSupabase();
   const now = new Date();
   const today = isoDate(now);
@@ -38,6 +44,15 @@ export default async function AdminDashboard() {
   // Next school day that actually has scheduled sessions (for "Upcoming").
   const upcoming = new Date(now);
   upcoming.setDate(upcoming.getDate() + 1);
+
+  const showLeads = can(admin.role, "leads.view");
+  const [leadsAwaiting, myOpenLeads, leadsDue] = showLeads
+    ? await Promise.all([
+        supabase.from("crm_leads").select("id", { count: "exact", head: true }).eq("status", "pending_approval").is("deleted_at", null),
+        supabase.from("crm_leads").select("id", { count: "exact", head: true }).eq("assigned_to", admin.id).in("status", OPEN_STATUSES).is("deleted_at", null),
+        supabase.from("crm_leads").select("id", { count: "exact", head: true }).eq("assigned_to", admin.id).in("status", OPEN_STATUSES).is("deleted_at", null).lte("next_action_at", today),
+      ])
+    : [null, null, null];
 
   const [todaySessions, upcomingSessions, students, attendance, activity, messages, queue] = await Promise.all([
     getSessionsForDate(now),
@@ -97,6 +112,36 @@ export default async function AdminDashboard() {
           <StatCard label="Messages Sent" value={messages.count ?? 0} />
         </div>
       </section>
+
+      {/* Leads needing attention */}
+      {showLeads && ((leadsAwaiting?.count ?? 0) > 0 || (myOpenLeads?.count ?? 0) > 0) && (
+        <section>
+          <SectionHeader title="Leads" href="/admin/leads" cta="Open CRM" />
+          <div className="space-y-2.5">
+            {can(admin.role, "leads.approve") && (leadsAwaiting?.count ?? 0) > 0 && (
+              <Link href="/admin/leads?filter=approval" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: "rgba(244,196,48,0.08)", border: "1px solid rgba(244,196,48,0.3)" }}>
+                <ShieldCheck size={18} style={{ color: "#f4c430" }} />
+                <p className="flex-1 text-sm" style={{ color: "#f5f0e8" }}>
+                  {leadsAwaiting!.count} studio lead{leadsAwaiting!.count === 1 ? "" : "s"} waiting on your approval
+                </p>
+                <span className="text-xs font-semibold" style={{ color: "#f4c430" }}>Review →</span>
+              </Link>
+            )}
+            {(myOpenLeads?.count ?? 0) > 0 && (
+              <Link href="/admin/leads?filter=mine" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
+                <Sparkles size={18} style={{ color: "#c9a227" }} />
+                <p className="flex-1 text-sm" style={{ color: "#f5f0e8" }}>
+                  {myOpenLeads!.count} open lead{myOpenLeads!.count === 1 ? "" : "s"} with you
+                  {(leadsDue?.count ?? 0) > 0 && (
+                    <span style={{ color: "#f4c430" }}> · {leadsDue!.count} due now</span>
+                  )}
+                </p>
+                <span className="text-xs font-semibold" style={{ color: "#f4c430" }}>Work them →</span>
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* WhatsApp queue alert */}
       {(pendingQueue > 0 || failedQueue > 0) && (

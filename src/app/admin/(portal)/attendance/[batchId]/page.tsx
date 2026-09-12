@@ -96,7 +96,16 @@ export default async function MarkAttendancePage({
         </p>
       </header>
 
-      {roster.length === 0 ? (
+      {!batch.start_time ? (
+        <div className="rounded-2xl p-8 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(244,196,48,0.3)" }}>
+          <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.6)" }}>
+            This batch has no timing set yet, so attendance can&apos;t be keyed to a session. Add its days and time first.
+          </p>
+          <Link href={`/admin/batches/${batch.id}/edit`} className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
+            Set batch timing
+          </Link>
+        </div>
+      ) : roster.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
           <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>No students enrolled in this batch yet.</p>
           <Link href={`/admin/batches/${batch.id}`} className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>Enrol Students</Link>

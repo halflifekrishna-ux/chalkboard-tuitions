@@ -21,6 +21,8 @@ export const studentSchema = z.object({
   // Optional — enrol straight into a batch when creating the student, so
   // there's no separate trip to the batch page for the common case.
   batch_id: z.string().uuid().or(z.literal("")).optional(),
+  // Set when the student came in from a CRM lead, which then closes as converted.
+  lead_id: z.string().uuid().or(z.literal("")).optional(),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;

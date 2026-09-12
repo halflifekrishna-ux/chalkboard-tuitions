@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Terminal,
   MoreHorizontal,
+  Sparkles,
   LogOut,
   X,
 } from "lucide-react";
@@ -38,6 +39,7 @@ interface NavItem {
 // Order matters: first 4 (post-filter) become the mobile bottom bar.
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, flag: "dashboard" },
+  { href: "/admin/leads", label: "Leads", icon: Sparkles, flag: "crm", caps: ["leads.view"] },
   { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, flag: "attendance", caps: ["attendance.mark"] },
   { href: "/admin/students", label: "Students", icon: Users, flag: "students", caps: ["students.view"] },
   { href: "/admin/batches", label: "Batches", icon: BookOpen, flag: "classes", caps: ["batches.manage", "batches.viewAssigned"] },
