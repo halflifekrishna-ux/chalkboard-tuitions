@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ChevronDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { PortalField } from "@/components/ui/portal-field";
+import { PortalShader } from "@/components/ui/portal-shader";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
 
@@ -46,7 +46,7 @@ export default function HomePage() {
 
       {/* ── Hero: portal field ── */}
       <section className="relative flex min-h-[100svh] items-center overflow-hidden">
-        <PortalField />
+        <PortalShader />
 
         {/* legibility scrim + chalk-line texture (decorative) */}
         <div
