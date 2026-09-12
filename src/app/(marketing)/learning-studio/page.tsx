@@ -16,22 +16,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/learning-studio` },
 };
 
-/* ── Section numeral — the recurring editorial device that ties the page
-   together. Purely decorative (aria-hidden), so it never competes with the
-   real heading semantics below it. ── */
-function Numeral({ n, tone = "light" }: { n: string; tone?: "light" | "dark" }) {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute right-0 top-0 select-none font-playfair text-[7rem] font-black leading-none sm:text-[10rem] lg:text-[13rem]"
-      style={{ color: tone === "dark" ? "rgba(245,240,232,0.04)" : "rgba(30,58,47,0.05)" }}
-    >
-      {n}
-    </span>
-  );
-}
-
-function Eyebrow({ n, label, tone = "light" }: { n: string; label: string; tone?: "light" | "dark" }) {
+function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "dark" }) {
   return (
     <span
       className={
@@ -39,7 +24,6 @@ function Eyebrow({ n, label, tone = "light" }: { n: string; label: string; tone?
         (tone === "dark" ? "text-chalk-yellow/90" : "text-gold")
       }
     >
-      <span className="opacity-60">{n}</span>
       <span className={tone === "dark" ? "h-px w-6 bg-chalk-yellow/40" : "h-px w-6 bg-gold/50"} />
       {label}
     </span>
@@ -126,7 +110,7 @@ export default function LearningStudioPage() {
           />
           <Container className="relative z-10">
             <div className="max-w-3xl">
-              <Eyebrow n="01" label="Chalkboard Learning Studio" tone="dark" />
+              <Eyebrow label="Chalkboard Learning Studio" tone="dark" />
               <h1 className="mt-6 break-words font-playfair font-black leading-[1.03] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]">
                 Learning that moves
                 <br />
@@ -148,10 +132,9 @@ export default function LearningStudioPage() {
       <SectionEnter>
         <section className="relative overflow-hidden bg-board-deep py-20 text-chalk sm:py-28">
           <div aria-hidden className="grid-dots pointer-events-none" />
-          <Numeral n="02" tone="dark" />
           <Container className="relative">
             <Reveal>
-              <Eyebrow n="02" label="Who We Build For" tone="dark" />
+              <Eyebrow label="Who We Build For" tone="dark" />
               <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(2rem,5.5vw,3.5rem)] font-bold leading-[1.08] tracking-tight">
                 Different learners.
                 <br />
@@ -229,10 +212,9 @@ export default function LearningStudioPage() {
 
       {/* ── 03 — What we build ── */}
       <section className="relative overflow-hidden bg-cream-bg py-20 text-board sm:py-28">
-        <Numeral n="03" tone="light" />
         <Container className="relative">
           <Reveal>
-            <Eyebrow n="03" label="What We Build" />
+            <Eyebrow label="What We Build" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
               We don&rsquo;t just deliver courses.
               <br />
@@ -256,10 +238,9 @@ export default function LearningStudioPage() {
 
       {/* ── 04 — How we work / capability ── */}
       <section className="relative overflow-hidden bg-white py-20 text-board sm:py-28">
-        <Numeral n="04" tone="light" />
         <Container className="relative">
           <Reveal>
-            <Eyebrow n="04" label="How We Work" />
+            <Eyebrow label="How We Work" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
               Built around the learner.
               <br />
@@ -285,10 +266,9 @@ export default function LearningStudioPage() {
 
       {/* ── 05 — Selected work ── */}
       <section className="relative overflow-hidden bg-board-deep bg-chalk-lines py-20 text-chalk sm:py-28">
-        <Numeral n="05" tone="dark" />
         <Container className="relative">
           <Reveal>
-            <Eyebrow n="05" label="Selected Work" tone="dark" />
+            <Eyebrow label="Selected Work" tone="dark" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight">
               Where we&rsquo;ve worked.
             </h2>
@@ -316,10 +296,9 @@ export default function LearningStudioPage() {
 
       {/* ── 06 — Conversation ── */}
       <section className="relative overflow-hidden bg-board-deep py-24 text-chalk sm:py-32">
-        <Numeral n="06" tone="dark" />
         <Container className="relative" size="narrow">
           <Reveal>
-            <Eyebrow n="06" label="Conversation" tone="dark" />
+            <Eyebrow label="Conversation" tone="dark" />
             <h2 className="mt-5 break-words font-playfair text-[clamp(2rem,6vw,3.75rem)] font-bold leading-[1.08] tracking-tight">
               Have a learning
               <br />
