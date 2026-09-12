@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 
 /**
  * HeroPin — pins the hero at full-screen while the page scrolls a little
- * further, subtly shrinking and rotating it so the next section visibly
+ * further, shrinking and rotating it so the next section visibly
  * "gives way" to it. This is the one scroll-linked framer-motion effect on
  * the page (the project's existing animation dependency — the same
  * useScroll/useTransform/motion.div API the "motion/react" package ships,
@@ -35,8 +35,8 @@ export function HeroPin({ children }: { children: React.ReactNode }) {
     offset: ["start start", "end start"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.94]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, -2.5]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
+  const rotate = useTransform(scrollYProgress, [0, 1], [0, -4]);
   const opacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 1, 0.55]);
 
   if (!animate) {

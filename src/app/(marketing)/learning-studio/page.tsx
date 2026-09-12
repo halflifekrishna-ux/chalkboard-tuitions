@@ -117,7 +117,8 @@ export default function LearningStudioPage() {
 
       {/* ── 01 — Statement ── */}
       <HeroPin>
-        <section className="relative flex h-full min-h-[100svh] items-center overflow-hidden bg-board-deep bg-chalk-lines text-chalk">
+        <section className="relative flex h-full min-h-[100svh] items-center overflow-hidden bg-board-deep text-chalk">
+          <div aria-hidden className="grid-dots pointer-events-none" />
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -145,7 +146,8 @@ export default function LearningStudioPage() {
 
       {/* ── 02 — Who we build for ── */}
       <SectionEnter>
-        <section className="relative overflow-hidden bg-board-deep bg-chalk-lines py-20 text-chalk sm:py-28">
+        <section className="relative overflow-hidden bg-board-deep py-20 text-chalk sm:py-28">
+          <div aria-hidden className="grid-dots pointer-events-none" />
           <Numeral n="02" tone="dark" />
           <Container className="relative">
             <Reveal>
@@ -204,6 +206,23 @@ export default function LearningStudioPage() {
                 </div>
               </Reveal>
             </div>
+
+            {/* Closing graphic beat — the section's signature typographic
+                moment as it hands off to "03 What We Build". Decorative
+                only: "Learning Studio" is already announced by the eyebrow
+                above and the nav, so this is aria-hidden. */}
+            <p
+              aria-hidden
+              className="mt-20 select-none text-center font-playfair font-black uppercase leading-[0.88] tracking-tight text-[clamp(2.75rem,13vw,8.5rem)] sm:mt-28"
+              style={{
+                backgroundImage: "linear-gradient(180deg, rgba(244,196,48,0.55) 0%, rgba(244,196,48,0.06) 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              Learning Studio
+            </p>
           </Container>
         </section>
       </SectionEnter>

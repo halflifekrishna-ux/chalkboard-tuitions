@@ -181,6 +181,21 @@ section { @apply scroll-mt-20; }
 @keyframes marqueeLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes marqueeRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 
+/* ── Grid-dot texture (/learning-studio scroll hero) ────────────────────────
+   Graph-paper grid lines masked into a soft ellipse behind the pinned
+   hero → audience hand-off — the signature graphic texture of that
+   transition, in chalk-on-board rather than the reference's flat grey. */
+.grid-dots {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(245, 240, 232, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 240, 232, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
+}
+
 /* ── Scroll reveal (IntersectionObserver driven) ───────────────────────────── */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1); }
 .reveal--in { opacity: 1; transform: none; }

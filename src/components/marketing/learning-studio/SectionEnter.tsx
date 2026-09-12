@@ -27,8 +27,8 @@ export function SectionEnter({ children, className }: { children: React.ReactNod
     offset: ["start end", "start 0.3"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 1], [0.96, 1]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [1.5, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [0.85, 1]);
+  const rotate = useTransform(scrollYProgress, [0, 1], [4, 0]);
 
   if (!animate) {
     return (
