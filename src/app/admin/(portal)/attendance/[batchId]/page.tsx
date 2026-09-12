@@ -10,24 +10,38 @@ import { finishSession } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function MarkAttendancePage({ params }: { params: { batchSubjectId: string } }) {
+export default async function MarkAttendancePage({
+  params,
+  searchParams,
+}: {
+  params: { batchId: string };
+  searchParams: { date?: string };
+}) {
   await requireCapability("attendance.mark");
   const supabase = createServerSupabase();
-  const today = isoDate(new Date());
+  const day = searchParams.date && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date) ? searchParams.date : isoDate(new Date());
 
-  // Batch subject → subject, teacher, and parent batch (for roster + header).
-  const { data: bs } = await supabase
-    .from("batch_subjects")
-    .select("id, start_time, end_time, subject:subjects(name), teacher:teachers(full_name), batch:batches(id, name, grade)")
-    .eq("id", params.batchSubjectId)
+  const { data: batch } = await supabase
+    .from("batches")
+    .select("id, name, grade, start_time, end_time, room")
+    .eq("id", params.batchId)
     .is("deleted_at", null)
     .maybeSingle();
-  if (!bs) notFound();
-
-  const batch = bs.batch as unknown as { id: string; name: string; grade: number } | null;
-  const subject = bs.subject as unknown as { name: string } | null;
-  const teacher = bs.teacher as unknown as { full_name: string } | null;
   if (!batch) notFound();
+
+  const { data: batchSubjects } = await supabase
+    .from("batch_subjects")
+    .select("id, subject_id, colour, subject:subjects(name), teacher:teachers(full_name)")
+    .eq("batch_id", batch.id)
+    .eq("status", "active")
+    .is("deleted_at", null);
+
+  const subjectOptions = (batchSubjects ?? []).map((bs) => ({
+    id: bs.subject_id as string,
+    name: (bs.subject as unknown as { name: string } | null)?.name ?? "—",
+    teacherName: (bs.teacher as unknown as { full_name: string } | null)?.full_name ?? null,
+    colour: bs.colour as string,
+  }));
 
   // Roster = students enrolled in the batch (lazy: only ids first, then details).
   const { data: enrol } = await supabase
@@ -40,12 +54,12 @@ export default async function MarkAttendancePage({ params }: { params: { batchSu
     .filter((s): s is NonNullable<typeof s> => !!s && s.status !== "archived" && s.status !== "dropped")
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
-  // Existing session + marks today (resume / edit).
+  // Existing session + marks for this date (resume / edit).
   const { data: session } = await supabase
     .from("sessions")
-    .select("id, status, topic_covered, homework_assigned, teacher_notes")
-    .eq("batch_subject_id", params.batchSubjectId)
-    .eq("session_date", today)
+    .select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
+    .eq("batch_id", params.batchId)
+    .eq("session_date", day)
     .maybeSingle();
 
   const existingMarks = session
@@ -63,18 +77,21 @@ export default async function MarkAttendancePage({ params }: { params: { batchSu
     status: markByStudent.get(s.id) ?? "present", // Present pre-selected
   }));
 
+  const today = isoDate(new Date());
+  const initialSubjectIds = session?.subject_ids?.length ? session.subject_ids : subjectOptions.map((s) => s.id);
+
   return (
     <div className="max-w-2xl">
       <header className="mb-4">
-        <Link href="/admin/attendance" className="inline-flex items-center gap-1.5 text-xs font-semibold mb-3" style={{ color: "rgba(245,240,232,0.5)" }}>
+        <Link href={`/admin/attendance${day !== today ? `?date=${day}` : ""}`} className="inline-flex items-center gap-1.5 text-xs font-semibold mb-3" style={{ color: "rgba(245,240,232,0.5)" }}>
           <ArrowLeft size={14} /> Today&apos;s Sessions
         </Link>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-lg font-bold" style={{ color: "#f4c430" }}>{fmtTime(bs.start_time)}</span>
+          <span className="text-lg font-bold" style={{ color: "#f4c430" }}>{fmtTime(batch.start_time)}</span>
           <h1 className="font-playfair text-2xl font-bold" style={{ color: "#f5f0e8" }}>{batch.name}</h1>
         </div>
         <p className="text-sm mt-1" style={{ color: "rgba(245,240,232,0.45)" }}>
-          {subject?.name ?? "—"}{teacher ? ` · ${teacher.full_name}` : ""} · Grade {batch.grade}
+          Grade {batch.grade}{batch.room ? ` · ${batch.room}` : ""} · {new Date(`${day}T00:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
           {session?.status === "completed" && " · completed (editing)"}
         </p>
       </header>
@@ -86,11 +103,13 @@ export default async function MarkAttendancePage({ params }: { params: { batchSu
         </div>
       ) : (
         <AttendanceScreen
-          batchSubjectId={bs.id}
-          sessionDate={today}
-          startTime={bs.start_time?.slice(0, 5) ?? null}
-          endTime={bs.end_time?.slice(0, 5) ?? null}
+          batchId={batch.id}
+          sessionDate={day}
+          startTime={batch.start_time?.slice(0, 5) ?? null}
+          endTime={batch.end_time?.slice(0, 5) ?? null}
           roster={roster}
+          subjectOptions={subjectOptions}
+          initialSubjectIds={initialSubjectIds}
           existingNotes={{ topic: session?.topic_covered ?? "", homework: session?.homework_assigned ?? "", teacherNotes: session?.teacher_notes ?? "" }}
           alreadyCompleted={session?.status === "completed"}
           finishAction={finishSession}

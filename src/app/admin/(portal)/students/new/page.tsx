@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
+import { createServerSupabase } from "@/lib/os/supabase-server";
 import { StudentForm } from "@/components/admin/StudentForm";
 import { createStudent } from "../actions";
 
@@ -8,6 +9,13 @@ export const dynamic = "force-dynamic";
 
 export default async function NewStudentPage() {
   await requireCapability("students.manage");
+  const supabase = createServerSupabase();
+  const { data: batches } = await supabase
+    .from("batches")
+    .select("id, name, grade")
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .order("name");
   return (
     <div className="space-y-5 max-w-xl">
       <header>
@@ -22,7 +30,7 @@ export default async function NewStudentPage() {
         </p>
       </header>
 
-      <StudentForm action={createStudent} submitLabel="Add Student" draftKey="new-student" />
+      <StudentForm action={createStudent} submitLabel="Add Student" draftKey="new-student" batches={batches ?? []} />
     </div>
   );
 }

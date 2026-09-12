@@ -1,38 +1,48 @@
 # Attendance Architecture — Chalkboard OS Phase 2
 
-Status: **BUILT (Phase 2 complete)** — this document was approved and implemented. See "Phase 2 delivery" at the bottom for the shipped file map.
+Status: **BUILT (Phase 2 complete)**, schedule model simplified in migration
+`0013_batch_slot_simplify` — see below. See "Phase 2 delivery" at the bottom
+for the originally shipped file map.
 
 ## 1. Database
 
 Attendance never attaches to a student directly. The chain is:
 
 ```
-branches → classes → class_sessions → attendance → students
-              ↑            ↑
-           subjects     (date, time, status)
-           teachers
+branches → batches → sessions → attendance → students
+              ↑          ↑
+      days/start/end   (date, time, status, subject_ids)
+        time, room
 ```
 
-All tables already exist (migrations 0001/0002). Roles of each:
+A batch is **one dedicated slot** (e.g. "Grade 8 Foundation", Mon–Fri and
+sometimes Sat, 5–7 PM) with no fixed subject-per-day rule — any mix of the
+batch's subjects can be covered on any day it meets. `batch_subjects` is just
+the list of subjects taught in a batch (subject + teacher + a colour tag),
+not a schedule of its own; the schedule (`days[]`, `start_time`, `end_time`,
+`room`) lives on `batches`. Each `sessions` row picks freely, per occurrence,
+which of those subjects were actually covered (`subject_ids`).
 
 | Table | Role | Key fields |
 |---|---|---|
-| `classes` | Recurring batch, e.g. "Grade 6 Maths · 5 PM" | branch, subject, teacher, grade, start/end time, `days[]`, capacity, room, `online_link` |
-| `class_students` | Enrolment (who belongs to the batch) | unique (class_id, student_id) |
-| `class_sessions` | One concrete occurrence of a class on a date | unique (class_id, session_date, start_time); status scheduled → in_progress → completed; **class notes**: `topic_covered`, `homework_assigned`, `teacher_notes` (migration 0003) |
+| `batches` | The recurring slot + enrolled group | branch, grade, board, capacity, `days[]`, start/end time, room |
+| `batch_students` | Enrolment (who belongs to the batch) | unique (batch_id, student_id) |
+| `batch_subjects` | A subject taught within a batch — no schedule of its own | subject, teacher, colour tag |
+| `sessions` | One concrete occurrence of a batch's slot on a date | unique (batch_id, session_date, start_time); status scheduled → in_progress → completed; `subject_ids` = what was actually covered; **class notes**: `topic_covered`, `homework_assigned`, `teacher_notes` |
 | `attendance` | One row per student per session | unique (session_id, student_id); status present/absent/late/excused; `marked_by`, `marked_at` |
 | `attendance_logs` | Immutable edit history | old_status → new_status, changed_by, timestamp |
 | `communications` + `whatsapp_logs` | Parent notification record | template_key, provider_id, delivery status |
-| `activity_logs` | Student timeline + audit | "Aarav marked present — Grade 6 Maths" |
+| `activity_logs` | Student timeline + audit | "Aarav marked present — Grade 6 Foundation" |
 
-Because a session is unique per (class, date, time), **multiple classes per day per student** work naturally — a student in Maths at 5 PM and Science at 6:30 PM gets two independent attendance rows.
-
-**Session creation is lazy**: when Nanditha opens Attendance for a class today, the session row is created on first touch (`upsert` on the unique key). No cron needed; a future scheduler can pre-create sessions without any schema change.
+**Session creation is lazy**: when Nanditha opens Attendance for a batch
+today, the session row is created on first touch (`upsert` on the unique
+key). No cron needed; a future scheduler can pre-create sessions without any
+schema change.
 
 ## 2. User flow (Nanditha, on her phone, < 30 seconds)
 
-1. **Attendance tab** → list of today's classes (derived from `classes.days` matching today's weekday), each showing time, enrolled count, and a Done/Pending chip.
-2. Tap a class → session upserted → roster screen: one large row per enrolled student (photo, name), four big touch targets: **Present / Absent / Late / Excused**. Default pre-selection: Present (one tap flips the exceptions — fastest path).
+1. **Attendance tab** → a week calendar strip to jump to any day, and a list of that day's batches (derived from `batches.days` matching the weekday), each showing time, enrolled count, the subjects it can cover, and a Done/Pending chip.
+2. Tap a batch → session upserted → roster screen: a **Subjects covered today** picker (free choice, pre-selected to everything the batch teaches — deselect what wasn't covered) above one large row per enrolled student (photo, name), four big touch targets: **Present / Absent / Late / Excused**. Default pre-selection: Present (one tap flips the exceptions — fastest path).
 3. Optimistic UI — taps update instantly, writes happen in the background.
 4. Tap **Finish Class** → a compact **Class Notes** sheet appears (all fields optional, skippable in one tap):
    - **Today's Topic** — e.g. "Force and Motion"

@@ -116,6 +116,16 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
 
   await logActivity(supabase, admin.id, student.id, "created", `${v.full_name} joined Chalkboard (${student.student_code})`);
 
+  if (v.batch_id) {
+    await supabase.from("batch_students").upsert(
+      { batch_id: v.batch_id, student_id: student.id },
+      { onConflict: "batch_id,student_id", ignoreDuplicates: true }
+    );
+    const { data: batch } = await supabase.from("batches").select("name").eq("id", v.batch_id).single();
+    await logActivity(supabase, admin.id, student.id, "enrolled", `${v.full_name} enrolled in ${batch?.name ?? "batch"}`);
+    revalidatePath(`/admin/batches/${v.batch_id}`);
+  }
+
   revalidatePath("/admin/students");
   redirect(`/admin/students/${student.id}`);
 }

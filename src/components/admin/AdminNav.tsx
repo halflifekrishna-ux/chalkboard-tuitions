@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   type LucideIcon,
   LayoutDashboard,
@@ -91,17 +92,28 @@ export function AdminNav({
         </div>
 
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          {items.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
-              style={isActive(href) ? { background: "rgba(201,162,39,0.15)", color: "#f4c430" } : { color: "rgba(245,240,232,0.55)" }}
-            >
-              <Icon size={18} />
-              {label}
-            </Link>
-          ))}
+          {items.map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold"
+                style={{ color: active ? "#f4c430" : "rgba(245,240,232,0.55)" }}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="admin-nav-active"
+                    className="absolute inset-0 rounded-xl"
+                    style={{ background: "rgba(201,162,39,0.15)" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 34 }}
+                  />
+                )}
+                <Icon size={18} className="relative" />
+                <span className="relative">{label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="px-5 py-5" style={{ borderTop: "1px solid rgba(201,162,39,0.15)" }}>
@@ -124,7 +136,15 @@ export function AdminNav({
         {primary.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-1 py-2.5 px-2 min-w-[54px]">
+            <Link key={href} href={href} className="relative flex flex-col items-center gap-1 py-2.5 px-2 min-w-[54px]">
+              {active && (
+                <motion.span
+                  layoutId="admin-bottom-nav-active"
+                  className="absolute top-0.5 h-1 w-1 rounded-full"
+                  style={{ background: "#f4c430" }}
+                  transition={{ type: "spring", stiffness: 500, damping: 34 }}
+                />
+              )}
               <Icon size={20} className={active ? "" : "opacity-50"} style={{ color: active ? "#f4c430" : "#f5f0e8" }} />
               <span className="text-[10px] font-semibold" style={{ color: active ? "#f4c430" : "rgba(245,240,232,0.5)" }}>{label}</span>
             </Link>

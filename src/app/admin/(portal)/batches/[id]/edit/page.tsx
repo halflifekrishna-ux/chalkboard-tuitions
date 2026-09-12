@@ -41,6 +41,10 @@ export default async function EditBatchPage({ params }: { params: { id: string }
           capacity: batch.capacity,
           status: batch.status,
           notes: batch.notes,
+          days: batch.days ?? [],
+          start_time: batch.start_time,
+          end_time: batch.end_time,
+          room: batch.room,
         }}
       />
     </div>

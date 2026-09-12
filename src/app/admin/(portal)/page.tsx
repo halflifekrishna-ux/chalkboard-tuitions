@@ -118,7 +118,7 @@ export default async function AdminDashboard() {
         <section>
           <SectionHeader title="Continue Session" />
           <div className="space-y-3">
-            {inProgress.map((s) => <SessionCard key={s.batchSubjectId} s={s} />)}
+            {inProgress.map((s) => <SessionCard key={s.batchId} s={s} />)}
           </div>
         </section>
       )}
@@ -135,13 +135,13 @@ export default async function AdminDashboard() {
           <div className="space-y-3">
             {notStarted.map((s) => {
               const startForm = (
-                <form action={startSession.bind(null, s.batchSubjectId, today, s.startTime, s.endTime)}>
+                <form action={startSession.bind(null, s.batchId, today, s.startTime, s.endTime)}>
                   <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
                     <PlayCircle size={16} /> Start Session
                   </button>
                 </form>
               );
-              return <SessionCard key={s.batchSubjectId} s={s} startForm={startForm} />;
+              return <SessionCard key={s.batchId} s={s} startForm={startForm} />;
             })}
             {notStarted.length === 0 && (
               <p className="text-sm px-1" style={{ color: "rgba(245,240,232,0.45)" }}>All of today&apos;s sessions are started or complete. 🎉</p>
@@ -155,7 +155,7 @@ export default async function AdminDashboard() {
         <section>
           <SectionHeader title="Completed Sessions" />
           <div className="space-y-3">
-            {completed.map((s) => <SessionCard key={s.batchSubjectId} s={s} />)}
+            {completed.map((s) => <SessionCard key={s.batchId} s={s} />)}
           </div>
         </section>
       )}
@@ -166,12 +166,12 @@ export default async function AdminDashboard() {
           <SectionHeader title={`Upcoming · ${upcomingLabel}`} />
           <div className="rounded-2xl divide-y" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
             {upcomingSessions.map((s) => (
-              <div key={s.batchSubjectId} className="p-3.5 flex items-center gap-3" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
-                <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ background: s.colour }} />
+              <div key={s.batchId} className="p-3.5 flex items-center gap-3" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
+                <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ background: s.subjects[0]?.colour ?? "#c9a227" }} />
                 <span className="text-xs font-bold w-14" style={{ color: "#f4c430" }}>{s.startTime ?? "—"}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: "#f5f0e8" }}>{s.batchName}</p>
-                  <p className="text-[11px]" style={{ color: "rgba(245,240,232,0.45)" }}>{s.subjectName}{s.teacherName ? ` · ${s.teacherName}` : ""}</p>
+                  <p className="text-[11px] truncate" style={{ color: "rgba(245,240,232,0.45)" }}>{s.subjects.map((sub) => sub.name).join(", ") || "No subjects yet"}</p>
                 </div>
               </div>
             ))}

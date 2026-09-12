@@ -65,11 +65,14 @@ export function StudentForm({
   defaultValues,
   submitLabel,
   draftKey,
+  batches,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   defaultValues?: Partial<StudentFormValues>;
   submitLabel: string;
   draftKey?: string;
+  /** When provided, shows a "Batch" picker so the student is enrolled in one step. */
+  batches?: { id: string; name: string; grade: number }[];
 }) {
   const [state, formAction] = useFormState<ActionState, FormData>(action, {});
   const { formRef, restored, clear } = useFormDraft(draftKey ?? "student-disabled");
@@ -135,6 +138,18 @@ export function StudentForm({
           <input {...register("school_name")} className={inputCls} style={inputStyle} />
         </Field>
       </div>
+
+      {batches && batches.length > 0 && (
+        <Field label="Batch (optional)">
+          <select {...register("batch_id")} className={inputCls} style={inputStyle} defaultValue="">
+            <option value="" style={{ color: "#162d24" }}>— Enrol later —</option>
+            {batches.map((b) => (
+              <option key={b.id} value={b.id} style={{ color: "#162d24" }}>{b.name} (Grade {b.grade})</option>
+            ))}
+          </select>
+          <p className="text-[11px] mt-1" style={{ color: "rgba(245,240,232,0.4)" }}>Enrols the student straight away — no extra trip to the batch page.</p>
+        </Field>
+      )}
 
       <Field label="Profile photo (optional, under 5 MB)">
         <input
