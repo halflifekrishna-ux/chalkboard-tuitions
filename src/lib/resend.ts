@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 export function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -8,7 +9,7 @@ export function getResend() {
 // use onboarding@resend.dev which works on all Resend accounts out of the box.
 export const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-export const ADMIN_EMAIL = process.env.RESEND_TO_EMAIL || process.env.ADMIN_EMAIL || "admin@chalkboardtuitions.in";
+export const ADMIN_EMAIL = process.env.RESEND_TO_EMAIL || process.env.ADMIN_EMAIL || CONTACT_EMAIL;
 
 export function buildConfirmationEmail(name: string, grade: string) {
   return {

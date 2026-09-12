@@ -3,7 +3,7 @@ import { MapPin, Mail, Phone, Instagram, Facebook } from "lucide-react";
 
 const WHATSAPP = "917411446381";
 const WHATSAPP_DISPLAY = "+91 74114 46381";
-const EMAIL = "chalkboardtuitions@gmail.com";
+const EMAIL = "connect@chalkboardlearning.in";
 const INSTAGRAM = "https://www.instagram.com/chalkboard.tuitions/";
 
 const footerLinks = {

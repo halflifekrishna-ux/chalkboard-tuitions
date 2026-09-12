@@ -41,6 +41,9 @@ export function EcosystemNavbar() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   // The homepage is a quiet "front door" — no Book Demo CTA competing with the pathways.
   const isHome = pathname === "/";
+  // Learning Studio is email-only: no Tuitions WhatsApp / demo CTA there —
+  // its primary action is its own enquiry form.
+  const isStudio = pathname === "/learning-studio" || pathname.startsWith("/learning-studio/");
 
   return (
     <>
@@ -92,7 +95,16 @@ export function EcosystemNavbar() {
               <LogIn size={15} /> Login
             </Link>
 
-            {!isHome && (
+            {isStudio && (
+              <Link
+                href="/learning-studio#enquire"
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-chalk-dark transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-chalk-yellow/30 active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #f4c430 0%, #c9a227 100%)" }}
+              >
+                Enquire
+              </Link>
+            )}
+            {!isHome && !isStudio && (
               <a
                 href={`https://wa.me/${WHATSAPP}?text=Hi! I'd like to book a free demo class at Chalkboard Tuitions.`}
                 target="_blank"
@@ -136,7 +148,17 @@ export function EcosystemNavbar() {
               <Link href="/admin/login" className="px-4 py-3 rounded-xl font-medium text-chalk/70 hover:text-chalk hover:bg-chalk/10 flex items-center gap-2">
                 <LogIn size={16} /> Login to Chalkboard OS
               </Link>
-              {!isHome && (
+              {isStudio && (
+                <Link
+                  href="/learning-studio#enquire"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-chalk-dark text-sm"
+                  style={{ background: "linear-gradient(135deg, #f4c430 0%, #c9a227 100%)" }}
+                >
+                  Enquire with Learning Studio
+                </Link>
+              )}
+              {!isHome && !isStudio && (
                 <a
                   href={`https://wa.me/${WHATSAPP}?text=Hi! I'd like to book a free demo class.`}
                   target="_blank"

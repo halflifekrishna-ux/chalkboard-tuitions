@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "@/lib/contact";
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 const localBusiness = {
@@ -13,7 +15,7 @@ const localBusiness = {
       description:
         "Small-batch daily tuitions for Grades 1–10 in Kammanahalli and Kalyan Nagar, Bangalore. Max 8 students per batch. CBSE, ICSE and Karnataka State Board covered.",
       telephone: "+917411446381",
-      email: "chalkboardtuitions@gmail.com",
+      email: CONTACT_EMAIL,
       priceRange: "₹₹",
       currenciesAccepted: "INR",
       paymentAccepted: "Cash, UPI, Bank Transfer",

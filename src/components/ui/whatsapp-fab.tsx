@@ -28,8 +28,9 @@ export function WhatsAppFab() {
   const [visible, setVisible] = useState(false);
   const [showLabel, setShowLabel] = useState(false);
 
-  // The ecosystem front door stays clean — no WhatsApp CTA on the homepage.
-  const hidden = pathname === "/";
+  // This is the Tuitions WhatsApp line. The homepage front door stays clean,
+  // and Learning Studio is email-only — so it belongs on neither.
+  const hidden = pathname === "/" || pathname.startsWith("/learning-studio");
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 1500);

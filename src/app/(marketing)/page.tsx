@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container";
 import { PortalShader } from "@/components/ui/portal-shader";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
@@ -28,6 +29,7 @@ const orgSchema = {
   name: "Chalkboard",
   legalName: "Chalkboard Learning Services LLP",
   url: SITE_URL,
+  email: CONTACT_EMAIL,
   logo: `${SITE_URL}/logo-dark.png`,
   description:
     "Chalkboard is a modern learning ecosystem spanning school tuitions, professional & institutional learning, and the technology platform that powers them.",

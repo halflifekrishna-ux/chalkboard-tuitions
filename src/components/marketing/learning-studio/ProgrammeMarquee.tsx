@@ -27,7 +27,9 @@ export function ProgrammeMarquee({
   className?: string;
 }) {
   return (
-    <div className={cn("relative overflow-hidden", className)} aria-label={items.join(", ")}>
+    // data-allow-overflow: the row is meant to run past its clip box; tells
+    // scripts/overflow-qa.mjs this isn't clipped content.
+    <div className={cn("relative overflow-hidden", className)} aria-label={items.join(", ")} data-allow-overflow>
       <div
         className={cn(
           "flex w-max items-center gap-3 whitespace-nowrap",

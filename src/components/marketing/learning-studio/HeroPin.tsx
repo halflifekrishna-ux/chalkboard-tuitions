@@ -17,21 +17,25 @@ import { motion, useScroll, useTransform } from "framer-motion";
  * only finished the transform near the very bottom of the page — visually
  * indistinguishable from no animation at all while the hero was on screen.
  *
- * Enabled on every viewport (including mobile — a phone gets a gentler
- * scale/rotate than desktop, not silence); disabled only under
- * prefers-reduced-motion.
+ * The pinned (180svh) layout is what the server renders, so for almost every
+ * visitor the page height never changes after hydration. If it did, every
+ * deep link below the hero (/learning-studio#enquire from the footer, etc.)
+ * would land ~80svh short once the hero grew. Reduced-motion visitors get the
+ * plain layout after mount and are re-landed on any #anchor.
+ *
+ * Enabled on every viewport (mobile gets a gentler scale/rotate than desktop,
+ * not silence); disabled only under prefers-reduced-motion.
  *
  * Used in: (marketing)/learning-studio/page.tsx (section 01).
  */
 export function HeroPin({ children }: { children: React.ReactNode }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [animate, setAnimate] = useState(false);
+  const [reduced, setReduced] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [range, setRange] = useState<[number, number]>([0, 1]);
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setAnimate(!reduce);
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const mq = window.matchMedia("(max-width: 767px)");
     const syncMobile = () => setMobile(mq.matches);
     syncMobile();
@@ -39,11 +43,13 @@ export function HeroPin({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener("change", syncMobile);
   }, []);
 
-  // Separate, `animate`-dependent effect: the sticky wrapper (and wrapRef)
-  // only exists in the DOM once `animate` flips true and React re-renders,
-  // so measuring in the same effect that sets it would read a null ref.
   useEffect(() => {
-    if (!animate) return;
+    if (reduced) {
+      // The hero just collapsed by ~80svh — re-land on any #anchor target.
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (id) document.getElementById(id)?.scrollIntoView();
+      return;
+    }
     const measure = () => {
       const el = wrapRef.current;
       if (!el) return;
@@ -60,14 +66,14 @@ export function HeroPin({ children }: { children: React.ReactNode }) {
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [animate]);
+  }, [reduced]);
 
   const { scrollY } = useScroll();
   const scale = useTransform(scrollY, range, mobile ? [1, 0.92] : [1, 0.78]);
   const rotate = useTransform(scrollY, range, mobile ? [0, -3] : [0, -6]);
   const opacity = useTransform(scrollY, range, [1, 0.55]);
 
-  if (!animate) {
+  if (reduced) {
     return <div className="relative min-h-[100svh]">{children}</div>;
   }
 

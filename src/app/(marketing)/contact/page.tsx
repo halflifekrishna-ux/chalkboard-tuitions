@@ -4,16 +4,17 @@ import { Contact } from "@/components/sections/Contact";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Contact Chalkboard — Book a Free Assessment or Talk to Us",
+  title: "Contact Chalkboard Tuitions — Book a Free Assessment",
   description:
-    "Get in touch with Chalkboard. Book a free tuition assessment, ask about batches and timings in Kammanahalli & Kalyan Nagar, Bangalore, or reach the Learning Studio team.",
+    "Book a free tuition assessment with Chalkboard Tuitions, or ask about batches and timings in Kammanahalli & Kalyan Nagar, Bangalore.",
   alternates: { canonical: `${SITE_URL}/contact` },
 };
 
 /**
- * /contact — unified contact page. Reuses the existing tuition contact section
- * (form → /api/contact, WhatsApp, location map). Studio "Talk to Sales" links
- * here; the message field lets institutional enquiries identify themselves.
+ * /contact — the Chalkboard Tuitions contact page (demo form → /api/contact,
+ * WhatsApp, location map). Learning Studio has its own email-only enquiry
+ * form at /learning-studio#enquire; the section here points Studio visitors
+ * there instead of taking their enquiry on the Tuitions form.
  */
 export default function ContactPage() {
   return (

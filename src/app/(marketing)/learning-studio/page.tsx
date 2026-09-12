@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ChevronDown, Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { Button } from "@/components/ui/button";
+import { CONTACT_EMAIL } from "@/lib/contact";
+import { StudioEnquiryForm } from "@/components/marketing/learning-studio/StudioEnquiryForm";
 import { Reveal } from "@/components/marketing/Reveal";
 import { HeroPin } from "@/components/marketing/learning-studio/HeroPin";
 import { SectionEnter } from "@/components/marketing/learning-studio/SectionEnter";
@@ -80,6 +82,18 @@ const CAPABILITIES = [
   "Learning Operations",
 ];
 
+/* Trainer intake — email only, prefilled so profiles arrive in a consistent shape. */
+const TRAINER_ASKS = [
+  "The topics and skills you train",
+  "Formats you deliver — workshops, bootcamps, longer programmes",
+  "Who you've trained — teams, students, faculty",
+  "A short proposal or a sample session outline",
+  "Your CV, and a LinkedIn or portfolio link",
+];
+const TRAINER_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Trainer profile — [Your name]")}&body=${encodeURIComponent(
+  "Name:\nTopics / skills I train:\nFormats (workshop, bootcamp, programme):\nAudiences I've trained:\nLinkedIn / portfolio:\n\nShort proposal or session idea:\n\n(Please attach your CV.)"
+)}`;
+
 /* Reused from the previous /learning-studio content — real sectors Chalkboard
    Learning Studio already works with, not invented case studies. */
 const SECTORS = [
@@ -119,6 +133,12 @@ export default function LearningStudioPage() {
               <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/65">
                 Learning programmes designed for colleges, teams and professionals — from classroom to workplace.
               </p>
+              <p className="mt-8 text-sm text-chalk/45">
+                Looking for school tuitions?{" "}
+                <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/70 underline decoration-chalk/25 underline-offset-4 hover:text-chalk-yellow">
+                  That&rsquo;s Chalkboard Tuitions →
+                </Link>
+              </p>
             </div>
           </Container>
           <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
@@ -142,9 +162,17 @@ export default function LearningStudioPage() {
               </h2>
             </Reveal>
 
-            <div className="mt-14 grid gap-5 lg:grid-cols-5">
+            {/* grid-cols-1 = minmax(0,1fr): without it the implicit auto track
+                grows to the marquee's max-content width and the cards get
+                silently clipped by the section's overflow-hidden on phones. */}
+            <div className="mt-14 grid grid-cols-1 gap-5 lg:grid-cols-5">
               {/* Corporate — primary, dominant */}
-              <Reveal delay={80} className="lg:col-span-3">
+              <Reveal delay={80} className="relative min-w-0 lg:col-span-3">
+                {/* Offset anchor, not scroll-margin: Next.js's hash scroll on a fresh
+                    load/cross-page nav ignores scroll-margin and parks the target at
+                    y=0, under the fixed navbar. Sitting 112px above the card keeps
+                    its heading clear however the page got here. */}
+                <span id="corporates" aria-hidden className="pointer-events-none absolute -top-28 left-0" />
                 <div
                   className="relative min-w-0 overflow-hidden rounded-2xl border p-7 sm:p-10"
                   style={{ borderColor: "rgba(244,196,48,0.3)", background: "linear-gradient(155deg, rgba(244,196,48,0.08) 0%, rgba(7,17,13,0.4) 55%)" }}
@@ -162,14 +190,15 @@ export default function LearningStudioPage() {
                     <ProgrammeMarquee items={CORPORATE_FORMATS} direction="right" durationClass="marquee-duration-medium" />
                   </div>
 
-                  <a href="/contact" className="mt-9 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow">
+                  <a href="#enquire" className="mt-9 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow">
                     Talk to us about a programme <ArrowRight size={15} />
                   </a>
                 </div>
               </Reveal>
 
               {/* College — secondary, visually smaller */}
-              <Reveal delay={160} className="lg:col-span-2">
+              <Reveal delay={160} className="relative min-w-0 lg:col-span-2">
+                <span id="colleges" aria-hidden className="pointer-events-none absolute -top-28 left-0" />
                 <div className="h-full min-w-0 rounded-2xl border border-chalk/10 bg-chalk/[0.03] p-6 sm:p-7">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-chalk/45">For institutions</span>
                   <h3 className="mt-3 font-playfair text-xl font-bold sm:text-2xl">College Learning</h3>
@@ -183,7 +212,7 @@ export default function LearningStudioPage() {
                       </span>
                     ))}
                   </div>
-                  <a href="/contact" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-chalk/70">
+                  <a href="#enquire" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-chalk/70">
                     Talk to us <ArrowRight size={14} />
                   </a>
                 </div>
@@ -228,7 +257,7 @@ export default function LearningStudioPage() {
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
                   <span className="font-playfair text-2xl font-black text-gold/40 sm:text-3xl">{s.n}</span>
                   <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
-                  <p className="min-w-0 text-sm leading-relaxed text-gray-600 sm:col-start-3 sm:text-base">{s.body}</p>
+                  <p className="col-start-2 min-w-0 text-sm leading-relaxed text-gray-600 sm:col-start-3 sm:text-base">{s.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -294,23 +323,76 @@ export default function LearningStudioPage() {
         </Container>
       </section>
 
-      {/* ── 06 — Conversation ── */}
-      <section className="relative overflow-hidden bg-board-deep py-24 text-chalk sm:py-32">
-        <Container className="relative" size="narrow">
-          <Reveal>
-            <Eyebrow label="Conversation" tone="dark" />
-            <h2 className="mt-5 break-words font-playfair text-[clamp(2rem,6vw,3.75rem)] font-bold leading-[1.08] tracking-tight">
-              Have a learning
-              <br />
-              problem to solve?
-            </h2>
-            <p className="mt-4 font-playfair text-xl italic text-chalk-yellow/90 sm:text-2xl">Let&rsquo;s build it.</p>
-            <div className="mt-9">
-              <Button href="/contact" variant="primary" size="lg">
-                Start a conversation <ArrowRight size={16} />
-              </Button>
-            </div>
-          </Reveal>
+      {/* ── Enquire — Learning Studio's own, email-only form (never the Tuitions demo form) ── */}
+      <section id="enquire" className="relative overflow-hidden bg-board-deep py-20 text-chalk sm:py-28">
+        <div aria-hidden className="grid-dots pointer-events-none" />
+        <Container className="relative">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+            <Reveal className="min-w-0 lg:col-span-5">
+              <Eyebrow label="Start a Conversation" tone="dark" />
+              <h2 className="mt-5 break-words font-playfair text-[clamp(2rem,6vw,3.5rem)] font-bold leading-[1.08] tracking-tight">
+                Have a learning
+                <br />
+                problem to solve?
+              </h2>
+              <p className="mt-4 font-playfair text-xl italic text-chalk-yellow/90 sm:text-2xl">Let&rsquo;s build it.</p>
+              <p className="mt-6 max-w-sm text-base leading-relaxed text-chalk/60">
+                Tell us who the learning is for and what needs to change. We&rsquo;ll reply by email.
+              </p>
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="mt-6 inline-flex max-w-full items-center gap-2 break-all text-sm font-semibold text-chalk/80 hover:text-chalk-yellow"
+              >
+                <Mail size={15} aria-hidden className="shrink-0" /> {CONTACT_EMAIL}
+              </a>
+              <p className="mt-10 max-w-sm border-t border-chalk/10 pt-5 text-sm leading-relaxed text-chalk/45">
+                This form is for organisations, institutions and professionals. Looking for tuitions for your child?{" "}
+                <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/75 underline decoration-chalk/30 underline-offset-4 hover:text-chalk-yellow">
+                  Chalkboard Tuitions →
+                </Link>
+              </p>
+            </Reveal>
+            <Reveal delay={100} className="min-w-0 lg:col-span-7">
+              <StudioEnquiryForm />
+            </Reveal>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── For trainers — the supply side; deliberately after the buyer's form ── */}
+      <section id="trainers" className="relative overflow-hidden bg-cream-bg py-20 text-board sm:py-24">
+        <Container className="relative">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
+            <Reveal className="min-w-0 lg:col-span-5">
+              <Eyebrow label="For Trainers" />
+              <h2 className="mt-5 break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
+                Train with us.
+              </h2>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-gray-600">
+                We&rsquo;re building a network of trainers, subject experts and facilitators. If you design or deliver
+                programmes, tell us what you teach.
+              </p>
+            </Reveal>
+            <Reveal delay={100} className="min-w-0 lg:col-span-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">Email us with</p>
+              <ul className="mt-4 divide-y divide-board/10 border-y border-board/10">
+                {TRAINER_ASKS.map((t) => (
+                  <li key={t} className="py-3.5 text-base text-board">
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <a
+                  href={TRAINER_MAILTO}
+                  className="inline-flex items-center gap-2 rounded-md bg-board px-5 py-3 text-sm font-semibold text-chalk transition-colors hover:bg-board-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                >
+                  <Mail size={15} aria-hidden /> Email your profile
+                </a>
+                <span className="min-w-0 break-all text-sm text-gray-500">{CONTACT_EMAIL}</span>
+              </div>
+            </Reveal>
+          </div>
         </Container>
       </section>
     </div>

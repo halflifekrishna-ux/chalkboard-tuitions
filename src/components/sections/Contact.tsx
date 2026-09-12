@@ -1,13 +1,15 @@
 "use client";
 import { useState, useRef, FormEvent } from "react";
 import { motion, useInView } from "framer-motion";
+import Link from "next/link";
 import { Send, MessageCircle, Clock, CheckCircle, Mail } from "lucide-react";
+import { CONTACT_EMAIL } from "@/lib/contact";
 import { Spotlight } from "@/components/ui/spotlight";
 import { LocationMap } from "@/components/ui/location-map";
 
 const WHATSAPP = "917411446381";
 const WHATSAPP_DISPLAY = "+91 74114 46381";
-const EMAIL = "chalkboardtuitions@gmail.com";
+const EMAIL = CONTACT_EMAIL;
 
 const grades = ["Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10"];
 const boards = ["CBSE","ICSE","Karnataka State Board (KSEEB)","Not sure yet"];
@@ -72,7 +74,7 @@ export function Contact() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-14">
           <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-chalk-yellow bg-chalk-yellow/10 px-3 py-1 rounded-full mb-4">
-            Get in Touch
+            Chalkboard Tuitions
           </span>
           <h2 className="font-playfair text-4xl sm:text-5xl font-bold text-chalk mb-4">
             Book your free demo class.
@@ -80,6 +82,15 @@ export function Contact() {
           <p className="text-chalk/60 text-lg max-w-xl mx-auto">
             Fill the form and we&apos;ll WhatsApp you within 30 minutes to confirm your slot.
             No obligation, no pressure.
+          </p>
+          <p className="mt-4 text-sm text-chalk/45">
+            This form is for school tuitions. For corporate, college or trainer enquiries, go to{" "}
+            <Link
+              href="/learning-studio#enquire"
+              className="whitespace-nowrap font-semibold text-chalk/75 underline decoration-chalk/30 underline-offset-4 hover:text-chalk-yellow"
+            >
+              Chalkboard Learning Studio →
+            </Link>
           </p>
         </div>
 

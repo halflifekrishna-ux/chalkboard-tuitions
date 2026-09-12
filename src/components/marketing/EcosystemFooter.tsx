@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Mail, Phone, Instagram, Facebook } from "lucide-react";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 /**
  * EcosystemFooter — site-wide footer. Presents the master brand, the three
@@ -9,7 +10,7 @@ import { MapPin, Mail, Phone, Instagram, Facebook } from "lucide-react";
  */
 const WHATSAPP = "917411446381";
 const WHATSAPP_DISPLAY = "+91 74114 46381";
-const EMAIL = "chalkboardtuitions@gmail.com";
+const EMAIL = CONTACT_EMAIL;
 const INSTAGRAM = "https://www.instagram.com/chalkboard.tuitions/";
 
 const columns = {
@@ -21,9 +22,10 @@ const columns = {
   ],
   "Learning Studio": [
     { label: "Overview", href: "/learning-studio" },
-    { label: "For Colleges", href: "/learning-studio#colleges" },
     { label: "For Corporates", href: "/learning-studio#corporates" },
-    { label: "Talk to Sales", href: "/contact" },
+    { label: "For Colleges", href: "/learning-studio#colleges" },
+    { label: "Enquire", href: "/learning-studio#enquire" },
+    { label: "For Trainers", href: "/learning-studio#trainers" },
   ],
   Chalkboard: [
     { label: "About", href: "/about" },
@@ -51,6 +53,7 @@ export function EcosystemFooter() {
             <div className="space-y-2.5">
               <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
                 <Phone size={13} className="text-chalk-yellow flex-shrink-0" /> {WHATSAPP_DISPLAY}
+                <span className="text-chalk/30">· Tuitions</span>
               </a>
               <a href={`mailto:${EMAIL}`} className="flex items-center gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
                 <Mail size={13} className="text-chalk-yellow flex-shrink-0" /> {EMAIL}
