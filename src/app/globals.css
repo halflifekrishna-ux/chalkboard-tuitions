@@ -169,6 +169,18 @@ section { @apply scroll-mt-20; }
 @keyframes portalSpinReverse { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(-360deg); } }
 @keyframes portalBreathe { from { transform: translate(-50%, -50%) scale(0.94); opacity: 0.75; } to { transform: translate(-50%, -50%) scale(1.12); opacity: 1; } }
 
+/* ── Programme marquee (/learning-studio) ───────────────────────────────────
+   A calm, medium-paced strip of programme labels. The row is doubled and
+   translated exactly -50%, so the loop is seamless; duration is long
+   (46–64s) on purpose — this is a slow drift a visitor can read, not a
+   ticker. Frozen by the prefers-reduced-motion guard below. */
+.animate-marquee-left { animation: marqueeLeft linear infinite; }
+.animate-marquee-right { animation: marqueeRight linear infinite; }
+.marquee-duration-slow { animation-duration: 64s; }
+.marquee-duration-medium { animation-duration: 46s; }
+@keyframes marqueeLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marqueeRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
 /* ── Scroll reveal (IntersectionObserver driven) ───────────────────────────── */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1); }
 .reveal--in { opacity: 1; transform: none; }
