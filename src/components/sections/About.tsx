@@ -26,7 +26,9 @@ export function About() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="about" className="py-24 bg-cream dark:bg-chalk-dark">
+    // overflow-hidden: the value cards enter from x:24, which otherwise widens
+    // the page by 8px on phones until they scroll into view.
+    <section id="about" className="py-24 bg-cream dark:bg-chalk-dark overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div ref={ref} className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Story */}

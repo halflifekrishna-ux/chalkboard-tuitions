@@ -11,7 +11,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuition
 export const metadata: Metadata = {
   title: { absolute: "Chalkboard — Learning, differently." },
   description:
-    "Chalkboard is a modern learning ecosystem: Chalkboard Tuitions (school learning, LKG–10), Chalkboard Learning Studio (college & corporate learning), and Chalkboard OS. Choose your path.",
+    "Chalkboard is a modern learning ecosystem: Chalkboard Tuitions (school learning, Grades 1–10), Chalkboard Learning Studio (college & corporate learning), and Chalkboard OS. Choose your path.",
   keywords: ["Chalkboard", "Chalkboard Learning", "Chalkboard Tuitions", "Chalkboard Learning Studio", "Chalkboard OS"],
   alternates: { canonical: SITE_URL },
   openGraph: {

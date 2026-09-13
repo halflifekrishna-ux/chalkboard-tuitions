@@ -12,7 +12,7 @@ export function TrustBanner({
     { value: "2018", label: "Trusted since" },
     { value: "Max 8", label: "Students per batch" },
     { value: "5 days", label: "A week" },
-    { value: "LKG–10", label: "Grades covered" },
+    { value: "1–10", label: "Grades covered" },
   ],
 }: {
   stats?: { value: string; label: string }[];

@@ -12,10 +12,25 @@ import { JsonLd } from "@/components/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Small-Batch Tuitions in Bangalore — CBSE, ICSE & State Board (LKG–10)",
+  title: "Tuitions in Kammanahalli & Kalyan Nagar, Bangalore — CBSE, ICSE & State Board",
   description:
-    "Chalkboard Tuitions: expert small-batch daily tuitions for Grades LKG–10 in Kammanahalli & Kalyan Nagar, Bangalore. Max 8 students per batch. CBSE, ICSE & Karnataka State Board. Book your free demo class.",
+    "Chalkboard Tuitions: expert small-batch daily tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bengaluru. Max 8 students per batch. CBSE, ICSE & Karnataka State Board. Book your free demo class.",
+  keywords: [
+    "tuition centre Kammanahalli",
+    "tuition classes Kalyan Nagar",
+    "CBSE tuitions Bangalore",
+    "ICSE tuitions Bengaluru",
+    "state board tuitions Bangalore",
+    "small batch tuition centre near me",
+  ],
   alternates: { canonical: `${SITE_URL}/tuitions` },
+  openGraph: {
+    title: "Small-Batch Tuitions in Kammanahalli & Kalyan Nagar, Bengaluru",
+    description:
+      "Grades 1–10, CBSE · ICSE · State Board. Max 8 students per batch, five days a week. Book a free demo class.",
+    url: `${SITE_URL}/tuitions`,
+    type: "website",
+  },
 };
 
 /**

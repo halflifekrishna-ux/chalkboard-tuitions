@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   description:
     "Chalkboard Learning Studio designs learning programmes for corporates, colleges and professionals — from capability building and leadership development to placement readiness and faculty training.",
   alternates: { canonical: `${SITE_URL}/learning-studio` },
+  openGraph: {
+    title: "Chalkboard Learning Studio — Professional & Institutional Learning",
+    description:
+      "Learning programmes for corporates, colleges and professionals in Bengaluru — capability building, leadership, placement readiness and faculty training.",
+    url: `${SITE_URL}/learning-studio`,
+    type: "website",
+  },
 };
 
 function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "dark" }) {

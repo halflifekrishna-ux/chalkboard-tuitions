@@ -110,7 +110,7 @@ export function Pathways() {
           eyebrow="For parents & students"
           title="Chalkboard Tuitions"
           description="Small-batch, personalised academic learning that helps your child make real progress."
-          tags={["LKG–10", "CBSE · ICSE · State Board"]}
+          tags={["Grades 1–10", "CBSE · ICSE · State Board"]}
           cta="Explore Tuitions"
           icon={GraduationCap}
           primary

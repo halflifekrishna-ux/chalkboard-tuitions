@@ -15,10 +15,17 @@ export const metadata: Metadata = {
   description:
     "Chalkboard is a learning company built on the experience of Home Tuitions Bangalore since 2018 — spanning school tuitions, professional learning, and the technology that powers them.",
   alternates: { canonical: `${SITE_URL}/about` },
+  openGraph: {
+    title: "About Chalkboard — Personalised Learning, Built on Trust",
+    description:
+      "A learning company built on the experience of Home Tuitions Bangalore since 2018 — school tuitions, professional learning, and the technology behind them.",
+    url: `${SITE_URL}/about`,
+    type: "website",
+  },
 };
 
 const pillars = [
-  { icon: GraduationCap, name: "Chalkboard Tuitions", body: "Small-batch, personalised academic learning for Grades LKG–10 across CBSE, ICSE and State Board." },
+  { icon: GraduationCap, name: "Chalkboard Tuitions", body: "Small-batch, personalised academic learning for Grades 1–10 across CBSE, ICSE and State Board." },
   { icon: Briefcase, name: "Chalkboard Learning Studio", body: "Professional and institutional programs for colleges, corporates, and training partners." },
   { icon: MonitorSmartphone, name: "Chalkboard OS", body: "The technology platform that runs admissions, attendance, fees and communication — and will power learning experiences over time." },
 ];

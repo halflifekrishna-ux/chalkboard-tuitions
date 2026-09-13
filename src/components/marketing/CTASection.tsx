@@ -37,7 +37,7 @@ export function CTASection({
               {primary.label}
             </Button>
             {secondary && (
-              <Button href={secondary.href} external={secondary.external} size="lg" variant="secondary">
+              <Button href={secondary.href} external={secondary.external} size="lg" variant="onDark">
                 {secondary.label}
               </Button>
             )}
