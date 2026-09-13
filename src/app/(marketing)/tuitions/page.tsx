@@ -8,6 +8,7 @@ import { About } from "@/components/sections/About";
 import { FAQ } from "@/components/sections/FAQ";
 import { Contact } from "@/components/sections/Contact";
 import { JsonLd } from "@/components/JsonLd";
+import { LegacyProof } from "@/components/marketing/LegacyProof";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
@@ -44,6 +45,7 @@ export default function TuitionsPage() {
       <JsonLd />
       <Hero />
       <Stats />
+      <LegacyProof />
       <Features />
       <Testimonials />
       <Pricing />

@@ -8,21 +8,86 @@ import { Reveal } from "@/components/marketing/Reveal";
 import { HeroPin } from "@/components/marketing/learning-studio/HeroPin";
 import { SectionEnter } from "@/components/marketing/learning-studio/SectionEnter";
 import { ProgrammeMarquee } from "@/components/marketing/learning-studio/ProgrammeMarquee";
+import { CourseBuild } from "@/components/marketing/learning-studio/CourseBuild";
+import { StudioFaq } from "@/components/marketing/learning-studio/StudioFaq";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Chalkboard Learning Studio — Professional & Institutional Learning",
+  title: "Corporate Training in Bangalore — Sales, Support & Team Performance",
   description:
-    "Chalkboard Learning Studio designs learning programmes for corporates, colleges and professionals — from capability building and leadership development to placement readiness and faculty training.",
+    "Chalkboard Learning Studio runs sales, customer support, team effectiveness and leadership training for companies and colleges in Bengaluru — and builds custom courses from your own material.",
+  keywords: [
+    "corporate training Bangalore",
+    "sales training Bengaluru",
+    "customer support training",
+    "team effectiveness workshop Bangalore",
+    "leadership training Bengaluru",
+    "custom course development",
+    "instructional design Bangalore",
+    "campus placement training Bangalore",
+  ],
   alternates: { canonical: `${SITE_URL}/learning-studio` },
   openGraph: {
-    title: "Chalkboard Learning Studio — Professional & Institutional Learning",
+    title: "Corporate Training in Bangalore — Chalkboard Learning Studio",
     description:
-      "Learning programmes for corporates, colleges and professionals in Bengaluru — capability building, leadership, placement readiness and faculty training.",
+      "Sales, customer support, team performance and leadership training for teams in Bengaluru — plus custom courses built from your own material.",
     url: `${SITE_URL}/learning-studio`,
     type: "website",
   },
+};
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+
+/* Each practice as a distinct Service so the page can surface for the specific
+   thing a buyer searched for, not just the brand. */
+const studioSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": `${SITE}/learning-studio#studio`,
+      name: "Chalkboard Learning Studio",
+      url: `${SITE}/learning-studio`,
+      parentOrganization: { "@id": `${SITE}/#organization` },
+      description:
+        "Training and course design for companies, colleges and institutions — sales, customer support, team effectiveness, leadership, and custom course building.",
+      areaServed: [
+        { "@type": "City", name: "Bengaluru" },
+        { "@type": "Country", name: "India" },
+      ],
+      serviceType: [
+        "Corporate training",
+        "Sales training",
+        "Customer support training",
+        "Leadership development",
+        "Instructional design",
+      ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Learning Studio programmes",
+        itemListElement: [
+          "Sales performance training",
+          "Customer support training",
+          "Team effectiveness programmes",
+          "Leadership and productivity programmes",
+          "Custom course design and build",
+          "Campus placement readiness",
+          "Faculty development",
+        ].map((name) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name },
+        })),
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE },
+        { "@type": "ListItem", position: 2, name: "Learning Studio", item: `${SITE}/learning-studio` },
+      ],
+    },
+  ],
 };
 
 function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "dark" }) {
@@ -43,14 +108,14 @@ function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "d
    Studio designs for, not a claim that every item is a currently-running
    fixed course. ── */
 const CORPORATE_TOPICS = [
-  "AI FOR BUSINESS",
-  "LEADERSHIP PROGRAMMES",
-  "DATA & ANALYTICS",
-  "GENERATIVE AI WORKSHOPS",
-  "COMMUNICATION SKILLS",
-  "DIGITAL TRANSFORMATION",
-  "PRODUCTIVITY & AUTOMATION",
+  "SALES PERFORMANCE",
+  "CUSTOMER SUPPORT",
   "TEAM EFFECTIVENESS",
+  "LEADERSHIP PROGRAMMES",
+  "COMMUNICATION SKILLS",
+  "PRODUCTIVITY & FOCUS",
+  "ONBOARDING ACADEMIES",
+  "TRAIN THE TRAINER",
 ];
 const CORPORATE_FORMATS = [
   "WORKSHOPS",
@@ -71,11 +136,28 @@ const COLLEGE_AREAS = [
   "Digital Technology",
 ];
 
-const LIFECYCLE = [
-  { n: "01", title: "Understand", body: "We start with the real gap — skills, outcomes or capability — not a fixed course catalogue." },
-  { n: "02", title: "Design", body: "A tailored blend of workshops, e-learning and coaching, built around your context and constraints." },
-  { n: "03", title: "Deliver", body: "Structured delivery with clear milestones, facilitators and materials — not a one-off session." },
-  { n: "04", title: "Measure", body: "Reviewed against agreed outcomes, with reporting you can take to your own stakeholders." },
+/* The four things teams actually call us about. Outcome first, not topic first. */
+const PRACTICES = [
+  {
+    n: "01",
+    title: "Sales teams",
+    body: "Discovery that earns the second meeting, objection handling, and the call after the no.",
+  },
+  {
+    n: "02",
+    title: "Customer support",
+    body: "De-escalation, first-contact resolution, and the tone that keeps a customer through a bad day.",
+  },
+  {
+    n: "03",
+    title: "How a team runs",
+    body: "Handoffs, feedback that lands, and decisions that survive the meeting they were made in.",
+  },
+  {
+    n: "04",
+    title: "Pace and focus",
+    body: "For teams that run hot — protecting attention, holding standards, finishing what was started.",
+  },
 ];
 
 const CAPABILITIES = [
@@ -115,6 +197,7 @@ const SECTORS = [
 export default function LearningStudioPage() {
   return (
     <div className="bg-board-deep">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(studioSchema) }} />
       {/* If JS never runs, reveal everything rather than leaving it transparent. */}
       <noscript>
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
@@ -250,16 +333,16 @@ export default function LearningStudioPage() {
       <section className="relative overflow-hidden bg-cream-bg py-20 text-board sm:py-28">
         <Container className="relative">
           <Reveal>
-            <Eyebrow label="What We Build" />
+            <Eyebrow label="What We Train" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
-              We don&rsquo;t just deliver courses.
+              Teams don&rsquo;t need a course.
               <br />
-              We build learning experiences.
+              They need to get better at the hard part.
             </h2>
           </Reveal>
 
           <div className="mt-14 divide-y divide-board/10 border-t border-board/10">
-            {LIFECYCLE.map((s, i) => (
+            {PRACTICES.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
                   <span className="font-playfair text-2xl font-black text-gold/40 sm:text-3xl">{s.n}</span>
@@ -271,6 +354,11 @@ export default function LearningStudioPage() {
           </div>
         </Container>
       </section>
+
+      {/* ── 03b — Course building: the signature scroll sequence ── */}
+      <CourseBuild />
+
+      <StudioFaq />
 
       {/* ── 04 — How we work / capability ── */}
       <section className="relative overflow-hidden bg-white py-20 text-board sm:py-28">

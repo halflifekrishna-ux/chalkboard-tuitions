@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
-import { Menu, X, Sun, Moon, LogIn } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
@@ -25,12 +24,9 @@ const LINKS = [
 export function EcosystemNavbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    setMounted(true);
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -76,18 +72,8 @@ export function EcosystemNavbar() {
             ))}
           </nav>
 
-          {/* Right: theme · Login (quiet) · Book Demo (primary) */}
+          {/* Right: Login (quiet) · Book Demo (primary) */}
           <div className="flex items-center gap-1.5">
-            {mounted && (
-              <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-lg text-chalk/50 hover:text-chalk hover:bg-chalk/10 transition-all"
-                aria-label="Toggle theme"
-              >
-                {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-              </button>
-            )}
-
             <Link
               href="/admin/login"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-chalk/55 hover:text-chalk hover:bg-chalk/10 transition-all"
