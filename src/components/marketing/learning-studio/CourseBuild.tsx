@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { Play } from "lucide-react";
+import { CourseDemo } from "./CourseDemo";
 
 /**
  * CourseBuild — the Studio's signature section: a chalkboard that assembles a
@@ -27,10 +29,10 @@ import { motion, useScroll, useTransform, type MotionValue } from "framer-motion
  */
 
 const ACTS = [
-  { kicker: "01 · Brainstorm", line: "Everything you know, in no particular order." },
-  { kicker: "02 · Storyboard", line: "We find the order it should be learned in." },
-  { kicker: "03 · Build", line: "Then it becomes something they do — a call to make, a score to chase, a situation to handle." },
-  { kicker: "04 · Launch", line: "Built so they finish it. A classroom, a sales floor, a support desk." },
+  { kicker: "01 · You hand it over", line: "A deck, an SOP, or one expert who knows it all. However messy." },
+  { kicker: "02 · We storyboard it", line: "You approve the flow before a single screen gets built." },
+  { kicker: "03 · We build it", line: "Decisions to make, things to drag, scores to chase." },
+  { kicker: "04 · You see who did what", line: "Who finished, who struggled, exactly where they dropped off." },
 ] as const;
 
 /** Where the raw thinking starts: scattered, angled, unordered. */
@@ -252,11 +254,36 @@ const DELIVERABLES = [
   { k: "You sign off", v: "A storyboard, before a single screen is built." },
   { k: "You get", v: "Working modules: branching scenarios, simulations, gamified practice." },
   { k: "It runs", v: "On your platform or ours. Classroom, sales floor or support desk." },
+  { k: "You track", v: "Completions, scores, and the exact screen people quit on." },
+  { k: "You own it", v: "The files are yours. Change them later with us or without us." },
 ];
 
 function Deliverables() {
+  const [demo, setDemo] = useState(false);
+
   return (
     <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-6 sm:pb-24">
+      {/* Reading about an interactive course convinces nobody. This is one. */}
+      <button
+        onClick={() => setDemo(true)}
+        className="group mb-8 flex w-full items-center gap-4 rounded-2xl border border-chalk-yellow/30 bg-chalk-yellow/[0.07] p-5 text-left transition-colors hover:border-chalk-yellow/60 hover:bg-chalk-yellow/10"
+      >
+        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-chalk-yellow/15 text-chalk-yellow transition-transform group-hover:scale-105">
+          <Play size={17} fill="currentColor" strokeWidth={0} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[15px] font-bold text-chalk">Try one — 30 seconds</span>
+          <span className="mt-0.5 block text-sm text-chalk/55">
+            A real module. Make a call, drag things into order, get scored.
+          </span>
+        </span>
+        <span className="ml-auto hidden font-special-elite text-[10px] uppercase tracking-[0.2em] text-chalk-yellow/70 sm:block">
+          Tap
+        </span>
+      </button>
+
+      <AnimatePresence>{demo && <CourseDemo onClose={() => setDemo(false)} />}</AnimatePresence>
+
       <dl className="grid gap-px overflow-hidden rounded-2xl border border-chalk/10 bg-chalk/10 sm:grid-cols-2">
         {DELIVERABLES.map((d) => (
           <div key={d.k} className="bg-board-deep p-5 sm:p-6">
@@ -312,7 +339,7 @@ export function CourseBuild() {
         Course building
       </span>
       <h2 className="mx-auto mt-5 max-w-3xl text-balance font-playfair text-[clamp(1.9rem,5vw,3.25rem)] font-bold leading-[1.1] tracking-tight text-chalk">
-        You know the thing. We make it learnable.
+        Outsource the whole course. Idea to built, plus who actually finished it.
       </h2>
     </div>
   );
