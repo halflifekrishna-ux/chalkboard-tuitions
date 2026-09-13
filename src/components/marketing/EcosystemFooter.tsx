@@ -51,12 +51,22 @@ export function EcosystemFooter() {
               technology that powers it. Built on Home Tuitions Bangalore since 2018.
             </p>
             <div className="space-y-2.5">
-              <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
-                <Phone size={13} className="text-chalk-yellow flex-shrink-0" /> {WHATSAPP_DISPLAY}
-                <span className="text-chalk/30">· Tuitions</span>
+              {/* This line reaches the tuition centre, not Chalkboard generally —
+                  Studio and everything else route to the shared inbox below. Said
+                  plainly so nobody WhatsApps a corporate brief to the classroom. */}
+              <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
+                <Phone size={13} className="text-chalk-yellow flex-shrink-0 mt-1" />
+                <span>
+                  {WHATSAPP_DISPLAY}
+                  <span className="block text-xs text-chalk/55">Tuitions enquiries only</span>
+                </span>
               </a>
-              <a href={`mailto:${EMAIL}`} className="flex items-center gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
-                <Mail size={13} className="text-chalk-yellow flex-shrink-0" /> {EMAIL}
+              <a href={`mailto:${EMAIL}`} className="flex items-start gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
+                <Mail size={13} className="text-chalk-yellow flex-shrink-0 mt-1" />
+                <span>
+                  {EMAIL}
+                  <span className="block text-xs text-chalk/55">Learning Studio &amp; everything else</span>
+                </span>
               </a>
               <div className="flex items-start gap-2.5 text-sm text-chalk/50">
                 <MapPin size={13} className="text-chalk-orange flex-shrink-0 mt-0.5" /> Kammanahalli & Kalyan Nagar, Bangalore
@@ -79,7 +89,7 @@ export function EcosystemFooter() {
               <ul className="space-y-2.5">
                 {links.map((l) => (
                   <li key={l.label}>
-                    <Link href={l.href} className="text-chalk/45 text-sm hover:text-chalk transition-colors duration-150">
+                    <Link href={l.href} className="text-chalk/60 text-sm hover:text-chalk transition-colors duration-150">
                       {l.label}
                     </Link>
                   </li>
@@ -90,9 +100,9 @@ export function EcosystemFooter() {
         </div>
 
         {/* Legal bar */}
-        <div className="border-t border-chalk/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-chalk/40">
+        <div className="border-t border-chalk/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-chalk/60">
           <p>© {new Date().getFullYear()} Chalkboard Learning Services LLP. All rights reserved.</p>
-          <p className="text-chalk/35">Chalkboard · Chalkboard Tuitions · Chalkboard Learning Studio · Chalkboard OS</p>
+          <p className="text-chalk/55">Chalkboard · Chalkboard Tuitions · Chalkboard Learning Studio · Chalkboard OS</p>
         </div>
       </div>
     </footer>

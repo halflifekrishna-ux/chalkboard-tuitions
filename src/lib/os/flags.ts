@@ -6,6 +6,7 @@ export type FeatureKey =
   | "attendance"
   | "whatsapp"
   | "classes"
+  | "crm"
   | "homework"
   | "fees"
   | "payments"
@@ -25,6 +26,7 @@ const DEFAULTS: FeatureFlags = {
   attendance: true,
   whatsapp: true,
   classes: true,
+  crm: true,
   homework: false,
   fees: false,
   payments: false,

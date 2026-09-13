@@ -13,6 +13,13 @@ export const metadata: Metadata = {
   description:
     "Chalkboard OS is the technology platform that runs Chalkboard — admissions, attendance, fees, parent communication and analytics in one place.",
   alternates: { canonical: `${SITE_URL}/os` },
+  openGraph: {
+    title: "Chalkboard OS — The Platform Powering Chalkboard",
+    description:
+      "Admissions, attendance, fees, parent communication and analytics for a learning centre — in one calm, reliable system.",
+    url: `${SITE_URL}/os`,
+    type: "website",
+  },
 };
 
 const capabilities = [

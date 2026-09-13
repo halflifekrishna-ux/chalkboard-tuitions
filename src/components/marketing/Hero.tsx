@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
  *   eyebrow?  small kicker
  *   title / highlight  headline; `highlight` renders in gold after the title
  *   subtitle  supporting paragraph
- *   chips?    trust facts shown as pills (e.g. LKG–10, CBSE·ICSE·State, Max 8)
+ *   chips?    trust facts shown as pills (e.g. Grades 1–10, CBSE·ICSE·State, Max 8)
  *   primary / secondary  { label, href, external? } CTAs
  *   note?     small reassurance line under the CTAs
  * Used in: homepage; reusable on sub-pages.
@@ -84,14 +84,14 @@ export function Hero({
                 </Button>
               )}
               {secondary && (
-                <Button href={secondary.href} external={secondary.external} size="lg" variant="secondary">
+                <Button href={secondary.href} external={secondary.external} size="lg" variant="onDark">
                   {secondary.label}
                 </Button>
               )}
             </div>
           )}
 
-          {note && <p className="mt-4 text-sm text-chalk/45">{note}</p>}
+          {note && <p className="mt-4 text-sm text-chalk/60">{note}</p>}
         </div>
       </Container>
     </section>

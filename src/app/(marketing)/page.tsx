@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { PortalShader } from "@/components/ui/portal-shader";
 import { Reveal } from "@/components/marketing/Reveal";
@@ -11,12 +12,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuition
 export const metadata: Metadata = {
   title: { absolute: "Chalkboard — Learning, differently." },
   description:
-    "Chalkboard is a modern learning ecosystem: Chalkboard Tuitions (school learning, LKG–10), Chalkboard Learning Studio (college & corporate learning), and Chalkboard OS. Choose your path.",
+    "Chalkboard is a learning ecosystem in Bengaluru: Chalkboard Tuitions for Grades 1–10, and Chalkboard Learning Studio for sales, support and team training. Built on Home Tuitions Bangalore, teaching since 2018.",
   keywords: ["Chalkboard", "Chalkboard Learning", "Chalkboard Tuitions", "Chalkboard Learning Studio", "Chalkboard OS"],
   alternates: { canonical: SITE_URL },
   openGraph: {
     title: "Chalkboard — Learning, differently.",
-    description: "A modern learning ecosystem — tuitions, professional learning, and the technology behind it.",
+    description: "Tuitions for Grades 1–10 and training for teams at work — built on Home Tuitions Bangalore, teaching in Bengaluru since 2018.",
     url: SITE_URL,
     type: "website",
     siteName: "Chalkboard",
@@ -62,7 +63,7 @@ export default function HomePage() {
 
         <Container className="relative z-10">
           <div className="max-w-4xl">
-            <span className="block font-special-elite text-sm sm:text-base uppercase tracking-[0.34em] text-chalk-yellow/90">
+            <span className="block text-sm font-bold uppercase tracking-[0.24em] text-chalk-yellow sm:text-base">
               Chalkboard
             </span>
             <h1 className="mt-5 break-words font-playfair font-black leading-[1.02] tracking-tight text-[clamp(2.75rem,9vw,6.5rem)]">
@@ -75,7 +76,7 @@ export default function HomePage() {
           </div>
         </Container>
 
-        <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
+        <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/60">
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">What brings you here?</span>
           <ChevronDown size={18} className="animate-bounce" />
         </div>
@@ -99,11 +100,19 @@ export default function HomePage() {
         <Container size="narrow">
           <Reveal>
             <div className="border-t border-chalk/10 pt-10 text-center">
-              <p className="font-playfair text-xl font-bold sm:text-2xl">Built on years of learning experience.</p>
+              <p className="font-playfair text-xl font-bold sm:text-2xl">This started with a teacher.</p>
               <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-chalk/55">
-                <span className="font-semibold text-chalk/85">Home Tuitions Bangalore</span>, operating since 2018, is the
-                foundation behind Chalkboard Tuitions.
+                <span className="font-semibold text-chalk/85">Home Tuitions Bangalore</span> has run since 2018.
+                Chalkboard is the same teachers and the same standard — and the reason we are strict about how a
+                thing gets taught.
               </p>
+              <Link
+                href="/about"
+                className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/30 underline-offset-4 transition-colors hover:decoration-chalk-yellow"
+              >
+                Read how it started
+                <ArrowRight size={15} />
+              </Link>
             </div>
           </Reveal>
         </Container>

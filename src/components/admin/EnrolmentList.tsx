@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
+import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
 export interface EnrolCandidate {
@@ -35,7 +36,7 @@ export function EnrolmentList({
       <ul className="space-y-2">
         {optimistic.map((s) => (
           <li key={s.id}>
-            <button
+            <motion.button
               type="button"
               onClick={() =>
                 startTransition(async () => {
@@ -43,10 +44,14 @@ export function EnrolmentList({
                   await onToggle(s.id, !s.enrolled);
                 })
               }
-              className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left active:scale-[0.99] transition-transform"
+              whileTap={{ scale: 0.98 }}
+              animate={{ scale: s.enrolled ? 1.01 : 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+              className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left"
               style={{
                 background: s.enrolled ? "rgba(201,162,39,0.15)" : "rgba(245,240,232,0.05)",
                 border: `1px solid ${s.enrolled ? "rgba(201,162,39,0.45)" : "rgba(245,240,232,0.08)"}`,
+                boxShadow: s.enrolled ? "0 2px 12px rgba(201,162,39,0.2)" : "none",
               }}
             >
               <span className="min-w-0">
@@ -57,16 +62,19 @@ export function EnrolmentList({
                   {s.admission_number ?? "—"} · Grade {s.grade}
                 </span>
               </span>
-              <span
+              <motion.span
                 className="flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center"
+                initial={false}
+                animate={{ scale: s.enrolled ? [0.6, 1.15, 1] : 1 }}
+                transition={{ duration: 0.28 }}
                 style={{
                   background: s.enrolled ? "#c9a227" : "rgba(245,240,232,0.1)",
                   color: s.enrolled ? "#162d24" : "transparent",
                 }}
               >
                 <Check size={14} strokeWidth={3} />
-              </span>
-            </button>
+              </motion.span>
+            </motion.button>
           </li>
         ))}
       </ul>

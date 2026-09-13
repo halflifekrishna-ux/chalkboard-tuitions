@@ -54,9 +54,11 @@
            transition-all duration-200;
   }
 
+  /* Only ever sits on cream/white sections, where chalk-yellow measured about
+     1.9:1 against the pill. gold-deep clears 4.5:1 at this size. */
   .section-label {
-    @apply inline-block text-xs font-semibold tracking-[0.15em] uppercase
-           text-chalk-yellow bg-board/10 dark:bg-chalk/10 px-3 py-1 rounded-full mb-4;
+    @apply inline-block text-[13px] font-bold tracking-[0.15em] uppercase
+           text-gold-deep bg-board/[0.07] dark:bg-chalk/10 px-3 py-1 rounded-full mb-4;
   }
 
   .chalk-card {

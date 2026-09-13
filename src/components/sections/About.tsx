@@ -26,13 +26,15 @@ export function About() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="about" className="py-24 bg-cream dark:bg-chalk-dark">
+    // overflow-hidden: the value cards enter from x:24, which otherwise widens
+    // the page by 8px on phones until they scroll into view.
+    <section id="about" className="py-24 bg-cream dark:bg-chalk-dark overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div ref={ref} className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Story */}
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <span className="section-label">Our Story</span>
@@ -71,8 +73,8 @@ export function About() {
             {values.map(({ icon: Icon, title, description }, i) => (
               <motion.div
                 key={title}
-                initial={{ opacity: 0, x: 24 }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.15 + i * 0.12, duration: 0.5, ease: "easeOut" }}
                 className="flex gap-5 p-5 bg-white dark:bg-board/30 rounded-2xl border border-gray-100 dark:border-chalk/10 shadow-sm"
               >

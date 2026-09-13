@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Plus, Users, BookOpen, Layers, Tag, Search } from "lucide-react";
+import { Plus, Users, BookOpen, Layers, Tag, Search, Clock } from "lucide-react";
 import { requireAnyCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { BOARD_LABELS, type Board } from "@/lib/os/types";
+import { fmtTime } from "@/lib/os/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export default async function BatchesPage({ searchParams }: { searchParams: { q?
 
   let query = supabase
     .from("batches")
-    .select("id, name, grade, board, capacity, status, academic_year:academic_years(name), batch_students(count), batch_subjects(count)")
+    .select("id, name, grade, board, capacity, status, days, start_time, end_time, academic_year:academic_years(name), batch_students(count), batch_subjects(count)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (q) query = query.ilike("name", `%${q}%`);
@@ -78,6 +79,12 @@ export default async function BatchesPage({ searchParams }: { searchParams: { q?
                     <span className="flex items-center gap-1"><Users size={12} /> {students}/{b.capacity}</span>
                     <span className="flex items-center gap-1"><BookOpen size={12} /> {subs} subject{subs === 1 ? "" : "s"}</span>
                   </div>
+                  {(b.days?.length ?? 0) > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1.5 text-[11px]" style={{ color: "rgba(245,240,232,0.4)" }}>
+                      <Clock size={11} />
+                      <span>{b.days.map((d: string) => d[0].toUpperCase() + d.slice(1, 3)).join(" ")} · {fmtTime(b.start_time)}–{fmtTime(b.end_time)}</span>
+                    </div>
+                  )}
                 </Link>
               </li>
             );

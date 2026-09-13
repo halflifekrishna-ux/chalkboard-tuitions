@@ -37,25 +37,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const resend = getResend();
+    // The enquiry is safely stored by this point. Email is best-effort from
+    // here: a Resend outage must not show the parent an error and have them
+    // submit again, which is how one enquiry becomes four.
+    try {
+      const resend = getResend();
+      const confirmation = buildConfirmationEmail(name, child_grade);
+      const adminNotif = buildAdminEmail({ name, email, phone, child_grade, board, message });
 
-    // Send confirmation email to the lead
-    const confirmation = buildConfirmationEmail(name, child_grade);
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject: confirmation.subject,
-      html: confirmation.html,
-    });
-
-    // Send admin notification
-    const adminNotif = buildAdminEmail({ name, email, phone, child_grade, board, message });
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: ADMIN_EMAIL,
-      subject: adminNotif.subject,
-      html: adminNotif.html,
-    });
+      await Promise.all([
+        resend.emails.send({
+          from: FROM_EMAIL,
+          to: email,
+          subject: confirmation.subject,
+          html: confirmation.html,
+        }),
+        resend.emails.send({
+          from: FROM_EMAIL,
+          to: ADMIN_EMAIL,
+          subject: adminNotif.subject,
+          html: adminNotif.html,
+        }),
+      ]);
+    } catch (mailErr) {
+      // Surfaced in the Vercel logs; the lead is already captured.
+      console.error("Contact email dispatch failed (lead was saved):", mailErr);
+    }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {

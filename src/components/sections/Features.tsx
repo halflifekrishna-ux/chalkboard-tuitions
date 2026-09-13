@@ -153,7 +153,7 @@ export function Features() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-6">
-          <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-chalk-yellow bg-board/10 dark:bg-board/30 px-3 py-1 rounded-full mb-4">
+          <span className="inline-block text-[13px] font-bold tracking-[0.18em] uppercase text-gold-deep bg-board/[0.07] dark:bg-board/30 px-3 py-1 rounded-full mb-4">
             Why Chalkboard
           </span>
           <h2 className="font-playfair text-4xl sm:text-5xl font-bold text-board dark:text-chalk mb-4">
@@ -198,7 +198,7 @@ export function Features() {
             style={{ background: "radial-gradient(ellipse, #f4c430, transparent 70%)" }}
           />
           <div className="relative z-10">
-            <p className="font-special-elite text-chalk-yellow tracking-widest text-sm uppercase mb-3 opacity-80">
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-chalk-yellow mb-3">
               Our promise to you
             </p>
             <h3 className="font-playfair text-2xl sm:text-3xl font-bold text-chalk">

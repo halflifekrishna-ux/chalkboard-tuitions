@@ -109,8 +109,8 @@ export function Pathways() {
           href="/tuitions"
           eyebrow="For parents & students"
           title="Chalkboard Tuitions"
-          description="Small-batch, personalised academic learning that helps your child make real progress."
-          tags={["LKG–10", "CBSE · ICSE · State Board"]}
+          description="Small batches, taught by the same people, the same way, since 2018."
+          tags={["Grades 1–10", "CBSE · ICSE · State Board"]}
           cta="Explore Tuitions"
           icon={GraduationCap}
           primary
@@ -121,8 +121,8 @@ export function Pathways() {
           href="/learning-studio"
           eyebrow="For colleges, organisations & professionals"
           title="Chalkboard Learning Studio"
-          description="Learning solutions for institutions and organisations."
-          tags={["Corporate", "College", "E-learning", "Professional Development"]}
+          description="Training for teams that sell, support and deliver — and courses built from what your people already know."
+          tags={["Sales", "Support", "Team performance", "Course building"]}
           cta="Explore Learning Studio"
           icon={Briefcase}
           delay={230}
@@ -140,9 +140,9 @@ export function Pathways() {
             <LogIn size={16} className="text-chalk/60" />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/40">Already part of Chalkboard?</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">Already part of Chalkboard?</p>
             <p className="text-sm font-semibold text-chalk/85 truncate">
-              Chalkboard OS <span className="font-normal text-chalk/45">· Students · Parents · Teachers · Admin</span>
+              Chalkboard OS <span className="font-normal text-chalk/60">· Students · Parents · Teachers · Admin</span>
             </p>
           </div>
         </div>

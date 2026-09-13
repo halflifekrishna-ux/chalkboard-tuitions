@@ -83,7 +83,7 @@ export function Contact() {
             Fill the form and we&apos;ll WhatsApp you within 30 minutes to confirm your slot.
             No obligation, no pressure.
           </p>
-          <p className="mt-4 text-sm text-chalk/45">
+          <p className="mt-4 text-sm text-chalk/60">
             This form is for school tuitions. For corporate, college or trainer enquiries, go to{" "}
             <Link
               href="/learning-studio#enquire"
@@ -97,8 +97,8 @@ export function Contact() {
         <div ref={ref} className="grid lg:grid-cols-5 gap-10 items-start">
           {/* ── Left contact info ── */}
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
             className="lg:col-span-2 space-y-4"
           >
@@ -169,8 +169,8 @@ export function Contact() {
 
           {/* ── Right: Form ── */}
           <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-3 relative"
           >
@@ -293,7 +293,7 @@ export function Contact() {
                   )}
                 </button>
 
-                <p className="text-center text-xs text-chalk/30">
+                <p className="text-center text-xs text-chalk/55">
                   We&apos;ll WhatsApp you within 30 minutes. No spam, ever.
                 </p>
               </form>

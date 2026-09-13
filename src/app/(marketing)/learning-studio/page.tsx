@@ -5,28 +5,103 @@ import { Container } from "@/components/ui/container";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { StudioEnquiryForm } from "@/components/marketing/learning-studio/StudioEnquiryForm";
 import { Reveal } from "@/components/marketing/Reveal";
+import { LogoMark } from "@/components/marketing/LogoMark";
 import { HeroPin } from "@/components/marketing/learning-studio/HeroPin";
 import { SectionEnter } from "@/components/marketing/learning-studio/SectionEnter";
 import { ProgrammeMarquee } from "@/components/marketing/learning-studio/ProgrammeMarquee";
+import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
+import { CourseBuild } from "@/components/marketing/learning-studio/CourseBuild";
+import { PromptLesson } from "@/components/marketing/learning-studio/PromptLesson";
+import { StudioFaq } from "@/components/marketing/learning-studio/StudioFaq";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Chalkboard Learning Studio — Professional & Institutional Learning",
+  title: "Corporate Training in Bangalore — Sales, Support & Team Performance",
   description:
-    "Chalkboard Learning Studio designs learning programmes for corporates, colleges and professionals — from capability building and leadership development to placement readiness and faculty training.",
+    "Chalkboard Learning Studio runs sales, customer support, team effectiveness and leadership training for companies and colleges in Bengaluru — and builds custom courses from your own material.",
+  keywords: [
+    "corporate training Bangalore",
+    "sales training Bengaluru",
+    "customer support training",
+    "team effectiveness workshop Bangalore",
+    "leadership training Bengaluru",
+    "custom course development",
+    "instructional design Bangalore",
+    "campus placement training Bangalore",
+  ],
   alternates: { canonical: `${SITE_URL}/learning-studio` },
+  openGraph: {
+    title: "Corporate Training in Bangalore — Chalkboard Learning Studio",
+    description:
+      "Sales, customer support, team performance and leadership training for teams in Bengaluru — plus custom courses built from your own material.",
+    url: `${SITE_URL}/learning-studio`,
+    type: "website",
+  },
+};
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+
+/* Each practice as a distinct Service so the page can surface for the specific
+   thing a buyer searched for, not just the brand. */
+const studioSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": `${SITE}/learning-studio#studio`,
+      name: "Chalkboard Learning Studio",
+      url: `${SITE}/learning-studio`,
+      parentOrganization: { "@id": `${SITE}/#organization` },
+      description:
+        "Training and course design for companies, colleges and institutions — sales, customer support, team effectiveness, leadership, and custom course building.",
+      areaServed: [
+        { "@type": "City", name: "Bengaluru" },
+        { "@type": "Country", name: "India" },
+      ],
+      serviceType: [
+        "Corporate training",
+        "Sales training",
+        "Customer support training",
+        "Leadership development",
+        "Instructional design",
+      ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Learning Studio programmes",
+        itemListElement: [
+          "Sales performance training",
+          "Customer support training",
+          "Team effectiveness programmes",
+          "Leadership and productivity programmes",
+          "Custom course design and build",
+          "Campus placement readiness",
+          "Faculty development",
+        ].map((name) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name },
+        })),
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE },
+        { "@type": "ListItem", position: 2, name: "Learning Studio", item: `${SITE}/learning-studio` },
+      ],
+    },
+  ],
 };
 
 function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "dark" }) {
   return (
     <span
       className={
-        "inline-flex items-center gap-2.5 font-special-elite text-[11px] uppercase tracking-[0.28em] sm:text-xs " +
-        (tone === "dark" ? "text-chalk-yellow/90" : "text-gold")
+        "inline-flex items-center gap-2.5 text-[12px] font-bold uppercase tracking-[0.18em] sm:text-[13px] " +
+        (tone === "dark" ? "text-chalk-yellow" : "text-gold-deep")
       }
     >
-      <span className={tone === "dark" ? "h-px w-6 bg-chalk-yellow/40" : "h-px w-6 bg-gold/50"} />
+      <span className={tone === "dark" ? "h-px w-7 bg-chalk-yellow/50" : "h-px w-7 bg-gold-deep/45"} />
       {label}
     </span>
   );
@@ -36,14 +111,14 @@ function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "d
    Studio designs for, not a claim that every item is a currently-running
    fixed course. ── */
 const CORPORATE_TOPICS = [
-  "AI FOR BUSINESS",
-  "LEADERSHIP PROGRAMMES",
-  "DATA & ANALYTICS",
-  "GENERATIVE AI WORKSHOPS",
-  "COMMUNICATION SKILLS",
-  "DIGITAL TRANSFORMATION",
-  "PRODUCTIVITY & AUTOMATION",
+  "SALES PERFORMANCE",
+  "CUSTOMER SUPPORT",
   "TEAM EFFECTIVENESS",
+  "LEADERSHIP PROGRAMMES",
+  "COMMUNICATION SKILLS",
+  "PRODUCTIVITY & FOCUS",
+  "ONBOARDING ACADEMIES",
+  "TRAIN THE TRAINER",
 ];
 const CORPORATE_FORMATS = [
   "WORKSHOPS",
@@ -64,11 +139,33 @@ const COLLEGE_AREAS = [
   "Digital Technology",
 ];
 
-const LIFECYCLE = [
-  { n: "01", title: "Understand", body: "We start with the real gap — skills, outcomes or capability — not a fixed course catalogue." },
-  { n: "02", title: "Design", body: "A tailored blend of workshops, e-learning and coaching, built around your context and constraints." },
-  { n: "03", title: "Deliver", body: "Structured delivery with clear milestones, facilitators and materials — not a one-off session." },
-  { n: "04", title: "Measure", body: "Reviewed against agreed outcomes, with reporting you can take to your own stakeholders." },
+/* The four things teams actually call us about. Outcome first, not topic first. */
+const PRACTICES = [
+  {
+    n: "01",
+    title: "Sales teams",
+    body: "Discovery that earns the second meeting, objection handling, and the call after the no.",
+  },
+  {
+    n: "02",
+    title: "Customer support",
+    body: "De-escalation, first-contact resolution, and the tone that keeps a customer through a bad day.",
+  },
+  {
+    n: "03",
+    title: "How a team runs",
+    body: "Handoffs, feedback that lands, and decisions that survive the meeting they were made in.",
+  },
+  {
+    n: "04",
+    title: "Pace and focus",
+    body: "For teams that run hot — protecting attention, holding standards, finishing what was started.",
+  },
+  {
+    n: "05",
+    title: "Courses built for you",
+    body: "Your own material turned into something people finish — storyboarded, then built as scenarios, simulations or gamified practice. Scroll on — we’ll show you, then let you try one.",
+  },
 ];
 
 const CAPABILITIES = [
@@ -108,6 +205,7 @@ const SECTORS = [
 export default function LearningStudioPage() {
   return (
     <div className="bg-board-deep">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(studioSchema) }} />
       {/* If JS never runs, reveal everything rather than leaving it transparent. */}
       <noscript>
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
@@ -122,10 +220,40 @@ export default function LearningStudioPage() {
             className="pointer-events-none absolute inset-0"
             style={{ backgroundImage: "linear-gradient(180deg, rgba(7,17,13,0.35) 0%, transparent 30%, transparent 72%, rgba(7,17,13,0.85) 100%)" }}
           />
+          {/* The mark itself, large and faint behind the statement — the page
+              should say whose studio this is before a word is read. Masked so
+              the logo file's own square edge never shows. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-[-18%] top-[70%] w-[92vw] max-w-[560px] -translate-y-1/2 opacity-[0.15] sm:right-[-4%] sm:top-[46%] sm:w-[52vw] lg:right-[2%] lg:opacity-[0.17]"
+            style={{
+              maskImage: "radial-gradient(ellipse 62% 62% at 50% 50%, #000 35%, transparent 76%)",
+              WebkitMaskImage: "radial-gradient(ellipse 62% 62% at 50% 50%, #000 35%, transparent 76%)",
+            }}
+          >
+            <LogoMark className="w-full" sizes="(max-width: 640px) 86vw, 52vw" />
+          </div>
+
           <Container className="relative z-10">
             <div className="max-w-3xl">
-              <Eyebrow label="Chalkboard Learning Studio" tone="dark" />
-              <h1 className="mt-6 break-words font-playfair font-black leading-[1.03] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]">
+              {/* The brand lockup, not a typographic label: the mark, the name
+                  in the brand serif, and the studio line under it. */}
+              <div className="flex items-center gap-3.5">
+                <LogoMark
+                  className="w-[52px] shrink-0 rounded-xl ring-1 ring-chalk-yellow/25 sm:w-[60px]"
+                  sizes="60px"
+                  priority
+                />
+                <span className="leading-tight">
+                  <span className="block font-playfair text-xl font-black tracking-tight text-chalk sm:text-2xl">
+                    Chalkboard
+                  </span>
+                  <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
+                    Learning Studio
+                  </span>
+                </span>
+              </div>
+              <h1 className="mt-7 break-words font-playfair font-black leading-[1.03] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]">
                 Learning that moves
                 <br />
                 <span className="italic text-chalk-yellow">people forward.</span>
@@ -133,7 +261,7 @@ export default function LearningStudioPage() {
               <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/65">
                 Learning programmes designed for colleges, teams and professionals — from classroom to workplace.
               </p>
-              <p className="mt-8 text-sm text-chalk/45">
+              <p className="mt-8 text-sm text-chalk/60">
                 Looking for school tuitions?{" "}
                 <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/70 underline decoration-chalk/25 underline-offset-4 hover:text-chalk-yellow">
                   That&rsquo;s Chalkboard Tuitions →
@@ -141,7 +269,7 @@ export default function LearningStudioPage() {
               </p>
             </div>
           </Container>
-          <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
+          <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/60">
             <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
             <ChevronDown size={18} className="animate-bounce" />
           </div>
@@ -200,14 +328,14 @@ export default function LearningStudioPage() {
               <Reveal delay={160} className="relative min-w-0 lg:col-span-2">
                 <span id="colleges" aria-hidden className="pointer-events-none absolute -top-28 left-0" />
                 <div className="h-full min-w-0 rounded-2xl border border-chalk/10 bg-chalk/[0.03] p-6 sm:p-7">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-chalk/45">For institutions</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-chalk/60">For institutions</span>
                   <h3 className="mt-3 font-playfair text-xl font-bold sm:text-2xl">College Learning</h3>
                   <p className="mt-3 text-sm leading-relaxed text-chalk/55 sm:text-base">
                     Industry-ready learning for students and faculty.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-x-3 gap-y-2">
                     {COLLEGE_AREAS.map((a) => (
-                      <span key={a} className="text-xs text-chalk/45">
+                      <span key={a} className="text-xs text-chalk/60">
                         {a}
                       </span>
                     ))}
@@ -243,19 +371,19 @@ export default function LearningStudioPage() {
       <section className="relative overflow-hidden bg-cream-bg py-20 text-board sm:py-28">
         <Container className="relative">
           <Reveal>
-            <Eyebrow label="What We Build" />
+            <Eyebrow label="What We Train" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
-              We don&rsquo;t just deliver courses.
+              Teams don&rsquo;t need a course.
               <br />
-              We build learning experiences.
+              They need to get better at the hard part.
             </h2>
           </Reveal>
 
           <div className="mt-14 divide-y divide-board/10 border-t border-board/10">
-            {LIFECYCLE.map((s, i) => (
+            {PRACTICES.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
-                  <span className="font-playfair text-2xl font-black text-gold/40 sm:text-3xl">{s.n}</span>
+                  <span className="font-playfair text-2xl font-black text-gold/70 sm:text-3xl">{s.n}</span>
                   <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
                   <p className="col-start-2 min-w-0 text-sm leading-relaxed text-gray-600 sm:col-start-3 sm:text-base">{s.body}</p>
                 </div>
@@ -264,6 +392,17 @@ export default function LearningStudioPage() {
           </div>
         </Container>
       </section>
+
+      {/* ── 03b — The argument, made by doing it rather than describing it ── */}
+      <TransformBoring />
+
+      {/* ── 03c — Course building: the signature scroll sequence ── */}
+      <CourseBuild />
+
+      {/* ── 03d — The page becomes a lesson ── */}
+      <PromptLesson />
+
+      <StudioFaq />
 
       {/* ── 04 — How we work / capability ── */}
       <section className="relative overflow-hidden bg-white py-20 text-board sm:py-28">
@@ -285,7 +424,7 @@ export default function LearningStudioPage() {
                   className="flex min-w-0 items-baseline justify-between gap-4 border-b border-board/10 py-4"
                 >
                   <span className="min-w-0 truncate text-base font-medium text-board sm:text-lg">{c}</span>
-                  <span className="shrink-0 font-playfair text-xs font-bold text-gold/50">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="shrink-0 font-playfair text-xs font-bold text-gold-deep">{String(i + 1).padStart(2, "0")}</span>
                 </div>
               ))}
             </div>
@@ -308,7 +447,7 @@ export default function LearningStudioPage() {
               <Reveal key={s.n} delay={(i % 3) * 70}>
                 <div className="min-w-0 border-b border-chalk/10 py-6">
                   <div className="flex items-baseline gap-4">
-                    <span className="font-playfair text-lg font-black text-chalk-yellow/40">{s.n}</span>
+                    <span className="font-playfair text-lg font-black text-chalk-yellow/75">{s.n}</span>
                     <h3 className="font-playfair text-xl font-bold text-chalk sm:text-2xl">{s.name}</h3>
                   </div>
                   <p className="mt-2 max-w-md text-sm leading-relaxed text-chalk/55 sm:text-base">{s.body}</p>
@@ -318,7 +457,7 @@ export default function LearningStudioPage() {
           </div>
 
           <Reveal delay={120}>
-            <p className="mt-10 text-sm text-chalk/40">Programme details and references available on request.</p>
+            <p className="mt-10 text-sm text-chalk/60">Programme details and references available on request.</p>
           </Reveal>
         </Container>
       </section>
@@ -345,7 +484,7 @@ export default function LearningStudioPage() {
               >
                 <Mail size={15} aria-hidden className="shrink-0" /> {CONTACT_EMAIL}
               </a>
-              <p className="mt-10 max-w-sm border-t border-chalk/10 pt-5 text-sm leading-relaxed text-chalk/45">
+              <p className="mt-10 max-w-sm border-t border-chalk/10 pt-5 text-sm leading-relaxed text-chalk/60">
                 This form is for organisations, institutions and professionals. Looking for tuitions for your child?{" "}
                 <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/75 underline decoration-chalk/30 underline-offset-4 hover:text-chalk-yellow">
                   Chalkboard Tuitions →

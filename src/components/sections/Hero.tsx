@@ -223,14 +223,13 @@ export function Hero() {
               style={{ background: "rgba(22,45,36,0.90)" }}
             >
               <p className="text-xs font-semibold text-chalk/80 font-sans">📍 Kammanahalli</p>
-              <p className="text-xs text-chalk/40 font-sans">& Kalyan Nagar, Blr</p>
+              <p className="text-xs text-chalk/60 font-sans">& Kalyan Nagar, Blr</p>
             </motion.div>
           </div>
 
-          {/* Corner label */}
-          <div className="absolute -bottom-6 right-0 text-[10px] font-sans text-chalk/20 tracking-wider uppercase">
-            Interactive 3D · drag to explore
-          </div>
+          {/* The "drag to explore" hint now lives inside SplineScene, which only
+              shows it once the scene has actually loaded — this corner label
+              promised an interaction even when the scene had failed. */}
         </motion.div>
       </div>
 

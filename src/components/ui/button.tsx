@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  * Used in: Hero, CTASection, JourneyStrip, navbars, pages.
  */
 type Common = {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "onDark" | "ghost";
   size?: "md" | "lg";
   className?: string;
   children: React.ReactNode;
@@ -30,6 +30,10 @@ const variants = {
     "text-chalk-dark shadow-md hover:shadow-lg hover:shadow-chalk-yellow/30 hover:scale-[1.02] bg-[linear-gradient(135deg,#f4c430_0%,#c9a227_100%)]",
   secondary:
     "border-2 border-board/25 text-board hover:border-board hover:bg-board hover:text-chalk dark:border-chalk/30 dark:text-chalk dark:hover:bg-chalk dark:hover:text-board-deep",
+  // For bands that stay dark in both themes (hero, closing CTA). `secondary`
+  // follows the theme, so on those it turns dark-on-dark and disappears.
+  onDark:
+    "border-2 border-chalk/30 text-chalk hover:border-chalk hover:bg-chalk hover:text-board-deep",
   ghost:
     "text-board/70 hover:text-board hover:bg-board/5 dark:text-chalk/70 dark:hover:text-chalk dark:hover:bg-chalk/10",
 };

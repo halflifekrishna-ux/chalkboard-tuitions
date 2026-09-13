@@ -42,7 +42,7 @@ export function WhyChooseUs({
               key={item.title}
               className="group rounded-2xl border border-gray-100 dark:border-chalk/10 bg-cream-bg/60 dark:bg-board/20 p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
             >
-              <span className="font-playfair text-3xl font-black text-gold/30 group-hover:text-gold/50 transition-colors">
+              <span className="font-playfair text-3xl font-black text-gold/55 group-hover:text-gold-deep transition-colors">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <h3 className="mt-3 font-playfair text-xl font-bold text-board dark:text-chalk">{item.title}</h3>

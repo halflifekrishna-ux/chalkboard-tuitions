@@ -29,8 +29,11 @@ export function WhatsAppFab() {
   const [showLabel, setShowLabel] = useState(false);
 
   // This is the Tuitions WhatsApp line. The homepage front door stays clean,
-  // and Learning Studio is email-only — so it belongs on neither.
-  const hidden = pathname === "/" || pathname.startsWith("/learning-studio");
+  // Learning Studio is email-only, and /about carries the memorial to Uma
+  // Maheshwari — a booking bubble hovering over that is the wrong note, and it
+  // physically covers the closing lines. That page ends with its own CTA.
+  const hidden =
+    pathname === "/" || pathname.startsWith("/learning-studio") || pathname.startsWith("/about");
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 1500);
