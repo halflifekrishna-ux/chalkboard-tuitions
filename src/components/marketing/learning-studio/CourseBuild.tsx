@@ -14,10 +14,12 @@ import { motion, useScroll, useTransform, type MotionValue } from "framer-motion
  * paying for another megabyte of runtime would cost more in ranking than the
  * visual earns.
  *
- * Desktop pins and scrubs. Phones get the same four acts as a plain vertical
- * sequence: pinned scrubbing fights the dynamic browser chrome on iOS and
- * reads as jank on a small screen, so the mobile path is the honest one
- * rather than a shrunken copy of the desktop trick.
+ * Pinned and scrubbed on every viewport, phones included — HeroPin already
+ * pins on mobile in this codebase, and 100svh keeps iOS browser chrome from
+ * shifting the track. The phone gets tighter geometry (a fanned strip rather
+ * than a wide spine) instead of a smaller copy of the desktop spacing, which
+ * would push frames off-screen. Only reduced-motion visitors get the plain
+ * stacked list.
  *
  * Scroll progress is measured by hand from window.scrollY against this
  * element's own box — same reasoning as HeroPin.tsx, whose comment explains
@@ -70,17 +72,20 @@ function useActProgress(ref: React.RefObject<HTMLDivElement>, enabled: boolean) 
 }
 
 /** One storyboard frame, carried through all four acts by the shared progress. */
-function Frame({ i, progress }: { i: number; progress: MotionValue<number> }) {
+function Frame({ i, progress, mobile }: { i: number; progress: MotionValue<number>; mobile: boolean }) {
   const s = SCATTER[i];
-  const spineX = (i - 2) * 132;
-  const stackX = (i - 2) * 16;
+  // Five frames have to sit inside 390px on a phone, so they fan and overlap
+  // rather than spreading into a full spine.
+  const spineX = (i - 2) * (mobile ? 50 : 132);
+  const stackX = (i - 2) * (mobile ? 9 : 16);
+  const scatterScale = mobile ? 3.2 : 6;
 
   // act 1 scattered → act 2 in line → act 3 turned into the room → act 4 stacked
-  const x = useTransform(progress, [0, 0.3, 0.62, 0.86], [s.x * 6, spineX, spineX, stackX]);
-  const y = useTransform(progress, [0, 0.3, 0.62, 0.86], [s.y * 4, 0, 0, i * -4]);
+  const x = useTransform(progress, [0, 0.3, 0.62, 0.86], [s.x * scatterScale, spineX, spineX, stackX]);
+  const y = useTransform(progress, [0, 0.3, 0.62, 0.86], [s.y * (mobile ? 2.4 : 4), 0, 0, i * -4]);
   const rotate = useTransform(progress, [0, 0.3, 0.62, 0.86], [s.r, 0, 0, (i - 2) * 1.5]);
-  const rotateY = useTransform(progress, [0.3, 0.62, 0.86], [0, -22, 0]);
-  const z = useTransform(progress, [0.3, 0.62, 0.86], [0, i * 26, 0]);
+  const rotateY = useTransform(progress, [0.3, 0.62, 0.86], [0, mobile ? -13 : -22, 0]);
+  const z = useTransform(progress, [0.3, 0.62, 0.86], [0, i * (mobile ? 7 : 26), 0]);
   const scale = useTransform(progress, [0.62, 0.86, 1], [1, 0.94, 0.94]);
 
   // the frame draws itself in, then fills
@@ -91,7 +96,7 @@ function Frame({ i, progress }: { i: number; progress: MotionValue<number> }) {
   return (
     <motion.div
       style={{ x, y, rotate, rotateY, z, scale }}
-      className="absolute left-1/2 top-1/2 h-[168px] w-[118px] -translate-x-1/2 -translate-y-1/2 sm:h-[210px] sm:w-[148px]"
+      className="absolute left-1/2 top-1/2 h-[150px] w-[86px] -translate-x-1/2 -translate-y-1/2 sm:h-[210px] sm:w-[148px]"
     >
       {/* act 1 — a loose chalk note */}
       <motion.div
@@ -111,9 +116,12 @@ function Frame({ i, progress }: { i: number; progress: MotionValue<number> }) {
         </span>
 
         <motion.div style={{ opacity: fillOpacity }} className="flex h-full flex-col justify-between p-2.5">
-          <span className="font-special-elite text-[9px] uppercase tracking-[0.14em] text-chalk-yellow/80">
+          {/* At 86px across, five of these collide into each other — the
+              numbered corners still tell you which frame is which. */}
+          <span className="hidden font-special-elite text-[9px] uppercase tracking-[0.14em] text-chalk-yellow/80 sm:block">
             {FRAME_LABELS[i]}
           </span>
+          <span className="sm:hidden" aria-hidden />
           <FrameContent i={i} />
         </motion.div>
       </motion.div>
@@ -167,12 +175,12 @@ function FrameContent({ i }: { i: number }) {
   );
 }
 
-function Stage({ progress }: { progress: MotionValue<number> }) {
+function Stage({ progress, mobile }: { progress: MotionValue<number>; mobile: boolean }) {
   return (
-    <div className="relative h-[300px] w-full sm:h-[360px]" style={{ perspective: 1400 }}>
+    <div className="relative h-[260px] w-full sm:h-[360px]" style={{ perspective: mobile ? 900 : 1400 }}>
       <div className="relative h-full w-full" style={{ transformStyle: "preserve-3d" }}>
         {FRAME_LABELS.map((_, i) => (
-          <Frame key={i} i={i} progress={progress} />
+          <Frame key={i} i={i} progress={progress} mobile={mobile} />
         ))}
       </div>
     </div>
@@ -239,17 +247,21 @@ function Stacked() {
 export function CourseBuild() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [scrub, setScrub] = useState(false);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const wide = window.matchMedia("(min-width: 768px)");
-    const sync = () => setScrub(wide.matches && !reduce.matches);
+    const narrow = window.matchMedia("(max-width: 767px)");
+    const sync = () => {
+      setScrub(!reduce.matches);
+      setMobile(narrow.matches);
+    };
     sync();
     reduce.addEventListener("change", sync);
-    wide.addEventListener("change", sync);
+    narrow.addEventListener("change", sync);
     return () => {
       reduce.removeEventListener("change", sync);
-      wide.removeEventListener("change", sync);
+      narrow.removeEventListener("change", sync);
     };
   }, []);
 
@@ -282,11 +294,11 @@ export function CourseBuild() {
 
   return (
     <section id="course-building" className="relative scroll-mt-20 bg-board-deep text-chalk">
-      <div ref={trackRef} className="relative h-[420svh]">
+      <div ref={trackRef} className={`relative ${mobile ? "h-[340svh]" : "h-[420svh]"}`}>
         <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden bg-board-deep bg-chalk-lines">
-          <div className="mx-auto w-full max-w-5xl px-6">
+          <div className="mx-auto w-full max-w-5xl px-5 sm:px-6">
             {header}
-            <Stage progress={progress} />
+            <Stage progress={progress} mobile={mobile} />
             <Captions progress={progress} />
           </div>
         </div>

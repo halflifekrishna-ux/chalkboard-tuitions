@@ -10,19 +10,46 @@ import { ArrowUpRight, Star } from "lucide-react";
  * is a public record parents can go and read for themselves, so the section
  * exists to hand them that record rather than make another claim.
  *
- * `quotes` is empty until real review text is supplied — the block then shows
- * only the link, which is honest and still does the job. Never put words in a
- * parent's mouth here.
+ * The quotes are verbatim from the Google profile and attributed by name, so a
+ * parent can click through and find the same words. Never paraphrase them into
+ * something snappier — invented praise is the one thing that would undo what
+ * this section is for.
+ *
+ * Deliberately no AggregateRating markup: these reviews belong to the Home
+ * Tuitions Bangalore profile on Google, and Google's structured-data policy
+ * disallows marking up ratings you collected elsewhere as your own. Shown as
+ * plain attributed proof instead, which carries the same weight with a parent
+ * and none of the manual-action risk.
  */
 
 const REVIEWS_URL = "https://maps.app.goo.gl/hRzdE5WesLdoGDpg6";
+
+/** Live figures from the Home Tuitions Bangalore Google profile. */
+export const RATING = { value: 4.9, count: 43 };
+
+/* Verbatim from Google. Trimmed only where Google itself truncates, never
+   reworded — a parent can click through and find the same words. */
+const DEFAULT_QUOTES: ReviewQuote[] = [
+  {
+    text: "Great place to send your kids to get the best education coaching. Emphasising conceptual clarity over rote learning for in-depth knowledge.",
+    name: "Manikandan Kj",
+  },
+  {
+    text: "The personalised attention and tailored learning plan have greatly contributed to academic progress. Their expertise, teaching style, and commitment to student success make them an excellent choice.",
+    name: "Sarikonda Karthik Raju",
+  },
+  {
+    text: "Tutors' knowledge and way of making things easier for learners is praise worthy.",
+    name: "Imran Hassan",
+  },
+];
 
 export interface ReviewQuote {
   text: string;
   name: string;
 }
 
-export function LegacyProof({ quotes = [] as ReviewQuote[] }: { quotes?: ReviewQuote[] }) {
+export function LegacyProof({ quotes = DEFAULT_QUOTES }: { quotes?: ReviewQuote[] }) {
   return (
     <section
       aria-labelledby="legacy-heading"
@@ -53,8 +80,10 @@ export function LegacyProof({ quotes = [] as ReviewQuote[] }: { quotes?: ReviewQ
 
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-chalk/60">
             These teachers have been taking these batches for years, as{" "}
-            <span className="text-chalk/85">Home Tuitions Bangalore</span>. Parents have been writing
-            about them on Google that whole time.
+            <span className="text-chalk/85">Home Tuitions Bangalore</span> — rated{" "}
+            <span className="font-semibold text-chalk-yellow">{RATING.value}</span> by{" "}
+            <span className="text-chalk/85">{RATING.count} parents</span> on Google, going back eight
+            years.
           </p>
 
           <a
