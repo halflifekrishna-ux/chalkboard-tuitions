@@ -4,6 +4,7 @@ import { Hero } from "@/components/marketing/Hero";
 import { TrustBanner } from "@/components/marketing/TrustBanner";
 import { CTASection } from "@/components/marketing/CTASection";
 import { InMemory } from "@/components/marketing/InMemory";
+import { InMemoryQuotes } from "@/components/marketing/InMemoryQuotes";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -65,6 +66,7 @@ export default function AboutPage() {
       </Section>
 
       <InMemory />
+      <InMemoryQuotes />
 
       <TrustBanner />
 

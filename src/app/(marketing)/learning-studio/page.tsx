@@ -158,6 +158,11 @@ const PRACTICES = [
     title: "Pace and focus",
     body: "For teams that run hot — protecting attention, holding standards, finishing what was started.",
   },
+  {
+    n: "05",
+    title: "Courses built for you",
+    body: "Your own material turned into something people finish — storyboarded, then built as scenarios, simulations or gamified practice. Scroll on to watch one get made.",
+  },
 ];
 
 const CAPABILITIES = [

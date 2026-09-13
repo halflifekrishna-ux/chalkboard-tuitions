@@ -244,6 +244,45 @@ function Stacked() {
   );
 }
 
+
+/* What a buyer receives. The animation shows the process; this says what lands
+   on their desk, which is what turns a nice scroll into an enquiry. */
+const DELIVERABLES = [
+  { k: "You bring", v: "The expertise your people already have — and the thing they keep getting wrong." },
+  { k: "You sign off", v: "A storyboard, before a single screen is built." },
+  { k: "You get", v: "Working modules: branching scenarios, simulations, gamified practice." },
+  { k: "It runs", v: "On your platform or ours. Classroom, sales floor or support desk." },
+];
+
+function Deliverables() {
+  return (
+    <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-6 sm:pb-24">
+      <dl className="grid gap-px overflow-hidden rounded-2xl border border-chalk/10 bg-chalk/10 sm:grid-cols-2">
+        {DELIVERABLES.map((d) => (
+          <div key={d.k} className="bg-board-deep p-5 sm:p-6">
+            <dt className="font-special-elite text-[10px] uppercase tracking-[0.22em] text-chalk-yellow/85">
+              {d.k}
+            </dt>
+            <dd className="mt-2 text-[15px] leading-snug text-chalk/75">{d.v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-8 flex flex-col items-center gap-3 text-center">
+        <a
+          href="#enquire"
+          className="inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#f4c430_0%,#c9a227_100%)] px-7 py-3.5 text-sm font-bold text-chalk-dark transition-transform active:scale-[0.98]"
+        >
+          Talk about building one
+        </a>
+        <p className="text-xs text-chalk/40">
+          Simulations, branching scenarios, gamified practice — whatever the material actually needs.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function CourseBuild() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [scrub, setScrub] = useState(false);
@@ -284,9 +323,9 @@ export function CourseBuild() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           {header}
           <Stacked />
-          <p className="mt-8 text-center text-sm text-chalk/50">
-            Simulations, branching scenarios, gamified practice — whatever the material actually needs.
-          </p>
+        </div>
+        <div className="mt-14">
+          <Deliverables />
         </div>
       </section>
     );
@@ -303,6 +342,7 @@ export function CourseBuild() {
           </div>
         </div>
       </div>
+      <Deliverables />
     </section>
   );
 }

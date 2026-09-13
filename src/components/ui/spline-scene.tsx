@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 const Spline = lazy(() => import("@splinetool/react-spline"));
@@ -48,13 +48,31 @@ function SceneFallback() {
 /**
  * The 3D hero scene is third-party and network-dependent, so it is fenced off:
  * a failure here used to throw during render and blank the whole page.
+ *
+ * The "drag it" hint lives in here rather than in the hero because it must only
+ * appear once the scene has actually loaded — inviting someone to drag a blank
+ * panel is worse than saying nothing. It fades out on first interaction.
  */
 export function SplineScene({ scene, className }: SplineSceneProps) {
+  const [loaded, setLoaded] = useState(false);
+  const [touched, setTouched] = useState(false);
+
   return (
     <ErrorBoundary label="SplineScene" fallback={<SceneFallback />}>
-      <Suspense fallback={<Loader />}>
-        <Spline scene={scene} className={className} />
-      </Suspense>
+      <div className="relative h-full w-full" onPointerDown={() => setTouched(true)}>
+        <Suspense fallback={<Loader />}>
+          <Spline scene={scene} className={className} onLoad={() => setLoaded(true)} />
+        </Suspense>
+
+        {loaded && !touched && (
+          <span
+            className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 animate-pulse rounded-full border border-chalk/10 bg-board-deep/70 px-3 py-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-chalk/45 backdrop-blur-sm"
+            aria-hidden
+          >
+            Drag to explore
+          </span>
+        )}
+      </div>
     </ErrorBoundary>
   );
 }
