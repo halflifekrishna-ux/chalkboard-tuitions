@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/container";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { StudioEnquiryForm } from "@/components/marketing/learning-studio/StudioEnquiryForm";
 import { Reveal } from "@/components/marketing/Reveal";
+import { LogoMark } from "@/components/marketing/LogoMark";
 import { HeroPin } from "@/components/marketing/learning-studio/HeroPin";
 import { SectionEnter } from "@/components/marketing/learning-studio/SectionEnter";
 import { ProgrammeMarquee } from "@/components/marketing/learning-studio/ProgrammeMarquee";
@@ -96,11 +97,11 @@ function Eyebrow({ label, tone = "light" }: { label: string; tone?: "light" | "d
   return (
     <span
       className={
-        "inline-flex items-center gap-2.5 font-special-elite text-[11px] uppercase tracking-[0.28em] sm:text-xs " +
-        (tone === "dark" ? "text-chalk-yellow/90" : "text-gold")
+        "inline-flex items-center gap-2.5 text-[12px] font-bold uppercase tracking-[0.18em] sm:text-[13px] " +
+        (tone === "dark" ? "text-chalk-yellow" : "text-gold-deep")
       }
     >
-      <span className={tone === "dark" ? "h-px w-6 bg-chalk-yellow/40" : "h-px w-6 bg-gold/50"} />
+      <span className={tone === "dark" ? "h-px w-7 bg-chalk-yellow/50" : "h-px w-7 bg-gold-deep/45"} />
       {label}
     </span>
   );
@@ -219,10 +220,40 @@ export default function LearningStudioPage() {
             className="pointer-events-none absolute inset-0"
             style={{ backgroundImage: "linear-gradient(180deg, rgba(7,17,13,0.35) 0%, transparent 30%, transparent 72%, rgba(7,17,13,0.85) 100%)" }}
           />
+          {/* The mark itself, large and faint behind the statement — the page
+              should say whose studio this is before a word is read. Masked so
+              the logo file's own square edge never shows. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-[-18%] top-[70%] w-[92vw] max-w-[560px] -translate-y-1/2 opacity-[0.15] sm:right-[-4%] sm:top-[46%] sm:w-[52vw] lg:right-[2%] lg:opacity-[0.17]"
+            style={{
+              maskImage: "radial-gradient(ellipse 62% 62% at 50% 50%, #000 35%, transparent 76%)",
+              WebkitMaskImage: "radial-gradient(ellipse 62% 62% at 50% 50%, #000 35%, transparent 76%)",
+            }}
+          >
+            <LogoMark className="w-full" sizes="(max-width: 640px) 86vw, 52vw" />
+          </div>
+
           <Container className="relative z-10">
             <div className="max-w-3xl">
-              <Eyebrow label="Chalkboard Learning Studio" tone="dark" />
-              <h1 className="mt-6 break-words font-playfair font-black leading-[1.03] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]">
+              {/* The brand lockup, not a typographic label: the mark, the name
+                  in the brand serif, and the studio line under it. */}
+              <div className="flex items-center gap-3.5">
+                <LogoMark
+                  className="w-[52px] shrink-0 rounded-xl ring-1 ring-chalk-yellow/25 sm:w-[60px]"
+                  sizes="60px"
+                  priority
+                />
+                <span className="leading-tight">
+                  <span className="block font-playfair text-xl font-black tracking-tight text-chalk sm:text-2xl">
+                    Chalkboard
+                  </span>
+                  <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
+                    Learning Studio
+                  </span>
+                </span>
+              </div>
+              <h1 className="mt-7 break-words font-playfair font-black leading-[1.03] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]">
                 Learning that moves
                 <br />
                 <span className="italic text-chalk-yellow">people forward.</span>
@@ -230,7 +261,7 @@ export default function LearningStudioPage() {
               <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/65">
                 Learning programmes designed for colleges, teams and professionals — from classroom to workplace.
               </p>
-              <p className="mt-8 text-sm text-chalk/45">
+              <p className="mt-8 text-sm text-chalk/60">
                 Looking for school tuitions?{" "}
                 <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/70 underline decoration-chalk/25 underline-offset-4 hover:text-chalk-yellow">
                   That&rsquo;s Chalkboard Tuitions →
@@ -238,7 +269,7 @@ export default function LearningStudioPage() {
               </p>
             </div>
           </Container>
-          <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
+          <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/60">
             <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
             <ChevronDown size={18} className="animate-bounce" />
           </div>
@@ -297,14 +328,14 @@ export default function LearningStudioPage() {
               <Reveal delay={160} className="relative min-w-0 lg:col-span-2">
                 <span id="colleges" aria-hidden className="pointer-events-none absolute -top-28 left-0" />
                 <div className="h-full min-w-0 rounded-2xl border border-chalk/10 bg-chalk/[0.03] p-6 sm:p-7">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-chalk/45">For institutions</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-chalk/60">For institutions</span>
                   <h3 className="mt-3 font-playfair text-xl font-bold sm:text-2xl">College Learning</h3>
                   <p className="mt-3 text-sm leading-relaxed text-chalk/55 sm:text-base">
                     Industry-ready learning for students and faculty.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-x-3 gap-y-2">
                     {COLLEGE_AREAS.map((a) => (
-                      <span key={a} className="text-xs text-chalk/45">
+                      <span key={a} className="text-xs text-chalk/60">
                         {a}
                       </span>
                     ))}
@@ -352,7 +383,7 @@ export default function LearningStudioPage() {
             {PRACTICES.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
-                  <span className="font-playfair text-2xl font-black text-gold/40 sm:text-3xl">{s.n}</span>
+                  <span className="font-playfair text-2xl font-black text-gold/70 sm:text-3xl">{s.n}</span>
                   <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
                   <p className="col-start-2 min-w-0 text-sm leading-relaxed text-gray-600 sm:col-start-3 sm:text-base">{s.body}</p>
                 </div>
@@ -393,7 +424,7 @@ export default function LearningStudioPage() {
                   className="flex min-w-0 items-baseline justify-between gap-4 border-b border-board/10 py-4"
                 >
                   <span className="min-w-0 truncate text-base font-medium text-board sm:text-lg">{c}</span>
-                  <span className="shrink-0 font-playfair text-xs font-bold text-gold/50">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="shrink-0 font-playfair text-xs font-bold text-gold-deep">{String(i + 1).padStart(2, "0")}</span>
                 </div>
               ))}
             </div>
@@ -416,7 +447,7 @@ export default function LearningStudioPage() {
               <Reveal key={s.n} delay={(i % 3) * 70}>
                 <div className="min-w-0 border-b border-chalk/10 py-6">
                   <div className="flex items-baseline gap-4">
-                    <span className="font-playfair text-lg font-black text-chalk-yellow/40">{s.n}</span>
+                    <span className="font-playfair text-lg font-black text-chalk-yellow/75">{s.n}</span>
                     <h3 className="font-playfair text-xl font-bold text-chalk sm:text-2xl">{s.name}</h3>
                   </div>
                   <p className="mt-2 max-w-md text-sm leading-relaxed text-chalk/55 sm:text-base">{s.body}</p>
@@ -426,7 +457,7 @@ export default function LearningStudioPage() {
           </div>
 
           <Reveal delay={120}>
-            <p className="mt-10 text-sm text-chalk/40">Programme details and references available on request.</p>
+            <p className="mt-10 text-sm text-chalk/60">Programme details and references available on request.</p>
           </Reveal>
         </Container>
       </section>
@@ -453,7 +484,7 @@ export default function LearningStudioPage() {
               >
                 <Mail size={15} aria-hidden className="shrink-0" /> {CONTACT_EMAIL}
               </a>
-              <p className="mt-10 max-w-sm border-t border-chalk/10 pt-5 text-sm leading-relaxed text-chalk/45">
+              <p className="mt-10 max-w-sm border-t border-chalk/10 pt-5 text-sm leading-relaxed text-chalk/60">
                 This form is for organisations, institutions and professionals. Looking for tuitions for your child?{" "}
                 <Link href="/tuitions" className="whitespace-nowrap font-semibold text-chalk/75 underline decoration-chalk/30 underline-offset-4 hover:text-chalk-yellow">
                   Chalkboard Tuitions →

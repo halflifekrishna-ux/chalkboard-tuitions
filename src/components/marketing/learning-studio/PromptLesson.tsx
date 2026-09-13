@@ -94,10 +94,10 @@ const OPTIONS = [
 function StepTag({ n, label, mechanic }: { n: number; label: string; mechanic: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <span className="font-special-elite text-[11px] uppercase tracking-[0.22em] text-chalk-yellow/85">
+      <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
         Step {n} · {label}
       </span>
-      <span className="font-special-elite text-[9px] uppercase tracking-[0.18em] text-chalk/25">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-chalk/60">
         Mechanic · {mechanic}
       </span>
     </div>
@@ -141,7 +141,7 @@ export function PromptLesson() {
     >
       <div className="mx-auto max-w-2xl px-5 sm:px-6">
         <div className="text-center">
-          <span className="font-special-elite text-[11px] uppercase tracking-[0.28em] text-gold">
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-gold-deep sm:text-[13px]">
             Try it on yourself
           </span>
           <h2 className="mt-5 text-balance font-playfair text-[clamp(1.9rem,5.5vw,3.25rem)] font-bold leading-[1.1] tracking-tight text-board">
@@ -218,7 +218,7 @@ export function PromptLesson() {
                             color: choice && !picked ? "rgba(245,240,232,0.32)" : "#f5f0e8",
                           }}
                         >
-                          <span className="font-special-elite text-xs text-chalk-yellow/70">
+                          <span className="text-xs font-bold text-chalk-yellow">
                             {o.id.toUpperCase()}
                           </span>
                           <span className="min-w-0">&ldquo;{o.text}&rdquo;</span>
@@ -265,7 +265,7 @@ export function PromptLesson() {
                     onChange={(e) => setDraft(e.target.value)}
                     rows={4}
                     placeholder="Create a short sales email for…"
-                    className="mt-4 w-full resize-none rounded-xl border border-chalk/15 bg-chalk/[0.04] p-4 text-[15px] leading-relaxed text-chalk placeholder:text-chalk/25 focus:border-chalk-yellow/60 focus:outline-none focus:ring-1 focus:ring-chalk-yellow/40"
+                    className="mt-4 w-full resize-none rounded-xl border border-chalk/15 bg-chalk/[0.04] p-4 text-[15px] leading-relaxed text-chalk placeholder:text-chalk/50 focus:border-chalk-yellow/60 focus:outline-none focus:ring-1 focus:ring-chalk-yellow/40"
                   />
 
                   {/* Scaffolding, live: the four things it is still missing. */}
@@ -301,7 +301,7 @@ export function PromptLesson() {
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5">
                       <p className="font-playfair text-2xl font-bold">
                         {score}
-                        <span className="text-chalk/30"> / 4</span>
+                        <span className="text-chalk/55"> / 4</span>
                         <span className="ml-2 align-middle text-sm font-sans font-normal text-chalk/50">
                           {score === 4 ? "That prompt will work." : score >= 2 ? "Better already." : "Still guessing for you."}
                         </span>
@@ -319,7 +319,7 @@ export function PromptLesson() {
                             >
                               {hits[i] ? "✓" : "+"}
                             </span>
-                            <span className={hits[i] ? "text-chalk/45" : "text-chalk/80"}>
+                            <span className={hits[i] ? "text-chalk/60" : "text-chalk/80"}>
                               <strong className="font-semibold">{c.key}</strong>
                               {hits[i] ? " — got it." : ` — ${c.coach}`}
                             </span>
@@ -328,7 +328,7 @@ export function PromptLesson() {
                       </ul>
 
                       <div className="mt-5 rounded-xl border border-chalk/10 bg-chalk/[0.04] p-4">
-                        <p className="font-special-elite text-[10px] uppercase tracking-[0.2em] text-chalk/35">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/55">
                           One version that has all four
                         </p>
                         <p className="mt-2.5 text-sm leading-relaxed text-chalk/75">{MODEL_ANSWER}</p>
@@ -356,7 +356,7 @@ export function PromptLesson() {
               {/* ── 4 · The punchline ── */}
               {step === 3 && (
                 <motion.div key="r" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-                  <span className="font-special-elite text-[11px] uppercase tracking-[0.22em] text-chalk-yellow/85">
+                  <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
                     That was the point
                   </span>
                   <p className="mt-4 font-playfair text-2xl leading-snug sm:text-[1.75rem]">

@@ -31,7 +31,7 @@ type State = "idle" | "submitting" | "success" | "error";
 
 const label = "block text-[11px] font-semibold uppercase tracking-[0.16em] text-chalk/55";
 const field =
-  "mt-2 block w-full rounded-md border border-chalk/15 bg-white/[0.04] px-3.5 py-3 text-[15px] text-chalk placeholder:text-chalk/30 focus:border-chalk-yellow/60 focus:outline-none focus:ring-1 focus:ring-chalk-yellow/40";
+  "mt-2 block w-full rounded-md border border-chalk/15 bg-white/[0.04] px-3.5 py-3 text-[15px] text-chalk placeholder:text-chalk/55 focus:border-chalk-yellow/60 focus:outline-none focus:ring-1 focus:ring-chalk-yellow/40";
 
 export function StudioEnquiryForm() {
   const [state, setState] = useState<State>("idle");
@@ -167,7 +167,7 @@ export function StudioEnquiryForm() {
           {state === "submitting" ? "Sending…" : "Send enquiry"}
           {state !== "submitting" && <ArrowRight size={16} aria-hidden />}
         </button>
-        <p className="text-xs text-chalk/40">We reply by email.</p>
+        <p className="text-xs text-chalk/60">We reply by email.</p>
       </div>
     </form>
   );

@@ -12,6 +12,8 @@ module.exports = {
         chalk: "#f5f0e8",
         "chalk-yellow": "#f4c430",
         gold: "#c9a227",
+        // Readable gold for small text on cream/white — #c9a227 sits at ~2.4:1.
+        "gold-deep": "#8a6d14",
         "chalk-orange": "#e8784d",
         cream: "#fdf6e3",
         "cream-bg": "#faf8f4",

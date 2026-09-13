@@ -71,7 +71,7 @@ function FAQItem({ q, a, i }: { q: string; a: string; i: number }) {
         >
           <ChevronDown
             size={18}
-            className={open ? "text-board dark:text-chalk-yellow" : "text-gray-400"}
+            className={open ? "text-board dark:text-chalk-yellow" : "text-gray-500"}
           />
         </motion.div>
       </button>

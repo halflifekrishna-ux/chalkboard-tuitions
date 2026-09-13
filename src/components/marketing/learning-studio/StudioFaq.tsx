@@ -64,7 +64,7 @@ export function StudioFaq() {
       />
 
       <div className="mx-auto max-w-3xl px-5 sm:px-6">
-        <span className="inline-flex items-center gap-2.5 font-special-elite text-[11px] uppercase tracking-[0.28em] text-gold">
+        <span className="inline-flex items-center gap-2.5 text-[12px] font-bold uppercase tracking-[0.18em] text-gold-deep sm:text-[13px]">
           <span className="h-px w-6 bg-gold/50" />
           Common questions
         </span>

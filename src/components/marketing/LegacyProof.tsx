@@ -67,7 +67,7 @@ export function LegacyProof({ quotes = DEFAULT_QUOTES }: { quotes?: ReviewQuote[
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center"
         >
-          <span className="font-special-elite text-[11px] uppercase tracking-[0.28em] text-chalk-yellow/85">
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
             Teaching here since 2018
           </span>
 
@@ -116,7 +116,7 @@ export function LegacyProof({ quotes = DEFAULT_QUOTES }: { quotes?: ReviewQuote[
                 <blockquote className="text-sm leading-relaxed text-chalk/80">
                   &ldquo;{q.text}&rdquo;
                 </blockquote>
-                <figcaption className="mt-3 font-special-elite text-[10px] uppercase tracking-[0.16em] text-chalk/40">
+                <figcaption className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">
                   {q.name}
                 </figcaption>
               </motion.figure>

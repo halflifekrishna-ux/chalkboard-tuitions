@@ -29,7 +29,7 @@ export function CTASection({
               "radial-gradient(ellipse 60% 60% at 50% 0%, rgba(244,196,48,0.14), transparent 70%), repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,0.025) 27px, rgba(255,255,255,0.025) 28px)",
           }}
         >
-          <span className="font-special-elite text-chalk-yellow tracking-widest text-xs uppercase opacity-80">{eyebrow}</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">{eyebrow}</span>
           <h2 className="mt-3 font-playfair text-2xl sm:text-4xl font-bold text-chalk max-w-2xl mx-auto">{title}</h2>
           {subtitle && <p className="mt-4 text-chalk/60 text-base max-w-xl mx-auto leading-relaxed">{subtitle}</p>}
           <div className="mt-7 flex flex-wrap gap-3 justify-center">

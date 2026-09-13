@@ -68,7 +68,7 @@ export function Stats() {
                 <AnimatedNumber value={value} suffix={suffix} inView={inView} />
               </div>
               <div className="font-semibold text-chalk text-sm mb-1">{label}</div>
-              <div className="text-chalk/40 text-xs">{description}</div>
+              <div className="text-chalk/60 text-xs">{description}</div>
             </motion.div>
           ))}
         </div>

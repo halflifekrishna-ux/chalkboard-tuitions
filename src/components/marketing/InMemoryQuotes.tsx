@@ -33,7 +33,7 @@ export function InMemoryQuotes() {
       <div className="mx-auto max-w-2xl px-5 sm:px-6">
         <div className="h-px w-full bg-chalk/10" />
 
-        <p className="mt-10 font-special-elite text-[11px] uppercase tracking-[0.28em] text-chalk/35">
+        <p className="mt-10 text-[12px] font-bold uppercase tracking-[0.18em] text-chalk/60">
           She never wrote this down. Parents did.
         </p>
 
@@ -49,7 +49,7 @@ export function InMemoryQuotes() {
               <blockquote className="font-playfair text-xl leading-snug text-chalk/90 sm:text-2xl">
                 &ldquo;{q.text}&rdquo;
               </blockquote>
-              <figcaption className="mt-2.5 font-special-elite text-[10px] uppercase tracking-[0.18em] text-chalk/35">
+              <figcaption className="mt-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">
                 {q.name} · {q.when}
               </figcaption>
             </motion.figure>

@@ -63,7 +63,7 @@ export default function HomePage() {
 
         <Container className="relative z-10">
           <div className="max-w-4xl">
-            <span className="block font-special-elite text-sm sm:text-base uppercase tracking-[0.34em] text-chalk-yellow/90">
+            <span className="block text-sm font-bold uppercase tracking-[0.24em] text-chalk-yellow sm:text-base">
               Chalkboard
             </span>
             <h1 className="mt-5 break-words font-playfair font-black leading-[1.02] tracking-tight text-[clamp(2.75rem,9vw,6.5rem)]">
@@ -76,7 +76,7 @@ export default function HomePage() {
           </div>
         </Container>
 
-        <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/40">
+        <div aria-hidden className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 text-chalk/60">
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">What brings you here?</span>
           <ChevronDown size={18} className="animate-bounce" />
         </div>

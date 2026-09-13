@@ -91,7 +91,7 @@ export function Hero({
             </div>
           )}
 
-          {note && <p className="mt-4 text-sm text-chalk/45">{note}</p>}
+          {note && <p className="mt-4 text-sm text-chalk/60">{note}</p>}
         </div>
       </Container>
     </section>

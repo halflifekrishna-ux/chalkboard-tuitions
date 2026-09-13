@@ -92,14 +92,14 @@ function StageShell({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-bold text-chalk sm:text-base">{STAGES[i]}</span>
-          <span className="mt-0.5 block font-special-elite text-[10px] uppercase tracking-[0.18em] text-chalk/30">
+          <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-chalk/50">
             Mechanic · {MECHANICS[i]}
           </span>
         </span>
         <motion.span
           animate={{ rotate: open ? 45 : 0 }}
           transition={{ duration: 0.2 }}
-          className="text-lg leading-none text-chalk/30"
+          className="text-lg leading-none text-chalk/55"
           aria-hidden
         >
           +
@@ -148,7 +148,7 @@ export function TransformBoring() {
 
       <div className="relative mx-auto max-w-2xl px-5 sm:px-6">
         <div className="text-center">
-          <span className="font-special-elite text-[11px] uppercase tracking-[0.28em] text-chalk-yellow/90">
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
             What we actually do
           </span>
           <h2 className="mx-auto mt-5 text-balance font-playfair text-[clamp(1.9rem,5.5vw,3.25rem)] font-bold leading-[1.1] tracking-tight">
@@ -164,7 +164,7 @@ export function TransformBoring() {
               transition={{ duration: 0.4, ease: [0.4, 0, 1, 1] }}
               className="mt-12"
             >
-              <p className="mb-4 text-center font-special-elite text-[10px] uppercase tracking-[0.24em] text-chalk/30">
+              <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/55">
                 Traditional training
               </p>
 
@@ -185,7 +185,7 @@ export function TransformBoring() {
                 </div>
               </div>
 
-              <p className="mt-5 text-center text-sm text-chalk/40">
+              <p className="mt-5 text-center text-sm text-chalk/60">
                 Every word of that is true. Nobody has ever been better at their job for reading it.
               </p>
 
@@ -285,7 +285,7 @@ export function TransformBoring() {
                 {/* 3 — Feedback: the consequence of their own choice */}
                 <StageShell i={2} open={open === 2} done={done[2]} onToggle={() => go(2)}>
                   {pick === null ? (
-                    <p className="text-sm text-chalk/45">Make the call above first — this stage answers it.</p>
+                    <p className="text-sm text-chalk/60">Make the call above first — this stage answers it.</p>
                   ) : (
                     <>
                       <p className="text-[15px] leading-relaxed text-chalk/85">{DECISIONS[pick].verdict}</p>
@@ -387,7 +387,7 @@ export function TransformBoring() {
                     }}
                     className="mt-5 w-full accent-chalk-yellow"
                   />
-                  <div className="mt-1 flex justify-between font-special-elite text-[10px] uppercase tracking-[0.16em] text-chalk/25">
+                  <div className="mt-1 flex justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-chalk/60">
                     <span>Not a chance</span>
                     <span>Every time</span>
                   </div>

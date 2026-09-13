@@ -223,7 +223,7 @@ export function Hero() {
               style={{ background: "rgba(22,45,36,0.90)" }}
             >
               <p className="text-xs font-semibold text-chalk/80 font-sans">📍 Kammanahalli</p>
-              <p className="text-xs text-chalk/40 font-sans">& Kalyan Nagar, Blr</p>
+              <p className="text-xs text-chalk/60 font-sans">& Kalyan Nagar, Blr</p>
             </motion.div>
           </div>
 

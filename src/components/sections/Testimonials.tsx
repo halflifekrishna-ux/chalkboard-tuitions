@@ -103,12 +103,12 @@ export function Testimonials() {
                 >
                   <p className="font-playfair text-2xl font-black text-chalk-yellow mb-1">{value}</p>
                   <p className="text-chalk text-xs font-semibold mb-0.5">{label}</p>
-                  <p className="text-chalk/40 text-[11px]">{sub}</p>
+                  <p className="text-chalk/60 text-[11px]">{sub}</p>
                 </div>
               ))}
             </div>
 
-            <p className="text-chalk/40 text-sm">
+            <p className="text-chalk/60 text-sm">
               ⭐ Results are real. We&apos;ll never fabricate a testimonial — we earn them.
             </p>
           </div>

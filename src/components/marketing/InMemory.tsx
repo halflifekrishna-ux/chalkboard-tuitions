@@ -38,7 +38,7 @@ export function InMemory() {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="font-special-elite text-[11px] uppercase tracking-[0.3em] text-chalk-yellow/80">
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
             In memory
           </span>
 
@@ -48,7 +48,7 @@ export function InMemory() {
           >
             Uma Maheshwari
           </h2>
-          <p className="mt-3 font-special-elite text-xs uppercase tracking-[0.2em] text-chalk/40">
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-chalk/60">
             Founder · Home Tuitions Bangalore
           </p>
 

@@ -83,7 +83,7 @@ export function Contact() {
             Fill the form and we&apos;ll WhatsApp you within 30 minutes to confirm your slot.
             No obligation, no pressure.
           </p>
-          <p className="mt-4 text-sm text-chalk/45">
+          <p className="mt-4 text-sm text-chalk/60">
             This form is for school tuitions. For corporate, college or trainer enquiries, go to{" "}
             <Link
               href="/learning-studio#enquire"
@@ -293,7 +293,7 @@ export function Contact() {
                   )}
                 </button>
 
-                <p className="text-center text-xs text-chalk/30">
+                <p className="text-center text-xs text-chalk/55">
                   We&apos;ll WhatsApp you within 30 minutes. No spam, ever.
                 </p>
               </form>

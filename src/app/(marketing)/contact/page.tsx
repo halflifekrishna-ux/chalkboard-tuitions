@@ -45,7 +45,7 @@ export default function ContactPage() {
           style={{ background: "radial-gradient(ellipse 60% 100% at 50% 0%, #f4c430, transparent 70%)" }}
         />
         <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <span className="font-special-elite text-[11px] uppercase tracking-[0.28em] text-chalk-yellow/90">
+          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
             Talk to us
           </span>
           <h1 className="mt-5 font-playfair text-4xl font-black leading-[1.08] tracking-tight text-chalk sm:text-5xl lg:text-6xl">
@@ -65,7 +65,7 @@ export default function ContactPage() {
                 className="rounded-2xl border border-chalk/10 bg-chalk/[0.04] px-5 py-5 text-left backdrop-blur-sm"
               >
                 <Icon size={16} className="text-chalk-yellow" aria-hidden />
-                <dt className="mt-3 font-special-elite text-[10px] uppercase tracking-[0.18em] text-chalk/40">
+                <dt className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">
                   {label}
                 </dt>
                 <dd className="mt-1 text-sm font-medium leading-snug text-chalk/85">{value}</dd>
@@ -73,7 +73,7 @@ export default function ContactPage() {
             ))}
           </dl>
 
-          <p className="mt-8 text-sm text-chalk/45">
+          <p className="mt-8 text-sm text-chalk/60">
             Looking for corporate, college or trainer programmes? Head to{" "}
             <Link
               href="/learning-studio#enquire"

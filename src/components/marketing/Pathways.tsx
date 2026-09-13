@@ -140,9 +140,9 @@ export function Pathways() {
             <LogIn size={16} className="text-chalk/60" />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/40">Already part of Chalkboard?</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">Already part of Chalkboard?</p>
             <p className="text-sm font-semibold text-chalk/85 truncate">
-              Chalkboard OS <span className="font-normal text-chalk/45">· Students · Parents · Teachers · Admin</span>
+              Chalkboard OS <span className="font-normal text-chalk/60">· Students · Parents · Teachers · Admin</span>
             </p>
           </div>
         </div>
