@@ -3,6 +3,8 @@ import { GraduationCap, Briefcase, MonitorSmartphone } from "lucide-react";
 import { Hero } from "@/components/marketing/Hero";
 import { TrustBanner } from "@/components/marketing/TrustBanner";
 import { CTASection } from "@/components/marketing/CTASection";
+import { InMemory } from "@/components/marketing/InMemory";
+import { InMemoryQuotes } from "@/components/marketing/InMemoryQuotes";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -11,14 +13,27 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuition
 const WHATSAPP = "917411446381";
 
 export const metadata: Metadata = {
-  title: "About Chalkboard — Personalised Learning, Built on Trust",
+  title: "About Chalkboard — The Teacher This Was Built On",
   description:
-    "Chalkboard is a learning company built on the experience of Home Tuitions Bangalore since 2018 — spanning school tuitions, professional learning, and the technology that powers them.",
+    "Chalkboard grew out of Home Tuitions Bangalore, founded by the late Uma Maheshwari, who taught until the end of her life. The same teachers, the same standard, a structure built to carry it further.",
+  keywords: [
+    "Home Tuitions Bangalore",
+    "Uma Maheshwari",
+    "Chalkboard Tuitions about",
+    "tuition centre Bangalore since 2018",
+  ],
   alternates: { canonical: `${SITE_URL}/about` },
+  openGraph: {
+    title: "About Chalkboard — The Teacher This Was Built On",
+    description:
+      "Chalkboard grew out of Home Tuitions Bangalore and the way one teacher insisted on being understood, not repeated.",
+    url: `${SITE_URL}/about`,
+    type: "website",
+  },
 };
 
 const pillars = [
-  { icon: GraduationCap, name: "Chalkboard Tuitions", body: "Small-batch, personalised academic learning for Grades LKG–10 across CBSE, ICSE and State Board." },
+  { icon: GraduationCap, name: "Chalkboard Tuitions", body: "Small-batch, personalised academic learning for Grades 1–10 across CBSE, ICSE and State Board." },
   { icon: Briefcase, name: "Chalkboard Learning Studio", body: "Professional and institutional programs for colleges, corporates, and training partners." },
   { icon: MonitorSmartphone, name: "Chalkboard OS", body: "The technology platform that runs admissions, attendance, fees and communication — and will power learning experiences over time." },
 ];
@@ -28,40 +43,46 @@ export default function AboutPage() {
     <>
       <Hero
         eyebrow="About Chalkboard"
-        title="Why Chalkboard"
-        highlight="exists."
-        subtitle="We believe every learner deserves personal attention, steady progress, and teachers who genuinely care. Chalkboard exists to make that the standard — not the exception."
+        title="Someone taught us"
+        highlight="how to do this."
+        subtitle="Chalkboard did not start with a business plan. It started with a teacher, and a way of teaching worth keeping."
       />
 
       <Section bg="white">
         <Container size="narrow">
           <SectionHeading align="left" eyebrow="Our Philosophy" title="Learning is personal. So is trust." />
-          <div className="mt-6 space-y-4 text-gray-600 dark:text-chalk/70 leading-relaxed">
+          <div className="mt-6 space-y-4 text-gray-600 leading-relaxed">
             <p>
-              Big classrooms lose children. Crowded tuition rooms lose them faster. We started from a
-              simple conviction: when a teacher knows every student by name — their strengths, their
-              gaps, their pace — progress follows naturally.
+              Big classrooms lose children. Crowded tuition rooms lose them faster. Keep the room small
+              enough that a teacher knows every child&rsquo;s name, pace and blind spots, and progress
+              stops being a surprise.
             </p>
             <p>
-              That belief shapes everything at Chalkboard: small batches, daily consistency, honest
-              assessments, and parents kept genuinely in the loop. We would rather grow slowly and keep
-              our standards than grow fast and dilute them.
+              We did not arrive at that from theory. We watched it work, for years, in one teacher&rsquo;s
+              classes.
             </p>
           </div>
         </Container>
       </Section>
 
+      <InMemory />
+      <InMemoryQuotes />
+
       <TrustBanner />
 
       <Section bg="white">
         <Container>
-          <SectionHeading eyebrow="Our Journey" title="From Home Tuitions Bangalore to Chalkboard" subtitle="Same people. Same care. A stronger platform to deliver it." />
-          <div className="mt-8 max-w-2xl mx-auto space-y-4 text-center text-gray-600 dark:text-chalk/70 leading-relaxed">
+          <SectionHeading eyebrow="The Handover" title="From Home Tuitions Bangalore to Chalkboard" subtitle="The same teachers. The same standard. A structure built to carry it further." />
+          <div className="mt-8 max-w-2xl mx-auto space-y-4 text-gray-600 leading-relaxed">
             <p>
-              Since 2018, Home Tuitions Bangalore has supported hundreds of students with personalised
-              academic help. Chalkboard is the next chapter of that work — the same teachers and values,
-              now backed by better structure, better tracking, and technology that keeps families
-              informed every step of the way.
+              Chalkboard began there. I brought together the teachers she worked with, kept the way she
+              taught, and built the structure she never had the time to build — proper records, honest
+              tracking, parents who actually hear from us.
+            </p>
+            <p>
+              I spend my working life in learning and development. She is the reason I care about it at
+              all. So Chalkboard is not only a tuition centre: it is meant to hold every kind of
+              learning, for school children, for graduates, and for teams at work.
             </p>
           </div>
         </Container>

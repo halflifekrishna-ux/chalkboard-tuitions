@@ -1,5 +1,11 @@
+import { PageLoader } from "@/components/admin/Loader";
 import { ListSkeleton } from "@/components/admin/Skeleton";
 
 export default function Loading() {
-  return <ListSkeleton rows={5} />;
+  return (
+    <div className="space-y-4">
+      <PageLoader label="Loading batches…" />
+      <ListSkeleton rows={5} title={false} />
+    </div>
+  );
 }

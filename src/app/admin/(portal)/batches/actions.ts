@@ -19,7 +19,10 @@ async function branchId(supabase: ReturnType<typeof createServerSupabase>) {
 
 export async function createBatch(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireCapability("batches.manage");
-  const parsed = batchSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = batchSchema.safeParse({
+    ...Object.fromEntries(formData.entries()),
+    days: formData.getAll("days"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
 
@@ -38,6 +41,10 @@ export async function createBatch(_prev: ActionState, formData: FormData): Promi
       capacity: v.capacity,
       status: v.status,
       notes: v.notes || null,
+      days: v.days,
+      start_time: v.start_time,
+      end_time: v.end_time,
+      room: v.room || null,
     })
     .select("id, name")
     .single();
@@ -54,7 +61,10 @@ export async function createBatch(_prev: ActionState, formData: FormData): Promi
 
 export async function updateBatch(batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireCapability("batches.manage");
-  const parsed = batchSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = batchSchema.safeParse({
+    ...Object.fromEntries(formData.entries()),
+    days: formData.getAll("days"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
 
@@ -65,6 +75,7 @@ export async function updateBatch(batchId: string, _prev: ActionState, formData:
       academic_year_id: v.academic_year_id,
       name: v.name, grade: v.grade, board: v.board ?? null,
       capacity: v.capacity, status: v.status, notes: v.notes || null,
+      days: v.days, start_time: v.start_time, end_time: v.end_time, room: v.room || null,
     })
     .eq("id", batchId);
   if (error) return { error: error.message };
@@ -136,10 +147,7 @@ async function upsertTeacher(
 
 export async function addBatchSubject(batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireCapability("batches.manage");
-  const parsed = batchSubjectSchema.safeParse({
-    ...Object.fromEntries(formData.entries()),
-    days: formData.getAll("days"),
-  });
+  const parsed = batchSubjectSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
 
@@ -150,8 +158,7 @@ export async function addBatchSubject(batchId: string, _prev: ActionState, formD
 
   const { error } = await supabase.from("batch_subjects").insert({
     batch_id: batchId, subject_id: v.subject_id, teacher_id: teacherId,
-    days: v.days, start_time: v.start_time, end_time: v.end_time,
-    room: v.room || null, colour: v.colour, status: v.status,
+    colour: v.colour, status: v.status,
   });
   if (error) return { error: error.message };
 
@@ -167,10 +174,7 @@ export async function addBatchSubject(batchId: string, _prev: ActionState, formD
 
 export async function updateBatchSubject(batchSubjectId: string, batchId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireCapability("batches.manage");
-  const parsed = batchSubjectSchema.safeParse({
-    ...Object.fromEntries(formData.entries()),
-    days: formData.getAll("days"),
-  });
+  const parsed = batchSubjectSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
 
@@ -179,8 +183,7 @@ export async function updateBatchSubject(batchSubjectId: string, batchId: string
   const teacherId = await upsertTeacher(supabase, branch!, v.teacher_name);
 
   const { error } = await supabase.from("batch_subjects").update({
-    subject_id: v.subject_id, teacher_id: teacherId, days: v.days,
-    start_time: v.start_time, end_time: v.end_time, room: v.room || null,
+    subject_id: v.subject_id, teacher_id: teacherId,
     colour: v.colour, status: v.status,
   }).eq("id", batchSubjectId);
   if (error) return { error: error.message };

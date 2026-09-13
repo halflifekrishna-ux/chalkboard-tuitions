@@ -109,8 +109,8 @@ export function Pathways() {
           href="/tuitions"
           eyebrow="For parents & students"
           title="Chalkboard Tuitions"
-          description="Small-batch, personalised academic learning that helps your child make real progress."
-          tags={["LKG–10", "CBSE · ICSE · State Board"]}
+          description="Small batches, taught by the same people, the same way, since 2018."
+          tags={["Grades 1–10", "CBSE · ICSE · State Board"]}
           cta="Explore Tuitions"
           icon={GraduationCap}
           primary
@@ -121,8 +121,8 @@ export function Pathways() {
           href="/learning-studio"
           eyebrow="For colleges, organisations & professionals"
           title="Chalkboard Learning Studio"
-          description="Learning solutions for institutions and organisations."
-          tags={["Corporate", "College", "E-learning", "Professional Development"]}
+          description="Training for teams that sell, support and deliver — and courses built from what your people already know."
+          tags={["Sales", "Support", "Team performance", "Course building"]}
           cta="Explore Learning Studio"
           icon={Briefcase}
           delay={230}

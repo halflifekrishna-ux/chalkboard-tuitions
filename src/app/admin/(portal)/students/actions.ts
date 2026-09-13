@@ -116,6 +116,35 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
 
   await logActivity(supabase, admin.id, student.id, "created", `${v.full_name} joined Chalkboard (${student.student_code})`);
 
+  if (v.batch_id) {
+    await supabase.from("batch_students").upsert(
+      { batch_id: v.batch_id, student_id: student.id },
+      { onConflict: "batch_id,student_id", ignoreDuplicates: true }
+    );
+    const { data: batch } = await supabase.from("batches").select("name").eq("id", v.batch_id).single();
+    await logActivity(supabase, admin.id, student.id, "enrolled", `${v.full_name} enrolled in ${batch?.name ?? "batch"}`);
+    revalidatePath(`/admin/batches/${v.batch_id}`);
+  }
+
+  // Came in from a lead: close the loop so the CRM shows it converted.
+  if (v.lead_id) {
+    const { data: lead } = await supabase
+      .from("crm_leads").select("id, status").eq("id", v.lead_id).is("deleted_at", null).maybeSingle();
+    if (lead) {
+      await supabase
+        .from("crm_leads")
+        .update({ status: "converted", converted_student_id: student.id, converted_at: new Date().toISOString() })
+        .eq("id", v.lead_id);
+      await supabase.from("crm_lead_events").insert({
+        lead_id: v.lead_id, actor_id: admin.id, action: "converted",
+        from_status: lead.status, to_status: "converted",
+        note: `Joined as ${student.student_code}`,
+      });
+      revalidatePath("/admin/leads");
+      revalidatePath(`/admin/leads/${v.lead_id}`);
+    }
+  }
+
   revalidatePath("/admin/students");
   redirect(`/admin/students/${student.id}`);
 }

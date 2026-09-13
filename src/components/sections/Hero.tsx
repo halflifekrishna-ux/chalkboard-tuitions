@@ -227,10 +227,9 @@ export function Hero() {
             </motion.div>
           </div>
 
-          {/* Corner label */}
-          <div className="absolute -bottom-6 right-0 text-[10px] font-sans text-chalk/20 tracking-wider uppercase">
-            Interactive 3D · drag to explore
-          </div>
+          {/* The "drag to explore" hint now lives inside SplineScene, which only
+              shows it once the scene has actually loaded — this corner label
+              promised an interaction even when the scene had failed. */}
         </motion.div>
       </div>
 

@@ -32,7 +32,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
-    supabase.from("attendance").select("status, session:sessions!inner(session_date, batch_subject:batch_subjects(subject:subjects(name), batch:batches(name)))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
+    supabase.from("attendance").select("status, session:sessions!inner(session_date, subject_ids, batch:batches(name))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
     supabase.from("batch_students").select("batch:batches(id, name, grade, status, deleted_at)").eq("student_id", params.id),
   ]);
 
@@ -42,13 +42,21 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
 
   if (!student) notFound();
 
+  const subjectIds = Array.from(
+    new Set((attendance ?? []).flatMap((a) => (a.session as unknown as { subject_ids: string[] | null } | null)?.subject_ids ?? []))
+  );
+  const { data: subjectRows } = subjectIds.length
+    ? await supabase.from("subjects").select("id, name").in("id", subjectIds)
+    : { data: [] as { id: string; name: string }[] };
+  const subjectNameById = new Map((subjectRows ?? []).map((s) => [s.id, s.name]));
+
   const attendanceRecords: AttendanceRecord[] = (attendance ?? []).map((a) => {
-    const session = a.session as unknown as { session_date: string; batch_subject: { subject: { name: string } | null; batch: { name: string } | null } | null } | null;
-    const bsub = session?.batch_subject;
+    const session = a.session as unknown as { session_date: string; subject_ids: string[] | null; batch: { name: string } | null } | null;
+    const subjectsLabel = (session?.subject_ids ?? []).map((id) => subjectNameById.get(id)).filter(Boolean).join(", ");
     return {
       date: session?.session_date ?? "",
       status: a.status as AttendanceRecord["status"],
-      className: bsub ? `${bsub.batch?.name ?? ""} · ${bsub.subject?.name ?? ""}`.trim() : "Session",
+      className: session?.batch?.name ? `${session.batch.name}${subjectsLabel ? ` · ${subjectsLabel}` : ""}` : "Session",
     };
   });
   const parent = student.parent as {

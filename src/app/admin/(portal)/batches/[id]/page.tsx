@@ -9,6 +9,7 @@ import { Tabs } from "@/components/admin/Tabs";
 import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { BOARD_LABELS, type Board } from "@/lib/os/types";
 import { fmtTime } from "@/lib/os/attendance";
+import { DAY_OPTIONS } from "../schema";
 import { archiveBatch, setBatchEnrolment, addBatchSubject, updateBatchSubject, archiveBatchSubject } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +29,9 @@ export default async function BatchDetailPage({ params }: { params: { id: string
   const [{ data: allStudents }, { data: enrolled }, { data: batchSubjects }, { data: subjects }, { data: recentSessions }] = await Promise.all([
     supabase.from("students").select("id, full_name, admission_number, grade").is("deleted_at", null).in("status", ["active", "trial", "paused"]).order("full_name"),
     supabase.from("batch_students").select("student_id").eq("batch_id", params.id),
-    supabase.from("batch_subjects").select("id, subject_id, days, start_time, end_time, room, colour, status, subject:subjects(name), teacher:teachers(full_name)").eq("batch_id", params.id).is("deleted_at", null).order("start_time"),
+    supabase.from("batch_subjects").select("id, subject_id, colour, status, subject:subjects(name), teacher:teachers(full_name)").eq("batch_id", params.id).is("deleted_at", null).order("created_at"),
     supabase.from("subjects").select("id, name").eq("is_active", true).order("name"),
-    supabase.from("sessions").select("id, session_date, start_time, status, batch_subject:batch_subjects!inner(batch_id, subject:subjects(name)), attendance(count)").eq("batch_subject.batch_id", params.id).order("session_date", { ascending: false }).limit(20),
+    supabase.from("sessions").select("id, session_date, start_time, status, subject_ids, attendance(count)").eq("batch_id", params.id).order("session_date", { ascending: false }).limit(20),
   ]);
 
   const enrolledIds = new Set((enrolled ?? []).map((e) => e.student_id));
@@ -41,8 +42,9 @@ export default async function BatchDetailPage({ params }: { params: { id: string
   const subjectRows: BatchSubjectRow[] = (batchSubjects ?? []).map((bs) => {
     const subject = bs.subject as unknown as { name: string } | null;
     const teacher = bs.teacher as unknown as { full_name: string } | null;
-    return { id: bs.id, subject_id: bs.subject_id, subject_name: subject?.name ?? "—", teacher_name: teacher?.full_name ?? null, days: bs.days ?? [], start_time: bs.start_time, end_time: bs.end_time, room: bs.room, colour: bs.colour, status: bs.status };
+    return { id: bs.id, subject_id: bs.subject_id, subject_name: subject?.name ?? "—", teacher_name: teacher?.full_name ?? null, colour: bs.colour, status: bs.status };
   });
+  const subjectNameById = new Map(subjectRows.map((r) => [r.subject_id, r.subject_name]));
 
   const ay = batch.academic_year as unknown as { name: string } | null;
   const archiveWithId = archiveBatch.bind(null, params.id);
@@ -88,6 +90,22 @@ export default async function BatchDetailPage({ params }: { params: { id: string
           </div>
         ))}
       </div>
+      <div className="rounded-2xl p-4" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
+        <p className="text-xs mb-2" style={{ color: "rgba(245,240,232,0.45)" }}>Schedule</p>
+        <p className="text-sm font-semibold mb-2" style={{ color: "#f4c430" }}>
+          {fmtTime(batch.start_time)}–{fmtTime(batch.end_time)}{batch.room ? ` · ${batch.room}` : ""}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {DAY_OPTIONS.map((d) => {
+            const on = (batch.days ?? []).includes(d.value);
+            return (
+              <span key={d.value} className="rounded-lg px-2.5 py-1 text-[11px] font-bold" style={{ background: on ? "rgba(201,162,39,0.18)" : "rgba(245,240,232,0.04)", color: on ? "#f4c430" : "rgba(245,240,232,0.3)" }}>
+                {d.label}
+              </span>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 
@@ -98,17 +116,17 @@ export default async function BatchDetailPage({ params }: { params: { id: string
       ) : (
         <ul className="divide-y" style={{ borderColor: "rgba(201,162,39,0.1)" }}>
           {recentSessions.map((s) => {
-            const bs = s.batch_subject as unknown as { subject: { name: string } | null } | null;
             const marked = (s.attendance as unknown as { count: number }[])?.[0]?.count ?? 0;
+            const subjectLabel = (s.subject_ids ?? []).map((id: string) => subjectNameById.get(id)).filter(Boolean).join(", ") || "—";
             return (
-              <li key={s.id} className="px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "#f5f0e8" }}>{bs?.subject?.name ?? "Subject"}</p>
+              <li key={s.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: "#f5f0e8" }}>{subjectLabel}</p>
                   <p className="text-[11px]" style={{ color: "rgba(245,240,232,0.45)" }}>
                     {new Date(s.session_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} · {fmtTime(s.start_time)} · {marked} marked
                   </p>
                 </div>
-                <span className="text-[11px] font-bold capitalize" style={{ color: s.status === "completed" ? "#7dc98f" : "#f4c430" }}>{s.status.replace("_", " ")}</span>
+                <span className="text-[11px] font-bold capitalize flex-shrink-0" style={{ color: s.status === "completed" ? "#7dc98f" : "#f4c430" }}>{s.status.replace("_", " ")}</span>
               </li>
             );
           })}

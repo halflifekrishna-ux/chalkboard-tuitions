@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useCallback, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Avatar } from "@/components/admin/Avatar";
 import { ATTENDANCE_META, type AttendanceStatus } from "@/lib/os/attendance";
-import { CheckCircle2, Loader2, X, WifiOff, Search, Undo2, Star } from "lucide-react";
+import { CheckCircle2, Loader2, X, WifiOff, Search, Undo2, Star, Check } from "lucide-react";
 import type { FinishResult } from "@/app/admin/(portal)/attendance/actions";
 
 export interface RosterStudent {
@@ -15,13 +16,21 @@ export interface RosterStudent {
   status: AttendanceStatus;
 }
 
+export interface SubjectOption {
+  id: string;
+  name: string;
+  teacherName: string | null;
+  colour: string;
+}
+
 const STATUSES: AttendanceStatus[] = ["present", "absent", "late", "excused"];
 
 interface FinishArgs {
-  batchSubjectId: string;
+  batchId: string;
   sessionDate: string;
   startTime: string | null;
   endTime: string | null;
+  subjectIds: string[];
   marks: { studentId: string; status: AttendanceStatus }[];
   topic?: string;
   homework?: string;
@@ -46,45 +55,88 @@ const StudentRow = ({ student, onMark }: { student: RosterStudent; onMark: (id: 
         const meta = ATTENDANCE_META[s];
         const active = student.status === s;
         return (
-          <button
+          <motion.button
             key={s}
             type="button"
             aria-pressed={active}
             aria-label={`${student.full_name}: ${meta.label}`}
             onClick={() => onMark(student.id, s)}
-            className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-2.5 transition-all active:scale-95"
-            style={{ background: active ? meta.bg : "rgba(245,240,232,0.04)", border: `1.5px solid ${active ? meta.border : "transparent"}` }}
+            whileTap={{ scale: 0.92 }}
+            animate={{ scale: active ? 1.03 : 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 24 }}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-2.5"
+            style={{ background: active ? meta.bg : "rgba(245,240,232,0.04)", border: `1.5px solid ${active ? meta.border : "transparent"}`, boxShadow: active ? `0 2px 10px ${meta.border}` : "none" }}
           >
             <span className="text-base leading-none" aria-hidden>{meta.emoji}</span>
             <span className="text-[10px] font-bold" style={{ color: active ? meta.color : "rgba(245,240,232,0.4)" }}>{meta.label}</span>
-          </button>
+          </motion.button>
         );
       })}
     </div>
   </li>
 );
 
+/** Which subjects were actually covered today — free pick, no fixed schedule. */
+function SubjectPicker({ subjects, selected, onToggle }: { subjects: SubjectOption[]; selected: string[]; onToggle: (id: string) => void }) {
+  if (subjects.length === 0) return null;
+  return (
+    <div className="mb-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "rgba(245,240,232,0.4)" }}>Subjects covered today</p>
+      <div className="flex flex-wrap gap-1.5">
+        {subjects.map((s) => {
+          const on = selected.includes(s.id);
+          return (
+            <motion.button
+              key={s.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggle(s.id)}
+              whileTap={{ scale: 0.94 }}
+              animate={{ scale: on ? 1.02 : 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
+              style={{ background: on ? `${s.colour}26` : "rgba(245,240,232,0.05)", border: `1.5px solid ${on ? s.colour : "transparent"}`, color: on ? "#f5f0e8" : "rgba(245,240,232,0.45)" }}
+            >
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: s.colour }} />
+              {s.name}
+              {on && <Check size={12} strokeWidth={3} />}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function AttendanceScreen({
-  batchSubjectId,
+  batchId,
   sessionDate,
   startTime,
   endTime,
   roster,
+  subjectOptions,
+  initialSubjectIds,
   existingNotes,
   alreadyCompleted,
   finishAction,
 }: {
-  batchSubjectId: string;
+  batchId: string;
   sessionDate: string;
   startTime: string | null;
   endTime: string | null;
   roster: RosterStudent[];
+  subjectOptions: SubjectOption[];
+  initialSubjectIds: string[];
   existingNotes: { topic: string; homework: string; teacherNotes: string };
   alreadyCompleted: boolean;
   finishAction: (args: FinishArgs) => Promise<FinishResult>;
 }) {
   const router = useRouter();
   const [marks, setMarks] = useState<Marks>(() => Object.fromEntries(roster.map((s) => [s.id, s.status])));
+  const [subjectIds, setSubjectIds] = useState<string[]>(initialSubjectIds);
+  const toggleSubject = useCallback((id: string) => {
+    setSubjectIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }, []);
   const history = useRef<Marks[]>([]);
   const [canUndo, setCanUndo] = useState(false);
 
@@ -145,7 +197,7 @@ export function AttendanceScreen({
     startTransition(async () => {
       try {
         const res = await finishAction({
-          batchSubjectId, sessionDate, startTime, endTime,
+          batchId, sessionDate, startTime, endTime, subjectIds,
           marks: roster.map((s) => ({ studentId: s.id, status: marks[s.id] })),
           topic, homework, teacherNotes, rating: rating || undefined,
         });
@@ -178,6 +230,8 @@ export function AttendanceScreen({
 
   return (
     <>
+      <SubjectPicker subjects={subjectOptions} selected={subjectIds} onToggle={toggleSubject} />
+
       {/* Sticky controls: tally, search, bulk, undo */}
       <div className="sticky top-0 z-10 pt-1 pb-2 space-y-2" style={{ background: "linear-gradient(#101d18 85%, transparent)" }}>
         <div className="flex items-center justify-between gap-2">

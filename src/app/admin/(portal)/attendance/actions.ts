@@ -9,25 +9,31 @@ import { enqueueMessages, processQueue, type QueueItem, type TemplateKey } from 
 import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "@/lib/os/attendance";
 
 /**
- * Start Session — lazily create today's session for a batch subject.
- * The batch subject (subject + teacher + days + time) is the recurring
- * template; this materialises one occurrence, marks it in_progress, and
- * navigates to the marking screen. Idempotent per (batch_subject, date, time).
+ * Start Session — lazily create today's session for a batch.
+ * The batch (days + time = its dedicated slot) is the recurring template;
+ * this materialises one occurrence, marks it in_progress, and navigates to
+ * the marking screen. Idempotent per (batch, date, time).
  */
-export async function startSession(batchSubjectId: string, sessionDate: string, startTime: string | null, endTime: string | null): Promise<void> {
+export async function startSession(batchId: string, sessionDate: string, startTime: string | null, endTime: string | null): Promise<void> {
   const admin = await requireCapability("attendance.mark");
+
+  // A batch with no slot time can't key a session: sessions are unique per
+  // (batch, date, start_time) and NULLs never collide, so marking twice would
+  // split one day's attendance across duplicate rows. Send them to fix it.
+  if (!startTime) redirect(`/admin/batches/${batchId}/edit`);
+
   const supabase = createServerSupabase();
 
   const { data: existing } = await supabase
     .from("sessions")
     .select("id, status, started_at")
-    .eq("batch_subject_id", batchSubjectId)
+    .eq("batch_id", batchId)
     .eq("session_date", sessionDate)
     .maybeSingle();
 
   if (!existing) {
     await supabase.from("sessions").insert({
-      batch_subject_id: batchSubjectId,
+      batch_id: batchId,
       session_date: sessionDate,
       start_time: startTime,
       end_time: endTime,
@@ -39,14 +45,15 @@ export async function startSession(batchSubjectId: string, sessionDate: string, 
     await supabase.from("sessions").update({ status: "in_progress", started_by: admin.id, started_at: new Date().toISOString() }).eq("id", existing.id);
   }
 
-  redirect(`/admin/attendance/${batchSubjectId}`);
+  redirect(`/admin/attendance/${batchId}`);
 }
 
 const markSchema = z.object({
-  batchSubjectId: z.string().uuid(),
+  batchId: z.string().uuid(),
   sessionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
+  subjectIds: z.array(z.string().uuid()).default([]),
   marks: z.array(z.object({
     studentId: z.string().uuid(),
     status: z.enum(["present", "absent", "late", "excused"]),
@@ -75,19 +82,20 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
   const admin = await requireCapability("attendance.mark");
   const parsed = markSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { batchSubjectId, sessionDate, startTime, endTime, marks, topic, homework, teacherNotes, rating } = parsed.data;
+  const { batchId, sessionDate, startTime, endTime, subjectIds, marks, topic, homework, teacherNotes, rating } = parsed.data;
 
   const supabase = createServerSupabase();
 
-  // 1. Session (idempotent on batch_subject+date+time) + class notes.
+  // 1. Session (idempotent on batch+date+time) + which subjects were covered + class notes.
   const { data: session, error: sErr } = await supabase
     .from("sessions")
     .upsert(
       {
-        batch_subject_id: batchSubjectId,
+        batch_id: batchId,
         session_date: sessionDate,
         start_time: startTime ?? null,
         end_time: endTime ?? null,
+        subject_ids: subjectIds,
         status: "completed",
         topic_covered: topic || null,
         homework_assigned: homework || null,
@@ -96,7 +104,7 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
         completed_at: new Date().toISOString(),
         completed_by: admin.id,
       },
-      { onConflict: "batch_subject_id,session_date,start_time" }
+      { onConflict: "batch_id,session_date,start_time" }
     )
     .select("id")
     .single();
@@ -121,15 +129,14 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
     .map((r) => ({ attendance_id: r.id, old_status: prevByStudent.get(r.student_id)?.status ?? null, new_status: r.status as AttendanceStatus, changed_by: admin.id }));
   if (logs.length) await supabase.from("attendance_logs").insert(logs);
 
-  // 4. activity_logs — batch/subject context for the summary + per-student.
-  const { data: bs } = await supabase
-    .from("batch_subjects")
-    .select("subject:subjects(name), batch:batches(name)")
-    .eq("id", batchSubjectId)
-    .single();
-  const subjectName = (bs?.subject as unknown as { name: string } | null)?.name ?? "Subject";
-  const batchName = (bs?.batch as unknown as { name: string } | null)?.name ?? "Batch";
-  const label = `${batchName} · ${subjectName}`;
+  // 4. activity_logs — batch/subjects context for the summary + per-student.
+  const [{ data: batch }, { data: subjectRows }] = await Promise.all([
+    supabase.from("batches").select("name").eq("id", batchId).single(),
+    subjectIds.length ? supabase.from("subjects").select("id, name").in("id", subjectIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ]);
+  const batchName = batch?.name ?? "Batch";
+  const subjectsLabel = (subjectRows ?? []).map((s) => s.name).join(", ") || "no subject picked";
+  const label = `${batchName} · ${subjectsLabel}`;
   const summary = savedRows.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] ?? 0) + 1 }), {} as Record<string, number>);
   await supabase.from("activity_logs").insert([
     {

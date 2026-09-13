@@ -22,7 +22,11 @@ const faqs = [
   },
   {
     q: "What are the class timings?",
-    a: "We run weekday batches from 4 PM to 8 PM. WhatsApp us to check current slot availability for your preferred grade.",
+    a: "We run weekday batches from 4 PM to 8 PM, Monday to Friday. WhatsApp us to check current slot availability for your preferred grade.",
+  },
+  {
+    q: "Where are your centres in Bangalore?",
+    a: "We have two centres in north-east Bengaluru — Kammanahalli and Kalyan Nagar — a short drive from HRBR Layout, Banaswadi and Lingarajapuram. WhatsApp us and we'll share the exact location pin for the centre nearest you.",
   },
   {
     q: "Are the workbooks included in the fee?",
