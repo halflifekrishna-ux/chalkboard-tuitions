@@ -8,7 +8,9 @@ import { Reveal } from "@/components/marketing/Reveal";
 import { HeroPin } from "@/components/marketing/learning-studio/HeroPin";
 import { SectionEnter } from "@/components/marketing/learning-studio/SectionEnter";
 import { ProgrammeMarquee } from "@/components/marketing/learning-studio/ProgrammeMarquee";
+import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
 import { CourseBuild } from "@/components/marketing/learning-studio/CourseBuild";
+import { PromptLesson } from "@/components/marketing/learning-studio/PromptLesson";
 import { StudioFaq } from "@/components/marketing/learning-studio/StudioFaq";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
@@ -161,7 +163,7 @@ const PRACTICES = [
   {
     n: "05",
     title: "Courses built for you",
-    body: "Your own material turned into something people finish — storyboarded, then built as scenarios, simulations or gamified practice. Scroll on to watch one get made.",
+    body: "Your own material turned into something people finish — storyboarded, then built as scenarios, simulations or gamified practice. Scroll on — we’ll show you, then let you try one.",
   },
 ];
 
@@ -360,8 +362,14 @@ export default function LearningStudioPage() {
         </Container>
       </section>
 
-      {/* ── 03b — Course building: the signature scroll sequence ── */}
+      {/* ── 03b — The argument, made by doing it rather than describing it ── */}
+      <TransformBoring />
+
+      {/* ── 03c — Course building: the signature scroll sequence ── */}
       <CourseBuild />
+
+      {/* ── 03d — The page becomes a lesson ── */}
+      <PromptLesson />
 
       <StudioFaq />
 

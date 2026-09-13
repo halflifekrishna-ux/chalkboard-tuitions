@@ -33,8 +33,8 @@ export function About() {
         <div ref={ref} className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Story */}
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <span className="section-label">Our Story</span>
@@ -73,8 +73,8 @@ export function About() {
             {values.map(({ icon: Icon, title, description }, i) => (
               <motion.div
                 key={title}
-                initial={{ opacity: 0, x: 24 }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.15 + i * 0.12, duration: 0.5, ease: "easeOut" }}
                 className="flex gap-5 p-5 bg-white dark:bg-board/30 rounded-2xl border border-gray-100 dark:border-chalk/10 shadow-sm"
               >

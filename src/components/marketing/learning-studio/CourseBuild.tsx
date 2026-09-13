@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useScroll, useTransform, type MotionValue } from "framer-motion";
-import { Play } from "lucide-react";
-import { CourseDemo } from "./CourseDemo";
+import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { ArrowDown } from "lucide-react";
 
 /**
  * CourseBuild — the Studio's signature section: a chalkboard that assembles a
@@ -259,30 +258,23 @@ const DELIVERABLES = [
 ];
 
 function Deliverables() {
-  const [demo, setDemo] = useState(false);
-
   return (
     <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-6 sm:pb-24">
-      {/* Reading about an interactive course convinces nobody. This is one. */}
-      <button
-        onClick={() => setDemo(true)}
+      {/* The lesson further down is the proof; this is the pointer to it. */}
+      <a
+        href="#interactive"
         className="group mb-8 flex w-full items-center gap-4 rounded-2xl border border-chalk-yellow/30 bg-chalk-yellow/[0.07] p-5 text-left transition-colors hover:border-chalk-yellow/60 hover:bg-chalk-yellow/10"
       >
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-chalk-yellow/15 text-chalk-yellow transition-transform group-hover:scale-105">
-          <Play size={17} fill="currentColor" strokeWidth={0} />
+        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-chalk-yellow/15 text-chalk-yellow transition-transform group-hover:translate-y-0.5">
+          <ArrowDown size={18} />
         </span>
         <span className="min-w-0">
-          <span className="block text-[15px] font-bold text-chalk">Try one — 30 seconds</span>
+          <span className="block text-[15px] font-bold text-chalk">Want to feel the difference?</span>
           <span className="mt-0.5 block text-sm text-chalk/55">
-            A real module. Make a call, drag things into order, get scored.
+            Further down, this page turns into a short lesson. Thirty seconds, and you&rsquo;ll learn something.
           </span>
         </span>
-        <span className="ml-auto hidden font-special-elite text-[10px] uppercase tracking-[0.2em] text-chalk-yellow/70 sm:block">
-          Tap
-        </span>
-      </button>
-
-      <AnimatePresence>{demo && <CourseDemo onClose={() => setDemo(false)} />}</AnimatePresence>
+      </a>
 
       <dl className="grid gap-px overflow-hidden rounded-2xl border border-chalk/10 bg-chalk/10 sm:grid-cols-2">
         {DELIVERABLES.map((d) => (
@@ -336,10 +328,10 @@ export function CourseBuild() {
   const header = (
     <div className="text-center">
       <span className="font-special-elite text-[11px] uppercase tracking-[0.28em] text-chalk-yellow/90">
-        Course building
+        How it gets built
       </span>
       <h2 className="mx-auto mt-5 max-w-3xl text-balance font-playfair text-[clamp(1.9rem,5vw,3.25rem)] font-bold leading-[1.1] tracking-tight text-chalk">
-        Outsource the whole course. Idea to built, plus who actually finished it.
+        Outsource the whole thing — your raw material in, a finished course out.
       </h2>
     </div>
   );

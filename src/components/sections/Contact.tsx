@@ -97,8 +97,8 @@ export function Contact() {
         <div ref={ref} className="grid lg:grid-cols-5 gap-10 items-start">
           {/* ── Left contact info ── */}
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
             className="lg:col-span-2 space-y-4"
           >
@@ -169,8 +169,8 @@ export function Contact() {
 
           {/* ── Right: Form ── */}
           <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-3 relative"
           >
