@@ -2,7 +2,7 @@ import Link from "next/link";
 import { UserPlus, Search, GraduationCap } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
-import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
+import { signedUrls, PHOTO_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
 import { BOARD_LABELS, STATUS_LABELS, STATUS_COLORS, type Board, type StudentStatus } from "@/lib/os/types";
 
@@ -42,9 +42,7 @@ export default async function StudentsPage({
   }
 
   const { data: students } = await query;
-  const photoUrls = await Promise.all(
-    (students ?? []).map((s) => signedUrl(PHOTO_BUCKET, s.photo_path))
-  );
+  const photoUrls = await signedUrls(PHOTO_BUCKET, (students ?? []).map((s) => s.photo_path));
 
   return (
     <div className="space-y-5">

@@ -1,18 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, PlayCircle, CalendarClock, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
+import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, PlayCircle, CalendarClock, AlertCircle, Sparkles, ShieldCheck, Square } from "lucide-react";
 import { requireAdmin } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { getSessionsForDate } from "@/lib/os/sessions";
-import { isoDate } from "@/lib/os/attendance";
+import { isoDate, addDays, fmtDate, orgHour } from "@/lib/os/attendance";
 import { can } from "@/lib/os/permissions";
 import { OPEN_STATUSES } from "@/lib/os/leads";
 import { SessionCard } from "@/components/admin/SessionCard";
-import { startSession } from "./attendance/actions";
+import { startSession, stopSession } from "./attendance/actions";
 
 export const dynamic = "force-dynamic";
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -38,12 +37,8 @@ export default async function AdminDashboard() {
   if (!can(admin.role, "students.view") && can(admin.role, "leads.view")) redirect("/admin/leads");
 
   const supabase = createServerSupabase();
-  const now = new Date();
-  const today = isoDate(now);
-
-  // Next school day that actually has scheduled sessions (for "Upcoming").
-  const upcoming = new Date(now);
-  upcoming.setDate(upcoming.getDate() + 1);
+  const today = isoDate();
+  const upcoming = addDays(today, 1);
 
   const showLeads = can(admin.role, "leads.view");
   const [leadsAwaiting, myOpenLeads, leadsDue] = showLeads
@@ -55,7 +50,7 @@ export default async function AdminDashboard() {
     : [null, null, null];
 
   const [todaySessions, upcomingSessions, students, attendance, activity, messages, queue] = await Promise.all([
-    getSessionsForDate(now),
+    getSessionsForDate(today),
     getSessionsForDate(upcoming),
     supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
     supabase.from("attendance").select("status, session:sessions!inner(session_date)").eq("session.session_date", today),
@@ -79,16 +74,16 @@ export default async function AdminDashboard() {
   const failedQueue = q.failed ?? 0;
 
   const firstName = admin.full_name.split(" ")[0];
-  const hour = now.getHours();
+  const hour = orgHour();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const upcomingLabel = WEEKDAYS[upcoming.getDay()];
+  const upcomingLabel = fmtDate(upcoming, { weekday: "long" });
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="font-playfair text-2xl sm:text-3xl font-bold" style={{ color: "#f5f0e8" }}>{greeting}, {firstName}</h1>
         <p className="text-sm mt-1" style={{ color: "rgba(245,240,232,0.45)" }}>
-          {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
+          {fmtDate(today)}
         </p>
       </header>
 
@@ -163,7 +158,21 @@ export default async function AdminDashboard() {
         <section>
           <SectionHeader title="Continue Session" />
           <div className="space-y-3">
-            {inProgress.map((s) => <SessionCard key={s.batchId} s={s} />)}
+            {inProgress.map((s) => (
+              <SessionCard
+                key={s.batchId}
+                s={s}
+                date={today}
+                today={today}
+                stopForm={
+                  <form action={stopSession.bind(null, s.batchId, today)}>
+                    <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(245,240,232,0.07)", color: "rgba(245,240,232,0.75)" }}>
+                      <Square size={13} /> Stop
+                    </button>
+                  </form>
+                }
+              />
+            ))}
           </div>
         </section>
       )}
@@ -186,7 +195,7 @@ export default async function AdminDashboard() {
                   </button>
                 </form>
               );
-              return <SessionCard key={s.batchId} s={s} startForm={startForm} />;
+              return <SessionCard key={s.batchId} s={s} date={today} today={today} startForm={startForm} />;
             })}
             {notStarted.length === 0 && (
               <p className="text-sm px-1" style={{ color: "rgba(245,240,232,0.45)" }}>All of today&apos;s sessions are started or complete. 🎉</p>
@@ -200,7 +209,7 @@ export default async function AdminDashboard() {
         <section>
           <SectionHeader title="Completed Sessions" />
           <div className="space-y-3">
-            {completed.map((s) => <SessionCard key={s.batchId} s={s} />)}
+            {completed.map((s) => <SessionCard key={s.batchId} s={s} date={today} today={today} />)}
           </div>
         </section>
       )}

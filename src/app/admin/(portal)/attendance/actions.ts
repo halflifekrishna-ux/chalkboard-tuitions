@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { enqueueMessages, processQueue, type QueueItem, type TemplateKey } from "@/lib/os/whatsapp";
-import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "@/lib/os/attendance";
+import { STATUS_TO_TEMPLATE, isoDate, isIsoDate, type AttendanceStatus } from "@/lib/os/attendance";
 
 /**
  * Start Session — lazily create today's session for a batch.
@@ -22,30 +22,68 @@ export async function startSession(batchId: string, sessionDate: string, startTi
   // split one day's attendance across duplicate rows. Send them to fix it.
   if (!startTime) redirect(`/admin/batches/${batchId}/edit`);
 
+  const today = isoDate();
+  const day = isIsoDate(sessionDate) ? sessionDate : today;
+  // Backfilling yesterday is normal; opening a class that hasn't happened is not.
+  if (day > today) redirect(`/admin/attendance?date=${day}`);
+
   const supabase = createServerSupabase();
 
   const { data: existing } = await supabase
     .from("sessions")
     .select("id, status, started_at")
     .eq("batch_id", batchId)
-    .eq("session_date", sessionDate)
+    .eq("session_date", day)
     .maybeSingle();
 
   if (!existing) {
     await supabase.from("sessions").insert({
       batch_id: batchId,
-      session_date: sessionDate,
+      session_date: day,
       start_time: startTime,
       end_time: endTime,
       status: "in_progress",
       started_by: admin.id,
       started_at: new Date().toISOString(),
     });
-  } else if (existing.status === "scheduled") {
+  } else if (existing.status === "scheduled" || existing.status === "cancelled") {
     await supabase.from("sessions").update({ status: "in_progress", started_by: admin.id, started_at: new Date().toISOString() }).eq("id", existing.id);
   }
 
-  redirect(`/admin/attendance/${batchId}`);
+  revalidatePath("/admin/attendance");
+  redirect(dayPath(`/admin/attendance/${batchId}`, day, today));
+}
+
+/** `?date=` only when it isn't today, so today's URLs stay clean and shareable. */
+function dayPath(base: string, day: string, today: string) {
+  return day === today ? base : `${base}?date=${day}`;
+}
+
+/**
+ * Stop Session — the way back out of a start.
+ *
+ * Starting was previously one-way: the only exit was finishing with
+ * attendance, so a mis-tap left a class sitting "in progress" for good. This
+ * returns it to scheduled and clears who started it, leaving any marks already
+ * saved untouched so nothing is lost by stopping. A completed session is left
+ * alone — that one is undone by editing it, not by stopping it.
+ */
+export async function stopSession(batchId: string, sessionDate: string): Promise<void> {
+  await requireCapability("attendance.mark");
+  const today = isoDate();
+  const day = isIsoDate(sessionDate) ? sessionDate : today;
+
+  const supabase = createServerSupabase();
+  await supabase
+    .from("sessions")
+    .update({ status: "scheduled", started_at: null, started_by: null })
+    .eq("batch_id", batchId)
+    .eq("session_date", day)
+    .eq("status", "in_progress");
+
+  revalidatePath("/admin/attendance");
+  revalidatePath("/admin");
+  redirect(dayPath("/admin/attendance", day, today));
 }
 
 const markSchema = z.object({

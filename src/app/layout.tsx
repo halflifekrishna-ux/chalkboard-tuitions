@@ -70,11 +70,11 @@ export const metadata: Metadata = {
     description:
       "Expert tuitions for Grades 1–10. Max 8 students per batch. Kammanahalli & Kalyan Nagar, Bengaluru.",
   },
-  icons: {
-    icon: "/icon.png",
-    apple: "/apple-icon.png",
-    shortcut: "/icon.png",
-  },
+  // No `icons` block on purpose. These paths pointed at /icon.png and
+  // /apple-icon.png, which only exist under src/app — so both 404'd and every
+  // browser fell back to its default globe. Next.js serves src/app/icon.png and
+  // src/app/apple-icon.png automatically, with content hashes, as long as
+  // nothing here overrides it.
   robots: {
     index: true,
     follow: true,

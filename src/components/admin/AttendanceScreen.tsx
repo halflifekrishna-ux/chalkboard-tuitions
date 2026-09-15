@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/admin/Avatar";
 import { ATTENDANCE_META, type AttendanceStatus } from "@/lib/os/attendance";
-import { CheckCircle2, Loader2, X, WifiOff, Search, Undo2, Star, Check } from "lucide-react";
+import { CheckCircle2, Loader2, X, WifiOff, Search, Undo2, Star, Check, ListChecks } from "lucide-react";
 import type { FinishResult } from "@/app/admin/(portal)/attendance/actions";
 
 export interface RosterStudent {
@@ -41,9 +41,46 @@ interface FinishArgs {
 type Marks = Record<string, AttendanceStatus>;
 
 /** One student row — memoised so marking one student doesn't re-render the list. */
-const StudentRow = ({ student, onMark }: { student: RosterStudent; onMark: (id: string, status: AttendanceStatus) => void }) => (
-  <li className="rounded-2xl p-3" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.12)" }}>
-    <div className="flex items-center gap-3 mb-2.5">
+const StudentRow = ({
+  student,
+  selecting,
+  selected,
+  onMark,
+  onToggleSelect,
+}: {
+  student: RosterStudent;
+  selecting: boolean;
+  selected: boolean;
+  onMark: (id: string, status: AttendanceStatus) => void;
+  onToggleSelect: (id: string) => void;
+}) => (
+  <li
+    className="rounded-2xl p-3"
+    style={{
+      background: "rgba(22,45,36,0.7)",
+      border: `1px solid ${selecting && selected ? "rgba(201,162,39,0.7)" : "rgba(201,162,39,0.12)"}`,
+    }}
+  >
+    <div
+      className={`flex items-center gap-3 mb-2.5 ${selecting ? "cursor-pointer" : ""}`}
+      onClick={selecting ? () => onToggleSelect(student.id) : undefined}
+      role={selecting ? "checkbox" : undefined}
+      aria-checked={selecting ? selected : undefined}
+      tabIndex={selecting ? 0 : undefined}
+      onKeyDown={selecting ? (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onToggleSelect(student.id); } } : undefined}
+    >
+      {selecting && (
+        <span
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
+          style={{
+            background: selected ? "#c9a227" : "rgba(245,240,232,0.08)",
+            border: `1.5px solid ${selected ? "#c9a227" : "rgba(245,240,232,0.2)"}`,
+          }}
+          aria-hidden
+        >
+          {selected && <Check size={14} strokeWidth={3} style={{ color: "#162d24" }} />}
+        </span>
+      )}
       <Avatar name={student.full_name} photoUrl={student.photoUrl} size={40} />
       <div className="min-w-0">
         <p className="text-sm font-semibold truncate" style={{ color: "#f5f0e8" }}>{student.full_name}</p>
@@ -141,6 +178,8 @@ export function AttendanceScreen({
   const [canUndo, setCanUndo] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [topic, setTopic] = useState(existingNotes.topic);
   const [homework, setHomework] = useState(existingNotes.homework);
@@ -165,14 +204,24 @@ export function AttendanceScreen({
     });
   }, [pushHistory]);
 
-  const bulkSet = useCallback((status: AttendanceStatus, ids?: string[]) => {
+  /** Apply one status to a set of students in a single, undoable step. */
+  const bulkSet = useCallback((status: AttendanceStatus, ids: string[]) => {
+    if (!ids.length) return;
     setMarks((prev) => {
       pushHistory(prev);
       const next = { ...prev };
-      for (const s of roster) if (!ids || ids.includes(s.id)) next[s.id] = status;
+      for (const id of ids) next[id] = status;
       return next;
     });
-  }, [roster, pushHistory]);
+  }, [pushHistory]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
   const undo = useCallback(() => {
     const last = history.current.pop();
@@ -191,6 +240,19 @@ export function AttendanceScreen({
     if (!q) return roster;
     return roster.filter((s) => s.full_name.toLowerCase().includes(q) || (s.admission_number ?? "").toLowerCase().includes(q));
   }, [roster, search]);
+
+  // Bulk applies to what's actually on screen. It used to hit the whole roster
+  // regardless of the search box, so filtering to three names and tapping
+  // "All present" quietly marked everyone.
+  const visibleIds = useMemo(() => visible.map((s) => s.id), [visible]);
+  const targetIds = useMemo(
+    () => (selecting ? visibleIds.filter((id) => picked.has(id)) : visibleIds),
+    [selecting, visibleIds, picked]
+  );
+  const filtered = search.trim().length > 0;
+  const allVisiblePicked = visibleIds.length > 0 && visibleIds.every((id) => picked.has(id));
+
+  const exitSelect = useCallback(() => { setSelecting(false); setPicked(new Set()); }, []);
 
   const submit = () => {
     setError(null);
@@ -247,14 +309,69 @@ export function AttendanceScreen({
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} type="search" aria-label="Search students" placeholder="Search student…" className="w-full rounded-xl pl-9 pr-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]" style={{ background: "rgba(22,45,36,0.9)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }} />
           </div>
-          <button onClick={() => bulkSet("present")} className="text-[11px] font-bold rounded-lg px-2.5 py-2 whitespace-nowrap" style={{ background: "rgba(125,201,143,0.14)", color: "#7dc98f" }}>All present</button>
-          <button onClick={() => bulkSet("absent")} className="text-[11px] font-bold rounded-lg px-2.5 py-2 whitespace-nowrap" style={{ background: "rgba(220,80,60,0.14)", color: "#e8a090" }}>All absent</button>
+          <button
+            onClick={() => (selecting ? exitSelect() : setSelecting(true))}
+            aria-pressed={selecting}
+            className="flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2.5 py-2 whitespace-nowrap"
+            style={{ background: selecting ? "#c9a227" : "rgba(245,240,232,0.07)", color: selecting ? "#162d24" : "#f5f0e8" }}
+          >
+            <ListChecks size={13} /> {selecting ? "Done" : "Select"}
+          </button>
+        </div>
+
+        {/* Bulk bar — all four statuses, applied to the picked students, or to
+            everyone currently listed when nothing is picked. */}
+        <div className="rounded-xl p-2" style={{ background: "rgba(22,45,36,0.9)", border: "1px solid rgba(201,162,39,0.18)" }}>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <p className="text-[11px] font-semibold" style={{ color: "rgba(245,240,232,0.55)" }}>
+              {selecting
+                ? `Mark ${targetIds.length} selected`
+                : filtered
+                  ? `Mark all ${visible.length} shown`
+                  : `Mark all ${roster.length}`}
+            </p>
+            {selecting && (
+              <button
+                onClick={() => setPicked(allVisiblePicked ? new Set() : new Set(visibleIds))}
+                className="text-[11px] font-bold rounded-lg px-2 py-1"
+                style={{ background: "rgba(245,240,232,0.07)", color: "#f5f0e8" }}
+              >
+                {allVisiblePicked ? "Clear" : `Select all${filtered ? " shown" : ""}`}
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {STATUSES.map((st) => {
+              const meta = ATTENDANCE_META[st];
+              const disabled = targetIds.length === 0;
+              return (
+                <button
+                  key={st}
+                  onClick={() => bulkSet(st, targetIds)}
+                  disabled={disabled}
+                  className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold disabled:opacity-35"
+                  style={{ background: meta.bg, color: meta.color }}
+                >
+                  <span aria-hidden>{meta.emoji}</span> {meta.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Roster */}
       <ul className="space-y-2 pb-28">
-        {visible.map((s) => (<StudentRow key={s.id} student={{ ...s, status: marks[s.id] }} onMark={onMark} />))}
+        {visible.map((s) => (
+          <StudentRow
+            key={s.id}
+            student={{ ...s, status: marks[s.id] }}
+            selecting={selecting}
+            selected={picked.has(s.id)}
+            onMark={onMark}
+            onToggleSelect={toggleSelect}
+          />
+        ))}
         {visible.length === 0 && (
           <li className="rounded-2xl p-6 text-center text-sm" style={{ background: "rgba(22,45,36,0.7)", color: "rgba(245,240,232,0.45)" }}>
             No students match “{search}”.

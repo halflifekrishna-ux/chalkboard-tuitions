@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "./supabase-server";
 import { can, type Capability } from "./permissions";
@@ -17,8 +18,12 @@ export interface AdminProfile {
  * Requires a Supabase session AND an active row in `admins`.
  * Also refreshes last_seen (throttled) so the Developer panel can show
  * recently-active users. Anyone else is bounced to the login screen.
+ *
+ * Memoised per request. The portal layout and every page inside it both call
+ * this, so each navigation was paying for two Supabase Auth round trips and
+ * two `admins` lookups before rendering anything.
  */
-export async function requireAdmin(): Promise<AdminProfile> {
+export const requireAdmin = cache(async function requireAdmin(): Promise<AdminProfile> {
   const supabase = createServerSupabase();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -54,7 +59,7 @@ export async function requireAdmin(): Promise<AdminProfile> {
     photo_path: admin.photo_path,
     must_change_password: admin.must_change_password,
   };
-}
+});
 
 /** Guard a page/action by capability. Redirects unauthorized users to /admin. */
 export async function requireCapability(cap: Capability): Promise<AdminProfile> {

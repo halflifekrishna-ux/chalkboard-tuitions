@@ -29,14 +29,17 @@ export interface TodaySession {
 }
 
 /**
- * All batches scheduled for `date` (default today) — the batch itself is the
- * recurring template (one dedicated slot, any mix of subjects), merged with
- * any session created for that date. Two queries total — no N+1.
+ * All batches scheduled for `day` (a YYYY-MM-DD calendar date, default today)
+ * — the batch itself is the recurring template (one dedicated slot, any mix of
+ * subjects), merged with any session created for that date. Two queries total
+ * — no N+1.
+ *
+ * Takes a calendar date rather than a Date so the caller and this query can
+ * never disagree about which day they mean.
  */
-export async function getSessionsForDate(date = new Date()): Promise<TodaySession[]> {
+export async function getSessionsForDate(day: string = isoDate()): Promise<TodaySession[]> {
   const supabase = createServerSupabase();
-  const day = isoDate(date);
-  const dayKey = weekdayKey(date);
+  const dayKey = weekdayKey(day);
 
   const { data: batches } = await supabase
     .from("batches")

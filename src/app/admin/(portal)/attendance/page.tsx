@@ -1,22 +1,23 @@
 import Link from "next/link";
-import { PlayCircle, CalendarDays } from "lucide-react";
+import { PlayCircle, CalendarDays, Square } from "lucide-react";
 import { getSessionsForDate, groupByTime } from "@/lib/os/sessions";
 import { requireCapability } from "@/lib/os/auth";
-import { isoDate, fmtTime } from "@/lib/os/attendance";
+import { isoDate, isIsoDate, fmtDate, fmtTime } from "@/lib/os/attendance";
 import { SessionCard } from "@/components/admin/SessionCard";
 import { DateStrip } from "@/components/admin/DateStrip";
-import { startSession } from "./actions";
+import { startSession, stopSession } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function TodaysSessionsPage({ searchParams }: { searchParams: { date?: string } }) {
   await requireCapability("attendance.mark");
-  const today = isoDate(new Date());
-  const selected = searchParams.date && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date) ? searchParams.date : today;
-  const viewDate = new Date(`${selected}T00:00:00`);
+  const today = isoDate();
+  const selected = isIsoDate(searchParams.date) ? searchParams.date : today;
   const isToday = selected === today;
+  // A class that hasn't happened yet can be looked at but not marked.
+  const isFuture = selected > today;
 
-  const sessions = await getSessionsForDate(viewDate);
+  const sessions = await getSessionsForDate(selected);
   const groups = groupByTime(sessions);
 
   const doneCount = sessions.filter((s) => s.state === "completed").length;
@@ -28,12 +29,12 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
           {isToday ? "Today's Sessions" : "Sessions"}
         </h1>
         <p className="text-sm mt-1" style={{ color: "rgba(245,240,232,0.45)" }}>
-          {viewDate.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
+          {fmtDate(selected)}
           {sessions.length > 0 && ` · ${doneCount}/${sessions.length} done`}
         </p>
       </header>
 
-      <DateStrip selected={selected} basePath="/admin/attendance" />
+      <DateStrip selected={selected} today={today} basePath="/admin/attendance" />
 
       {!sessions.length ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
@@ -54,14 +55,23 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
               {/* Sessions at this time */}
               <div className="flex-1 space-y-3 min-w-0">
                 {group.items.map((s) => {
-                  const startForm = isToday ? (
-                    <form action={startSession.bind(null, s.batchId, today, s.startTime, s.endTime)}>
+                  // Any past or present day can be opened — backfilling a
+                  // missed day is routine. Only the future is off limits.
+                  const startForm = isFuture ? undefined : (
+                    <form action={startSession.bind(null, s.batchId, selected, s.startTime, s.endTime)}>
                       <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
-                        <PlayCircle size={16} /> Start Session
+                        <PlayCircle size={16} /> {isToday ? "Start Session" : "Mark this day"}
+                      </button>
+                    </form>
+                  );
+                  const stopForm = s.state === "in_progress" ? (
+                    <form action={stopSession.bind(null, s.batchId, selected)}>
+                      <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(245,240,232,0.07)", color: "rgba(245,240,232,0.75)" }}>
+                        <Square size={13} /> Stop
                       </button>
                     </form>
                   ) : undefined;
-                  return <SessionCard key={s.batchId} s={s} startForm={startForm} />;
+                  return <SessionCard key={s.batchId} s={s} date={selected} today={today} readOnly={isFuture} startForm={startForm} stopForm={stopForm} />;
                 })}
               </div>
             </div>

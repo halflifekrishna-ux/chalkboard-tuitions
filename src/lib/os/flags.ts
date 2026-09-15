@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerSupabase } from "./supabase-server";
 
 export type FeatureKey =
@@ -38,7 +39,8 @@ const DEFAULTS: FeatureFlags = {
   qr_attendance: false,
 };
 
-export async function getFeatureFlags(): Promise<FeatureFlags> {
+/** Memoised per request — the layout and several pages both read these. */
+export const getFeatureFlags = cache(async function getFeatureFlags(): Promise<FeatureFlags> {
   const supabase = createServerSupabase();
   const { data } = await supabase.from("feature_flags").select("key, enabled");
   if (!data?.length) return DEFAULTS;
@@ -48,4 +50,4 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
     if (row.key in flags) flags[row.key as FeatureKey] = row.enabled;
   }
   return flags;
-}
+});

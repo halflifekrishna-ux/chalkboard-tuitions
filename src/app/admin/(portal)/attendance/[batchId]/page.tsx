@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Square } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
-import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
-import { isoDate, fmtTime, type AttendanceStatus } from "@/lib/os/attendance";
+import { signedUrls, PHOTO_BUCKET } from "@/lib/os/storage";
+import { isoDate, isIsoDate, fmtDate, fmtTime, type AttendanceStatus } from "@/lib/os/attendance";
 import { AttendanceScreen, type RosterStudent } from "@/components/admin/AttendanceScreen";
-import { finishSession } from "../actions";
+import { finishSession, stopSession } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,22 +19,37 @@ export default async function MarkAttendancePage({
 }) {
   await requireCapability("attendance.mark");
   const supabase = createServerSupabase();
-  const day = searchParams.date && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date) ? searchParams.date : isoDate(new Date());
+  const today = isoDate();
+  const day = isIsoDate(searchParams.date) ? searchParams.date : today;
 
-  const { data: batch } = await supabase
-    .from("batches")
-    .select("id, name, grade, start_time, end_time, room")
-    .eq("id", params.batchId)
-    .is("deleted_at", null)
-    .maybeSingle();
+  // Nothing here depends on anything else here, so they all go at once. These
+  // used to run one after another: five sequential round trips before the
+  // marking screen could paint.
+  const [{ data: batch }, { data: batchSubjects }, { data: enrol }, { data: session }] = await Promise.all([
+    supabase
+      .from("batches")
+      .select("id, name, grade, start_time, end_time, room")
+      .eq("id", params.batchId)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    supabase
+      .from("batch_subjects")
+      .select("id, subject_id, colour, subject:subjects(name), teacher:teachers(full_name)")
+      .eq("batch_id", params.batchId)
+      .eq("status", "active")
+      .is("deleted_at", null),
+    supabase
+      .from("batch_students")
+      .select("student:students(id, full_name, admission_number, photo_path, status)")
+      .eq("batch_id", params.batchId),
+    supabase
+      .from("sessions")
+      .select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
+      .eq("batch_id", params.batchId)
+      .eq("session_date", day)
+      .maybeSingle(),
+  ]);
   if (!batch) notFound();
-
-  const { data: batchSubjects } = await supabase
-    .from("batch_subjects")
-    .select("id, subject_id, colour, subject:subjects(name), teacher:teachers(full_name)")
-    .eq("batch_id", batch.id)
-    .eq("status", "active")
-    .is("deleted_at", null);
 
   const subjectOptions = (batchSubjects ?? []).map((bs) => ({
     id: bs.subject_id as string,
@@ -43,31 +58,19 @@ export default async function MarkAttendancePage({
     colour: bs.colour as string,
   }));
 
-  // Roster = students enrolled in the batch (lazy: only ids first, then details).
-  const { data: enrol } = await supabase
-    .from("batch_students")
-    .select("student:students(id, full_name, admission_number, photo_path, status)")
-    .eq("batch_id", batch.id);
-
   const students = (enrol ?? [])
     .map((e) => e.student as unknown as { id: string; full_name: string; admission_number: string | null; photo_path: string | null; status: string } | null)
     .filter((s): s is NonNullable<typeof s> => !!s && s.status !== "archived" && s.status !== "dropped")
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
-  // Existing session + marks for this date (resume / edit).
-  const { data: session } = await supabase
-    .from("sessions")
-    .select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
-    .eq("batch_id", params.batchId)
-    .eq("session_date", day)
-    .maybeSingle();
-
-  const existingMarks = session
-    ? (await supabase.from("attendance").select("student_id, status").eq("session_id", session.id)).data ?? []
-    : [];
+  // Existing marks for this date (resume / edit) alongside the photo signing.
+  const [existingMarks, photoUrls] = await Promise.all([
+    session
+      ? supabase.from("attendance").select("student_id, status").eq("session_id", session.id).then((r) => r.data ?? [])
+      : Promise.resolve([] as { student_id: string; status: string }[]),
+    signedUrls(PHOTO_BUCKET, students.map((s) => s.photo_path)),
+  ]);
   const markByStudent = new Map(existingMarks.map((m) => [m.student_id, m.status as AttendanceStatus]));
-
-  const photoUrls = await Promise.all(students.map((s) => signedUrl(PHOTO_BUCKET, s.photo_path)));
 
   const roster: RosterStudent[] = students.map((s, i) => ({
     id: s.id,
@@ -77,23 +80,32 @@ export default async function MarkAttendancePage({
     status: markByStudent.get(s.id) ?? "present", // Present pre-selected
   }));
 
-  const today = isoDate(new Date());
   const initialSubjectIds = session?.subject_ids?.length ? session.subject_ids : subjectOptions.map((s) => s.id);
 
   return (
     <div className="max-w-2xl">
       <header className="mb-4">
         <Link href={`/admin/attendance${day !== today ? `?date=${day}` : ""}`} className="inline-flex items-center gap-1.5 text-xs font-semibold mb-3" style={{ color: "rgba(245,240,232,0.5)" }}>
-          <ArrowLeft size={14} /> Today&apos;s Sessions
+          <ArrowLeft size={14} /> {day === today ? "Today's Sessions" : "Back to that day"}
         </Link>
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold" style={{ color: "#f4c430" }}>{fmtTime(batch.start_time)}</span>
           <h1 className="font-playfair text-2xl font-bold" style={{ color: "#f5f0e8" }}>{batch.name}</h1>
         </div>
         <p className="text-sm mt-1" style={{ color: "rgba(245,240,232,0.45)" }}>
-          Grade {batch.grade}{batch.room ? ` · ${batch.room}` : ""} · {new Date(`${day}T00:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
+          Grade {batch.grade}{batch.room ? ` · ${batch.room}` : ""} · {fmtDate(day, { weekday: "long", day: "numeric", month: "short" })}
           {session?.status === "completed" && " · completed (editing)"}
         </p>
+
+        {/* Starting used to be one-way. Stopping leaves any marks already
+            saved alone — it only reopens the session. */}
+        {session?.status === "in_progress" && (
+          <form action={stopSession.bind(null, batch.id, day)} className="mt-3">
+            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" style={{ background: "rgba(245,240,232,0.07)", color: "rgba(245,240,232,0.7)" }}>
+              <Square size={12} /> Stop session
+            </button>
+          </form>
+        )}
       </header>
 
       {!batch.start_time ? (

@@ -11,13 +11,33 @@ function fmtClock(iso: string | null) {
 /**
  * One session card — batch, the mix of subjects it can run, time, student
  * count, status, started/completed times. The action adapts to the session
- * state. `startForm` is the bound Start Session server action (form) for
- * not-started sessions.
+ * state. `startForm` / `stopForm` are the bound server actions.
+ *
+ * `date` is the day being viewed and has to travel with every link out of
+ * here: these links used to point at the bare marking route, which defaults to
+ * today, so opening a session from any other day in the calendar silently
+ * marked attendance against the wrong date.
  */
-export function SessionCard({ s, startForm }: { s: TodaySession; startForm?: React.ReactNode }) {
+export function SessionCard({
+  s,
+  date,
+  today,
+  readOnly,
+  startForm,
+  stopForm,
+}: {
+  s: TodaySession;
+  date: string;
+  today: string;
+  readOnly?: boolean;
+  startForm?: React.ReactNode;
+  stopForm?: React.ReactNode;
+}) {
   const done = s.state === "completed";
   const inProgress = s.state === "in_progress";
   const showCoverage = done || inProgress;
+  const suffix = date === today ? "" : `?date=${date}`;
+  const markHref = `/admin/attendance/${s.batchId}${suffix}`;
 
   return (
     <div
@@ -65,22 +85,29 @@ export function SessionCard({ s, startForm }: { s: TodaySession; startForm?: Rea
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 space-y-2">
         {!s.startTime ? (
           <Link href={`/admin/batches/${s.batchId}/edit`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(244,196,48,0.14)", color: "#f4c430" }}>
             Set this batch&apos;s timing first
           </Link>
+        ) : readOnly ? (
+          <p className="rounded-xl py-2.5 text-center text-sm font-semibold" style={{ background: "rgba(245,240,232,0.05)", color: "rgba(245,240,232,0.45)" }}>
+            Scheduled — mark it on the day
+          </p>
         ) : done ? (
-          <Link href={`/admin/attendance/${s.batchId}`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(125,201,143,0.14)", color: "#7dc98f" }}>
+          <Link href={markHref} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(125,201,143,0.14)", color: "#7dc98f" }}>
             <CheckCircle2 size={15} /> Review / Edit
           </Link>
         ) : inProgress ? (
-          <Link href={`/admin/attendance/${s.batchId}`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
-            <ClipboardCheck size={15} /> Continue Marking
-          </Link>
+          <>
+            <Link href={markHref} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
+              <ClipboardCheck size={15} /> Continue Marking
+            </Link>
+            {stopForm}
+          </>
         ) : (
           startForm ?? (
-            <Link href={`/admin/attendance/${s.batchId}`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
+            <Link href={markHref} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
               <PlayCircle size={16} /> Start Session
             </Link>
           )

@@ -1,11 +1,16 @@
+import { cache } from "react";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 /**
  * Cookie-bound Supabase client for Server Components, Server Actions and
  * Route Handlers. Runs as the logged-in user, so RLS policies apply.
+ *
+ * Wrapped in React's `cache` so one render pass builds a single client rather
+ * than a new one per call site — the layout, the page and every helper below
+ * them were each constructing their own.
  */
-export function createServerSupabase() {
+export const createServerSupabase = cache(function createServerSupabase() {
   const cookieStore = cookies();
 
   return createServerClient(
@@ -33,4 +38,4 @@ export function createServerSupabase() {
       },
     }
   );
-}
+});

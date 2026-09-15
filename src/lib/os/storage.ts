@@ -11,6 +11,22 @@ export async function signedUrl(bucket: string, path: string | null, expiresIn =
   return data?.signedUrl ?? null;
 }
 
+/**
+ * Signed URLs for many objects in one request. Rosters were signing photos one
+ * student at a time, so an eight-student batch made eight sequential calls to
+ * Supabase before the page could render. Returns URLs positionally, null where
+ * the path was missing or signing failed.
+ */
+export async function signedUrls(bucket: string, paths: (string | null)[]): Promise<(string | null)[]> {
+  const real = paths.filter((p): p is string => !!p);
+  if (!real.length) return paths.map(() => null);
+
+  const supabase = createServerSupabase();
+  const { data } = await supabase.storage.from(bucket).createSignedUrls(real, 3600);
+  const byPath = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  return paths.map((p) => (p ? byPath.get(p) ?? null : null));
+}
+
 /** Upload a File from a Server Action; returns the storage path. */
 export async function uploadFile(bucket: string, prefix: string, file: File): Promise<string> {
   const supabase = createServerSupabase();

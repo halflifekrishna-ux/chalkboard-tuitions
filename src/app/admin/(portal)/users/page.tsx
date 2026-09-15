@@ -2,7 +2,7 @@ import Link from "next/link";
 import { UserPlus, Search, Users as UsersIcon } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
-import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
+import { signedUrls, PHOTO_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
 import { ROLES, ROLE_LABELS, ROLE_BADGE, type Role } from "@/lib/os/permissions";
 
@@ -37,7 +37,7 @@ export default async function UsersPage({ searchParams }: { searchParams: { q?: 
   if (roleFilter && ROLES.includes(roleFilter as Role)) query = query.eq("role", roleFilter);
 
   const { data: users } = await query;
-  const photoUrls = await Promise.all((users ?? []).map((u) => signedUrl(PHOTO_BUCKET, u.photo_path)));
+  const photoUrls = await signedUrls(PHOTO_BUCKET, (users ?? []).map((u) => u.photo_path));
 
   const buildHref = (params: Record<string, string>) => {
     const sp = new URLSearchParams();

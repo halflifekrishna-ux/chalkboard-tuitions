@@ -19,14 +19,64 @@ export const STATUS_TO_TEMPLATE: Record<AttendanceStatus, string> = {
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
-/** DB day-code (mon,tue…) for a given Date in the org timezone (default local). */
-export function weekdayKey(d: Date): string {
-  return WEEKDAY_KEYS[d.getDay()];
+/**
+ * Every date in this system is a calendar date in the centre's own timezone,
+ * never an instant. That distinction matters: these helpers used to read the
+ * host's local clock, which is UTC on Vercel, so between midnight and 5:30am
+ * IST the server believed it was still yesterday while the browser knew it was
+ * today — the two disagreed about which day "Today" meant.
+ */
+export const ORG_TZ = "Asia/Kolkata";
+
+/** en-CA formats as YYYY-MM-DD, which is exactly the shape the DB stores. */
+const ISO_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ORG_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Today's calendar date at the centre, as YYYY-MM-DD. */
+export function isoDate(d: Date = new Date()): string {
+  return ISO_FMT.format(d);
 }
 
-/** YYYY-MM-DD for a Date (local). */
-export function isoDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/**
+ * DB day-code (mon, tue…) for a calendar date string. Built from a UTC
+ * instant so no timezone can shift it onto the neighbouring day — a plain
+ * `new Date("2026-03-01")` is midnight UTC and reads as Feb 28 west of
+ * Greenwich.
+ */
+export function weekdayKey(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return WEEKDAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+}
+
+/** Shift a calendar date by whole days, staying in calendar space. */
+export function addDays(iso: string, delta: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + delta);
+  return t.toISOString().slice(0, 10);
+}
+
+/** True for a well-formed YYYY-MM-DD. */
+export function isIsoDate(v: string | undefined | null): v is string {
+  return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
+/**
+ * Format a calendar date for display. Parsed as UTC and rendered in UTC so
+ * the label always names the same day it was given.
+ */
+export function fmtDate(iso: string, opts: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" }): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-IN", { ...opts, timeZone: "UTC" });
+}
+
+/** Hour of day (0-23) at the centre right now — the server clock is UTC. */
+export function orgHour(d: Date = new Date()): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: ORG_TZ, hour: "2-digit", hour12: false }).format(d));
 }
 
 export function fmtTime(t: string | null): string {
