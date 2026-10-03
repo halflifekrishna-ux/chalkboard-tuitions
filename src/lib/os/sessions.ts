@@ -101,6 +101,56 @@ export async function getSessionsForDate(date = new Date()): Promise<TodaySessio
   });
 }
 
+export interface DayCount {
+  /** Active classes whose weekly pattern includes this day. */
+  scheduled: number;
+  /** Sessions already completed on this date. */
+  done: number;
+}
+
+/**
+ * Per-day class counts for the whole month containing `anchorIso` — what the
+ * month calendar needs to show which days have classes and which are already
+ * marked. Two queries, computed in memory: classes recur by weekday, so the
+ * only per-date lookup is the sessions actually saved.
+ */
+export async function getMonthOverview(anchorIso: string): Promise<Record<string, DayCount>> {
+  const supabase = createServerSupabase();
+  const anchor = new Date(`${anchorIso}T00:00:00`);
+  const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+
+  const [{ data: batches }, { data: sessions }] = await Promise.all([
+    supabase.from("batches").select("days").eq("status", "active").is("deleted_at", null),
+    supabase
+      .from("sessions")
+      .select("session_date, status")
+      .gte("session_date", isoDate(first))
+      .lte("session_date", isoDate(last)),
+  ]);
+
+  const perWeekday = new Map<string, number>();
+  for (const b of batches ?? []) {
+    for (const d of ((b.days as string[] | null) ?? [])) perWeekday.set(d, (perWeekday.get(d) ?? 0) + 1);
+  }
+
+  const doneByDate = new Map<string, number>();
+  for (const s of sessions ?? []) {
+    if (s.status !== "completed") continue;
+    const key = s.session_date as string;
+    doneByDate.set(key, (doneByDate.get(key) ?? 0) + 1);
+  }
+
+  const out: Record<string, DayCount> = {};
+  for (const d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+    const iso = isoDate(d);
+    const scheduled = perWeekday.get(weekdayKey(d)) ?? 0;
+    const done = doneByDate.get(iso) ?? 0;
+    if (scheduled || done) out[iso] = { scheduled, done };
+  }
+  return out;
+}
+
 /** Group sessions by start time for a calendar-style layout. */
 export function groupByTime(sessions: TodaySession[]): { time: string | null; items: TodaySession[] }[] {
   const groups = new Map<string, TodaySession[]>();

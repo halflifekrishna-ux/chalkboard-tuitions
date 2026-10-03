@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlayCircle, CalendarDays } from "lucide-react";
-import { getSessionsForDate, groupByTime } from "@/lib/os/sessions";
+import { getSessionsForDate, groupByTime, getMonthOverview } from "@/lib/os/sessions";
 import { requireCapability } from "@/lib/os/auth";
 import { isoDate, fmtTime } from "@/lib/os/attendance";
 import { SessionCard } from "@/components/admin/SessionCard";
@@ -16,7 +16,7 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
   const viewDate = new Date(`${selected}T00:00:00`);
   const isToday = selected === today;
 
-  const sessions = await getSessionsForDate(viewDate);
+  const [sessions, monthCounts] = await Promise.all([getSessionsForDate(viewDate), getMonthOverview(selected)]);
   const groups = groupByTime(sessions);
 
   const doneCount = sessions.filter((s) => s.state === "completed").length;
@@ -33,7 +33,7 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
         </p>
       </header>
 
-      <DateStrip selected={selected} basePath="/admin/attendance" />
+      <DateStrip selected={selected} basePath="/admin/attendance" counts={monthCounts} />
 
       {!sessions.length ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
