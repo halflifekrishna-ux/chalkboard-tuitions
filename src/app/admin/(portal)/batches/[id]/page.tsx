@@ -151,7 +151,7 @@ export default async function BatchDetailPage({ params }: { params: { id: string
     <div className="space-y-5 max-w-2xl">
       <header>
         <Link href="/admin/batches" className="inline-flex items-center gap-1.5 text-xs font-semibold mb-3" style={{ color: "rgba(245,240,232,0.5)" }}>
-          <ArrowLeft size={14} /> Batches
+          <ArrowLeft size={14} /> Classes
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -179,10 +179,10 @@ export default async function BatchDetailPage({ params }: { params: { id: string
       <div className="pt-2 pb-6">
         <ConfirmButton
           action={archiveWithId}
-          triggerLabel="Archive batch"
+          triggerLabel="Archive class"
           triggerIcon={<Archive size={14} />}
-          title="Archive this batch?"
-          body={`"${batch.name}" and its subjects will be hidden and stop appearing in Today's Sessions. Attendance history is preserved.`}
+          title="Archive this class?"
+          body={`"${batch.name}" will be hidden and stop appearing in Today's Sessions. Attendance history is preserved.`}
           confirmLabel="Archive"
           className="flex items-center gap-2 text-xs font-semibold"
           style={{ color: "rgba(232,160,144,0.8)" }}

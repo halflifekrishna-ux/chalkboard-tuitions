@@ -68,7 +68,7 @@ export function SessionCard({ s, startForm }: { s: TodaySession; startForm?: Rea
       <div className="mt-3">
         {!s.startTime ? (
           <Link href={`/admin/batches/${s.batchId}/edit`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(244,196,48,0.14)", color: "#f4c430" }}>
-            Set this batch&apos;s timing first
+            Set this class&apos;s timing first
           </Link>
         ) : done ? (
           <Link href={`/admin/attendance/${s.batchId}`} className="flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm" style={{ background: "rgba(125,201,143,0.14)", color: "#7dc98f" }}>

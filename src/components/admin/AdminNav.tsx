@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/leads", label: "Leads", icon: Sparkles, flag: "crm", caps: ["leads.view"] },
   { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, flag: "attendance", caps: ["attendance.mark"] },
   { href: "/admin/students", label: "Students", icon: Users, flag: "students", caps: ["students.view"] },
-  { href: "/admin/batches", label: "Batches", icon: BookOpen, flag: "classes", caps: ["batches.manage", "batches.viewAssigned"] },
+  { href: "/admin/batches", label: "Classes", icon: BookOpen, flag: "classes", caps: ["batches.manage", "batches.viewAssigned"] },
   { href: "/admin/parents", label: "Parents", icon: Contact, caps: ["parents.manage"] },
   { href: "/admin/subjects", label: "Subjects", icon: Tag, caps: ["subjects.manage"] },
   { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, flag: "whatsapp", caps: ["communications.manage"] },

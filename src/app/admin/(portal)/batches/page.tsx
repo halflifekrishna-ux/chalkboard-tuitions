@@ -24,13 +24,13 @@ export default async function BatchesPage({ searchParams }: { searchParams: { q?
   return (
     <div className="space-y-5">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="font-playfair text-2xl sm:text-3xl font-bold" style={{ color: "#f5f0e8" }}>Batches</h1>
+        <h1 className="font-playfair text-2xl sm:text-3xl font-bold" style={{ color: "#f5f0e8" }}>Classes</h1>
         <div className="flex items-center gap-2">
           <Link href="/admin/subjects" className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 font-semibold text-xs" style={{ background: "rgba(245,240,232,0.06)", color: "rgba(245,240,232,0.7)" }}>
             <Tag size={14} /> Subjects
           </Link>
           <Link href="/admin/batches/new" className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
-            <Plus size={16} /> Add
+            <Plus size={16} /> New class
           </Link>
         </div>
       </header>
@@ -42,8 +42,8 @@ export default async function BatchesPage({ searchParams }: { searchParams: { q?
           name="q"
           type="search"
           defaultValue={q}
-          placeholder="Search batches…"
-          aria-label="Search batches"
+          placeholder="Search classes…"
+          aria-label="Search classes"
           className="w-full rounded-xl pl-11 pr-4 py-3 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]"
           style={{ background: "rgba(22,45,36,0.7)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }}
         />
@@ -53,11 +53,11 @@ export default async function BatchesPage({ searchParams }: { searchParams: { q?
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
           <Layers size={32} className="mx-auto mb-3" style={{ color: "rgba(245,240,232,0.25)" }} />
           <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>
-            {q ? `No batches match “${q}”.` : "No batches yet. Create your first — e.g. “Grade 8 Foundation”, then add subjects and enrol students."}
+            {q ? `No classes match “${q}”.` : "No classes yet. Schedule the first one — who's in it, which days it runs, and what's taught."}
           </p>
           {!q && (
             <Link href="/admin/batches/new" className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
-              <Plus size={16} /> Add Batch
+              <Plus size={16} /> Schedule a class
             </Link>
           )}
         </div>

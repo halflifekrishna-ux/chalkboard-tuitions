@@ -39,9 +39,9 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
           <CalendarDays size={32} className="mx-auto mb-3" style={{ color: "rgba(245,240,232,0.25)" }} />
           <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>
-            {isToday ? "No sessions scheduled today." : "No sessions scheduled on this day."} Set a batch's days under Batches.
+            {isToday ? "No classes run today." : "No classes run on this day."} Classes show up here on the days they&apos;re scheduled.
           </p>
-          <Link href="/admin/batches" className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>Manage Batches</Link>
+          <Link href="/admin/batches" className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>Manage classes</Link>
         </div>
       ) : (
         <div className="space-y-6">

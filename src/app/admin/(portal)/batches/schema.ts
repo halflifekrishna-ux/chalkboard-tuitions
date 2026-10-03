@@ -43,3 +43,32 @@ export const batchSubjectSchema = z.object({
 });
 
 export type BatchSubjectFormValues = z.infer<typeof batchSubjectSchema>;
+
+/**
+ * "Schedule a class" — the whole thing in one payload: the slot, who attends,
+ * and what's taught. Sent as a typed object, never scraped out of FormData,
+ * so a day can't silently stay selected after it's been tapped off.
+ */
+export const classSchema = z
+  .object({
+    name: z.string().trim().min(2, "Give this class a name"),
+    grade: z.coerce.number().int().min(1).max(12),
+    academic_year_id: z.string().uuid().nullable().optional(),
+    board: z.enum(["cbse", "icse", "state_board"]).nullable().optional(),
+    days: z.array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])).min(1, "Pick at least one day"),
+    start_time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a start time"),
+    end_time: z.string().regex(/^\d{2}:\d{2}$/, "Pick an end time"),
+    room: z.string().max(40).optional(),
+    notes: z.string().max(1000).optional(),
+    capacity: z.coerce.number().int().min(1).max(200).default(8),
+    status: z.enum(["active", "inactive", "archived"]).default("active"),
+    student_ids: z.array(z.string().uuid()).default([]),
+    subject_ids: z.array(z.string().uuid()).default([]),
+  })
+  .superRefine((v, ctx) => {
+    if (v.end_time <= v.start_time) {
+      ctx.addIssue({ code: "custom", path: ["end_time"], message: "The end time must be after the start time" });
+    }
+  });
+
+export type ClassInput = z.input<typeof classSchema>;
