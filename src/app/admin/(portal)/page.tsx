@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, PlayCircle, CalendarClock, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
+import { UserPlus, ClipboardCheck, Users, Activity, MessageCircle, CalendarClock, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { getSessionsForDate } from "@/lib/os/sessions";
@@ -8,7 +8,7 @@ import { isoDate } from "@/lib/os/attendance";
 import { can } from "@/lib/os/permissions";
 import { OPEN_STATUSES } from "@/lib/os/leads";
 import { SessionCard } from "@/components/admin/SessionCard";
-import { startSession } from "./attendance/actions";
+import { StartSessionButton } from "@/components/admin/StartSessionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -180,11 +180,7 @@ export default async function AdminDashboard() {
           <div className="space-y-3">
             {notStarted.map((s) => {
               const startForm = (
-                <form action={startSession.bind(null, s.batchId, today, s.startTime, s.endTime)}>
-                  <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
-                    <PlayCircle size={16} /> Start Session
-                  </button>
-                </form>
+                <StartSessionButton batchId={s.batchId} date={today} startTime={s.startTime} endTime={s.endTime} />
               );
               return <SessionCard key={s.batchId} s={s} startForm={startForm} />;
             })}

@@ -35,11 +35,18 @@ export async function saveClass(classId: string | null, input: unknown): Promise
     }
   }
 
+  // Individual Attention owns the whole class, so its roster IS that student.
+  const isIndividual = v.category === "individual_attention";
+  const studentId = isIndividual ? (v.student_id as string) : null;
+  const roster = isIndividual ? [studentId as string] : v.student_ids;
+
   const fields = {
     name: v.name,
     grade: v.grade,
     board: v.board ?? null,
-    capacity: Math.max(v.capacity, v.student_ids.length || 1),
+    session_category: v.category,
+    student_id: studentId,
+    capacity: isIndividual ? 1 : Math.max(v.capacity, v.student_ids.length || 1),
     status: v.status,
     notes: v.notes?.trim() || null,
     days: v.days,
@@ -62,8 +69,8 @@ export async function saveClass(classId: string | null, input: unknown): Promise
   /* ── Who attends ── */
   const { data: current } = await supabase.from("batch_students").select("student_id").eq("batch_id", id);
   const currentIds = new Set((current ?? []).map((r) => r.student_id as string));
-  const wanted = new Set(v.student_ids);
-  const toAdd = v.student_ids.filter((sid) => !currentIds.has(sid));
+  const wanted = new Set(roster);
+  const toAdd = roster.filter((sid) => !currentIds.has(sid));
   const toRemove = Array.from(currentIds).filter((sid) => !wanted.has(sid));
 
   if (toAdd.length) {
@@ -104,8 +111,8 @@ export async function saveClass(classId: string | null, input: unknown): Promise
     entity_type: "batch",
     entity_id: id,
     action: classId ? "class_updated" : "class_created",
-    summary: `Class "${v.name}" ${classId ? "updated" : "created"}: ${v.days.join(", ")} ${v.start_time}–${v.end_time}`,
-    metadata: { days: v.days, start_time: v.start_time, end_time: v.end_time, students: v.student_ids.length, subjects: v.subject_ids.length },
+    summary: `Class "${v.name}" ${classId ? "updated" : "created"}: ${v.days.join(", ")} ${v.start_time}–${v.end_time}${isIndividual ? " (Individual Attention)" : ""}`,
+    metadata: { days: v.days, start_time: v.start_time, end_time: v.end_time, students: roster.length, subjects: v.subject_ids.length, category: v.category, student_id: studentId },
   });
 
   revalidatePath("/admin/batches");

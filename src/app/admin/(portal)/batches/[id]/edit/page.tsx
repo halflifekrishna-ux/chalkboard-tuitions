@@ -51,6 +51,8 @@ export default async function EditClassPage({ params }: { params: { id: string }
           academic_year_id: batch.academic_year_id,
           student_ids: (enrolled ?? []).map((e) => e.student_id as string),
           subject_ids: (taught ?? []).map((t) => t.subject_id as string),
+          category: (batch.session_category ?? "combined_class") as "combined_class" | "individual_attention",
+          student_id: batch.student_id,
         }}
       />
     </div>

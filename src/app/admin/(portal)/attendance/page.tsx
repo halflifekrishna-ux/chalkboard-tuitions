@@ -1,25 +1,32 @@
 import Link from "next/link";
-import { PlayCircle, CalendarDays } from "lucide-react";
-import { getSessionsForDate, groupByTime, getMonthOverview } from "@/lib/os/sessions";
+import { CalendarDays, PartyPopper } from "lucide-react";
+import { getSessionsForDate, groupByTime, getMonthOverview, getHoliday } from "@/lib/os/sessions";
 import { requireCapability } from "@/lib/os/auth";
+import { can } from "@/lib/os/permissions";
 import { isoDate, fmtTime } from "@/lib/os/attendance";
 import { SessionCard } from "@/components/admin/SessionCard";
 import { DateStrip } from "@/components/admin/DateStrip";
-import { startSession } from "./actions";
+import { StartSessionButton } from "@/components/admin/StartSessionButton";
+import { HolidayControl } from "@/components/admin/HolidayControl";
 
 export const dynamic = "force-dynamic";
 
 export default async function TodaysSessionsPage({ searchParams }: { searchParams: { date?: string } }) {
-  await requireCapability("attendance.mark");
+  const admin = await requireCapability("attendance.mark");
   const today = isoDate(new Date());
   const selected = searchParams.date && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date) ? searchParams.date : today;
   const viewDate = new Date(`${selected}T00:00:00`);
   const isToday = selected === today;
 
-  const [sessions, monthCounts] = await Promise.all([getSessionsForDate(viewDate), getMonthOverview(selected)]);
+  const [sessions, monthCounts, holiday] = await Promise.all([
+    getSessionsForDate(viewDate),
+    getMonthOverview(selected),
+    getHoliday(selected),
+  ]);
   const groups = groupByTime(sessions);
 
   const doneCount = sessions.filter((s) => s.state === "completed").length;
+  const canManageHolidays = can(admin.role, "batches.manage");
 
   return (
     <div className="space-y-5">
@@ -34,6 +41,18 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
       </header>
 
       <DateStrip selected={selected} basePath="/admin/attendance" counts={monthCounts} />
+
+      {holiday && (
+        <section className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(220,80,60,0.1)", border: "1px solid rgba(232,120,100,0.3)" }}>
+          <p className="flex items-center gap-2 font-semibold" style={{ color: "#e8a090" }}>
+            <PartyPopper size={18} aria-hidden /> Public Holiday — {holiday.name}
+          </p>
+          <p className="text-sm" style={{ color: "rgba(245,240,232,0.65)" }}>
+            Classes scheduled today show as not conducted. If a class ran anyway, you can still mark its attendance.
+          </p>
+          {canManageHolidays && <HolidayControl date={selected} holidayName={holiday.name} />}
+        </section>
+      )}
 
       {!sessions.length ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
@@ -54,18 +73,26 @@ export default async function TodaysSessionsPage({ searchParams }: { searchParam
               {/* Sessions at this time */}
               <div className="flex-1 space-y-3 min-w-0">
                 {group.items.map((s) => {
-                  const startForm = isToday ? (
-                    <form action={startSession.bind(null, s.batchId, today, s.startTime, s.endTime)}>
-                      <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-sm active:scale-[0.98] transition-transform" style={{ background: "#c9a227", color: "#162d24" }}>
-                        <PlayCircle size={16} /> Start Session
-                      </button>
-                    </form>
-                  ) : undefined;
+                  const startForm = (
+                    <StartSessionButton
+                      batchId={s.batchId}
+                      date={selected}
+                      startTime={s.startTime}
+                      endTime={s.endTime}
+                      label={isToday ? "Start Session" : "Mark Attendance"}
+                    />
+                  );
                   return <SessionCard key={s.batchId} s={s} startForm={startForm} />;
                 })}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {canManageHolidays && !holiday && (
+        <div className="pt-1 pb-4">
+          <HolidayControl date={selected} holidayName={null} />
         </div>
       )}
     </div>

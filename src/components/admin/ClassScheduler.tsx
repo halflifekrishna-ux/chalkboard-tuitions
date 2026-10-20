@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, Search, Check, Clock, Users, BookOpen, ChevronDown, CalendarDays } from "lucide-react";
 import { saveClass } from "@/app/admin/(portal)/batches/class-actions";
 import { DAY_OPTIONS } from "@/app/admin/(portal)/batches/schema";
+import { CATEGORY_OPTIONS, type SessionCategory } from "@/lib/os/session-meta";
 import { useAction, Feedback } from "./ActionFeedback";
+import { ChoiceCards } from "./ChoiceChips";
 
 type Day = (typeof DAY_OPTIONS)[number]["value"];
 
@@ -39,6 +41,8 @@ export interface ClassDefaults {
   academic_year_id?: string | null;
   student_ids?: string[];
   subject_ids?: string[];
+  category?: SessionCategory;
+  student_id?: string | null;
 }
 
 function toMinutes(t: string) {
@@ -103,7 +107,12 @@ export function ClassScheduler({
   const [days, setDays] = useState<Day[]>((defaults?.days as Day[]) ?? WEEKDAYS);
   const [start, setStart] = useState(defaults?.start_time?.slice(0, 5) ?? "17:00");
   const [end, setEnd] = useState(defaults?.end_time?.slice(0, 5) ?? "18:00");
-  const [studentIds, setStudentIds] = useState<string[]>(defaults?.student_ids ?? []);
+  const [category, setCategory] = useState<SessionCategory>(defaults?.category ?? "combined_class");
+  const [studentIds, setStudentIds] = useState<string[]>(
+    defaults?.category === "individual_attention" && defaults?.student_id
+      ? [defaults.student_id]
+      : defaults?.student_ids ?? []
+  );
   const [subjectIds, setSubjectIds] = useState<string[]>(defaults?.subject_ids ?? []);
   const [room, setRoom] = useState(defaults?.room ?? "");
   const [notes, setNotes] = useState(defaults?.notes ?? "");
@@ -117,8 +126,23 @@ export function ClassScheduler({
     onSuccess: (r) => { if (r.batchId) router.push(`/admin/batches/${r.batchId}`); },
   });
 
+  const isIndividual = category === "individual_attention";
+
   const toggleDay = (d: Day) => setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
-  const toggleStudent = (id: string) => setStudentIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  // Individual Attention is one student, so tapping another replaces the
+  // choice instead of adding to it — no way to end up with two.
+  const toggleStudent = (id: string) =>
+    setStudentIds((prev) =>
+      isIndividual ? (prev[0] === id ? [] : [id]) : prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
+  const changeCategory = (next: SessionCategory) => {
+    setCategory(next);
+    // Switching to one-student keeps only the first pick, so the summary and
+    // what gets saved never disagree.
+    if (next === "individual_attention") setStudentIds((prev) => prev.slice(0, 1));
+  };
   const toggleSubject = (id: string) => setSubjectIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const setDuration = (mins: number) => setEnd(fromMinutes(toMinutes(start) + mins));
@@ -139,11 +163,14 @@ export function ClassScheduler({
     e.preventDefault();
     setLocalError(null);
     if (effectiveName.trim().length < 2) return setLocalError("Give this class a name.");
+    if (isIndividual && !studentIds[0]) return setLocalError("Choose the student this class is for.");
     if (!days.length) return setLocalError("Pick at least one day.");
     if (durationMins <= 0) return setLocalError("The end time must be after the start time.");
     save.run(defaults?.id ?? null, {
       name: effectiveName.trim(),
       grade,
+      category,
+      student_id: isIndividual ? studentIds[0] : null,
       academic_year_id: defaults?.academic_year_id ?? academicYearId,
       board: board || null,
       days,
@@ -168,12 +195,21 @@ export function ClassScheduler({
           <CalendarDays size={14} aria-hidden /> {daysLabel(days)} · {pretty(start)} – {pretty(end)}
         </p>
         <p className="text-xs mt-1" style={{ color: "rgba(245,240,232,0.55)" }}>
-          {studentIds.length} student{studentIds.length === 1 ? "" : "s"} · {subjectIds.length} subject{subjectIds.length === 1 ? "" : "s"}
+          {isIndividual ? "Individual Attention · 1 student" : `${studentIds.length} student${studentIds.length === 1 ? "" : "s"}`} · {subjectIds.length} subject{subjectIds.length === 1 ? "" : "s"}
           {durationMins > 0 && ` · ${Math.floor(durationMins / 60)}h ${durationMins % 60 ? `${durationMins % 60}m` : ""}`.trimEnd()}
         </p>
       </div>
 
-      <Section step={1} title="Who's in this class?" hint="Tap to add. You can change this any time." icon={<Users size={14} style={{ color: "#c9a227" }} />}>
+      <Section step={1} title="What kind of class?" icon={<Users size={14} style={{ color: "#c9a227" }} />}>
+        <ChoiceCards label="Class type" options={CATEGORY_OPTIONS} value={category} onChange={changeCategory} disabled={save.pending} />
+      </Section>
+
+      <Section
+        step={2}
+        title={isIndividual ? "Which student is it for?" : "Who's in this class?"}
+        hint={isIndividual ? "The whole class belongs to this one student." : "Tap to add. You can change this any time."}
+        icon={<Users size={14} style={{ color: "#c9a227" }} />}
+      >
         {students.length > 6 && (
           <div className="relative mb-2.5">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} aria-hidden />
@@ -207,7 +243,7 @@ export function ClassScheduler({
         )}
       </Section>
 
-      <Section step={2} title="When does it run?" hint="Pick the days, then the time. Tap a day again to remove it." icon={<Clock size={14} style={{ color: "#c9a227" }} />}>
+      <Section step={3} title="When does it run?" hint="Pick the days, then the time. Tap a day again to remove it." icon={<Clock size={14} style={{ color: "#c9a227" }} />}>
         <div className="flex flex-wrap gap-1.5 mb-3">
           {PRESETS.map((p) => (
             <button key={p.label} type="button" onClick={() => setDays(p.days)} className="rounded-lg px-3 py-2 text-xs font-bold min-h-[38px]" style={{ background: "rgba(245,240,232,0.07)", color: "rgba(245,240,232,0.7)" }}>
@@ -254,7 +290,7 @@ export function ClassScheduler({
         </div>
       </Section>
 
-      <Section step={3} title="What's taught?" hint="Optional. Any of these can be covered on any day — you pick while marking attendance." icon={<BookOpen size={14} style={{ color: "#c9a227" }} />}>
+      <Section step={4} title="What's taught?" hint="Optional. Any of these can be covered on any day — you pick while marking attendance." icon={<BookOpen size={14} style={{ color: "#c9a227" }} />}>
         {subjects.length === 0 ? (
           <p className="text-sm" style={{ color: "rgba(245,240,232,0.55)" }}>No subjects yet. Add them under Subjects.</p>
         ) : (
@@ -271,7 +307,7 @@ export function ClassScheduler({
         )}
       </Section>
 
-      <Section step={4} title="Name this class" hint="A name Nanditha will recognise in the calendar." icon={<CalendarDays size={14} style={{ color: "#c9a227" }} />}>
+      <Section step={5} title="Name this class" hint="A name Nanditha will recognise in the calendar." icon={<CalendarDays size={14} style={{ color: "#c9a227" }} />}>
         <input
           value={effectiveName}
           onChange={(e) => { setNameTouched(true); setName(e.target.value); }}

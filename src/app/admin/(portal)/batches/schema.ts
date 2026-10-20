@@ -64,10 +64,17 @@ export const classSchema = z
     status: z.enum(["active", "inactive", "archived"]).default("active"),
     student_ids: z.array(z.string().uuid()).default([]),
     subject_ids: z.array(z.string().uuid()).default([]),
+    // Combined Class (the whole group) or Individual Attention (the entire
+    // class belongs to exactly one student).
+    category: z.enum(["combined_class", "individual_attention"]).default("combined_class"),
+    student_id: z.string().uuid().nullable().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.end_time <= v.start_time) {
       ctx.addIssue({ code: "custom", path: ["end_time"], message: "The end time must be after the start time" });
+    }
+    if (v.category === "individual_attention" && !v.student_id) {
+      ctx.addIssue({ code: "custom", path: ["student_id"], message: "Choose the student this class is for" });
     }
   });
 

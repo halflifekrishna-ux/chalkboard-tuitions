@@ -6,6 +6,8 @@ import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
 import { isoDate, fmtTime, type AttendanceStatus } from "@/lib/os/attendance";
 import { AttendanceScreen, type RosterStudent } from "@/components/admin/AttendanceScreen";
+import { CategoryBadge } from "@/components/admin/SessionBadges";
+import { type SessionCategory } from "@/lib/os/session-meta";
 import { finishSession } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +25,9 @@ export default async function MarkAttendancePage({
 
   const { data: batch } = await supabase
     .from("batches")
-    .select("id, name, grade, start_time, end_time, room")
+    // `students!student_id` is explicit: batches reaches students both directly
+    // (Individual Attention) and through batch_students.
+    .select("id, name, grade, start_time, end_time, room, session_category, student_id, student:students!student_id(id, full_name, admission_number, photo_path)")
     .eq("id", params.batchId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -43,16 +47,28 @@ export default async function MarkAttendancePage({
     colour: bs.colour as string,
   }));
 
-  // Roster = students enrolled in the batch (lazy: only ids first, then details).
-  const { data: enrol } = await supabase
-    .from("batch_students")
-    .select("student:students(id, full_name, admission_number, photo_path, status)")
-    .eq("batch_id", batch.id);
+  type Person = { id: string; full_name: string; admission_number: string | null; photo_path: string | null };
 
-  const students = (enrol ?? [])
-    .map((e) => e.student as unknown as { id: string; full_name: string; admission_number: string | null; photo_path: string | null; status: string } | null)
-    .filter((s): s is NonNullable<typeof s> => !!s && s.status !== "archived" && s.status !== "dropped")
-    .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  // Individual Attention: the whole session belongs to ONE student, so the
+  // roster is exactly that student — never the rest of the class.
+  const category = ((batch.session_category as SessionCategory | null) ?? "combined_class") as SessionCategory;
+  const isIndividual = category === "individual_attention";
+  const iaStudent = batch.student as unknown as Person | null;
+
+  let students: Person[] = [];
+  if (isIndividual) {
+    students = iaStudent ? [iaStudent] : [];
+  } else {
+    const { data: enrol } = await supabase
+      .from("batch_students")
+      .select("student:students(id, full_name, admission_number, photo_path, status)")
+      .eq("batch_id", batch.id);
+
+    students = (enrol ?? [])
+      .map((e) => e.student as unknown as (Person & { status: string }) | null)
+      .filter((s): s is Person & { status: string } => !!s && s.status !== "archived" && s.status !== "dropped")
+      .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }
 
   // Existing session + marks for this date (resume / edit).
   const { data: session } = await supabase
@@ -60,6 +76,10 @@ export default async function MarkAttendancePage({
     .select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
     .eq("batch_id", params.batchId)
     .eq("session_date", day)
+    // A class whose slot time changed can leave more than one row on a date;
+    // take the earliest rather than throwing.
+    .order("start_time", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   const existingMarks = session
@@ -88,10 +108,17 @@ export default async function MarkAttendancePage({
         </Link>
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold" style={{ color: "#f4c430" }}>{fmtTime(batch.start_time)}</span>
-          <h1 className="font-playfair text-2xl font-bold" style={{ color: "#f5f0e8" }}>{batch.name}</h1>
+          <h1 className="font-playfair text-2xl font-bold" style={{ color: "#f5f0e8" }}>
+            {isIndividual ? iaStudent?.full_name ?? "Student" : batch.name}
+          </h1>
         </div>
+        {isIndividual && (
+          <div className="mt-1.5">
+            <CategoryBadge category={category} />
+          </div>
+        )}
         <p className="text-sm mt-1" style={{ color: "rgba(245,240,232,0.45)" }}>
-          Grade {batch.grade}{batch.room ? ` · ${batch.room}` : ""} · {new Date(`${day}T00:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
+          {isIndividual ? batch.name : `Grade ${batch.grade}`}{batch.room ? ` · ${batch.room}` : ""} · {new Date(`${day}T00:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
           {session?.status === "completed" && " · completed (editing)"}
         </p>
       </header>
@@ -107,8 +134,14 @@ export default async function MarkAttendancePage({
         </div>
       ) : roster.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
-          <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>No students enrolled in this batch yet.</p>
-          <Link href={`/admin/batches/${batch.id}`} className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>Enrol Students</Link>
+          <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>
+            {isIndividual
+              ? "This Individual Attention class has no student set. Open the class and choose who it's for."
+              : "No students enrolled in this class yet."}
+          </p>
+          <Link href={isIndividual ? `/admin/batches/${batch.id}/edit` : `/admin/batches/${batch.id}`} className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
+            {isIndividual ? "Edit class" : "Enrol Students"}
+          </Link>
         </div>
       ) : (
         <AttendanceScreen
