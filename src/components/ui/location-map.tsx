@@ -10,9 +10,10 @@ import {
   useTransform,
 } from "framer-motion";
 
-// Kammanahalli & Kalyan Nagar, Bangalore
-const MAPS_URL =
-  "https://maps.app.goo.gl/GUPsuattjnL3HrsT7";
+import { CENTRE } from "@/lib/tuitions-location";
+
+// The centre's Google Business Profile pin.
+const MAPS_URL = CENTRE.mapsUrl;
 
 interface LocationMapProps {
   location?: string;
@@ -22,9 +23,9 @@ interface LocationMapProps {
 }
 
 export function LocationMap({
-  location = "Kammanahalli & Kalyan Nagar",
-  sublocation = "Bangalore, Karnataka",
-  coordinates = "13.0275° N, 77.6477° E",
+  location = "Kammanahalli",
+  sublocation = "Pooja Arcade, Kammanahalli Main Rd",
+  coordinates = "13.0159° N, 77.6362° E",
   className,
 }: LocationMapProps) {
   const [isHovered, setIsHovered] = useState(false);

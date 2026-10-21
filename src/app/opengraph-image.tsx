@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Chalkboard Tuitions — small-batch tuitions in Kammanahalli & Kalyan Nagar, Bengaluru";
+export const alt = "Chalkboard Tuitions — small-batch tuitions in Kammanahalli, Bengaluru";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -50,7 +50,7 @@ export default function OpengraphImage() {
             }}
           >
             <div style={{ display: "flex", width: 46, height: 2, background: "rgba(244,196,48,0.55)" }} />
-            Kammanahalli · Kalyan Nagar · Bengaluru
+            Kammanahalli · Bengaluru
           </div>
 
           <div
@@ -77,7 +77,7 @@ export default function OpengraphImage() {
               maxWidth: 820,
             }}
           >
-            Daily tuitions for Grades 1–10 in Kammanahalli &amp; Kalyan Nagar.
+            Daily tuitions for Grades 1–10 in Kammanahalli, Bengaluru.
           </div>
         </div>
 

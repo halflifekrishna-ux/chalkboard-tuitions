@@ -96,6 +96,10 @@ export function Hero() {
           {/* Headline */}
           <motion.div custom={1} initial="hidden" animate="show" variants={fadeUp}>
             <h1 className="font-playfair text-5xl sm:text-6xl xl:text-7xl font-black text-chalk leading-[1.04] mb-6">
+              {/* The local query, said in the H1 itself — the brand line below stays as it was. */}
+              <span className="mb-4 block text-sm font-bold uppercase tracking-[0.16em] text-chalk-yellow/90 sm:text-base">
+                Tuition centre in Kammanahalli, Bengaluru
+              </span>
               Small batches.{" "}
               <span
                 className="relative inline-block"
@@ -121,7 +125,7 @@ export function Hero() {
             variants={fadeUp}
             className="text-chalk/60 text-lg leading-relaxed mb-4 max-w-lg"
           >
-            Daily tuitions for Grades 1–10 in Kammanahalli &amp; Kalyan Nagar.
+            Daily tuitions for Grades 1–10 on Kammanahalli Main Road, for families across Kalyan Nagar, HRBR Layout and Banaswadi.
             We cap every batch at <strong className="text-chalk/90">8 students</strong> so
             no child ever blends into the background.
           </motion.p>
@@ -223,7 +227,7 @@ export function Hero() {
               style={{ background: "rgba(22,45,36,0.90)" }}
             >
               <p className="text-xs font-semibold text-chalk/80 font-sans">📍 Kammanahalli</p>
-              <p className="text-xs text-chalk/60 font-sans">& Kalyan Nagar, Blr</p>
+              <p className="text-xs text-chalk/60 font-sans">near Kalyan Nagar, Blr</p>
             </motion.div>
           </div>
 

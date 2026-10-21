@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: "%s | Chalkboard",
   },
   description:
-    "Expert tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bangalore. Max 8 students per batch. CBSE, ICSE & Karnataka State Board covered. Book your free demo class today.",
+    "Expert tuitions for Grades 1–10 in Kammanahalli, Bangalore, near Kalyan Nagar. Max 8 students per batch. CBSE, ICSE & Karnataka State Board covered. Book your free demo class today.",
   keywords: [
     "tuitions near me",
     "tuition centre Kammanahalli",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
     description:
-      "Expert tuitions for Grades 1–10. Max 8 students per batch, five days a week. CBSE, ICSE & State Board. Kammanahalli & Kalyan Nagar, Bengaluru.",
+      "Expert tuitions for Grades 1–10. Max 8 students per batch, five days a week. CBSE, ICSE & State Board. Kammanahalli, Bengaluru.",
     type: "website",
     url: SITE_URL,
     locale: "en_IN",

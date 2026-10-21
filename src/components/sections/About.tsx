@@ -54,7 +54,7 @@ export function About() {
                 name, strength, and weakness, learning becomes transformational.
               </p>
               <p>
-                Located in the heart of Kammanahalli and Kalyan Nagar, we serve
+                Located on Kammanahalli Main Road, close to Kalyan Nagar, we serve
                 Grades 1–10 across CBSE, ICSE, and Karnataka State Board. Our
                 structured daily classes, branded workbooks, and rigorous parent
                 communication set a new standard for what a neighbourhood tuition
@@ -64,7 +64,7 @@ export function About() {
 
             <div className="flex items-center gap-2 mt-6 text-sm text-gray-500 dark:text-chalk/50">
               <MapPin size={15} className="text-chalk-orange" />
-              <span>Kammanahalli & Kalyan Nagar, Bangalore · Est. 2026</span>
+              <span>Kammanahalli, Bengaluru · Est. 2026</span>
             </div>
           </motion.div>
 

@@ -7,7 +7,7 @@ import { SITE_URL, OG_IMAGES } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Book a Free Demo Class in Bangalore",
   description:
-    "Book a free demo class or ask about batches and timings at Chalkboard Tuitions, Kammanahalli & Kalyan Nagar, Bengaluru. CBSE, ICSE and State Board.",
+    "Book a free demo class or ask about batches and timings at Chalkboard Tuitions, Kammanahalli Main Rd, Bengaluru. CBSE, ICSE and State Board.",
   keywords: [
     "tuition centre near me Bangalore",
     "book free demo class Bangalore",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Book a Free Demo Class — Chalkboard Tuitions, Bengaluru",
     description:
-      "Tell us your child's grade and board, and we'll find a batch that fits. Kammanahalli & Kalyan Nagar, Bengaluru.",
+      "Tell us your child's grade and board, and we'll find a batch that fits. Kammanahalli, Bengaluru.",
     url: `${SITE_URL}/contact`,
     type: "website",
     images: OG_IMAGES,
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 const facts = [
-  { icon: MapPin, label: "Two centres", value: "Kammanahalli & Kalyan Nagar" },
+  { icon: MapPin, label: "Our centre", value: "Pooja Arcade, Kammanahalli Main Rd" },
   { icon: Clock, label: "Class timings", value: "4–8 PM, Monday to Friday" },
   { icon: MessageCircle, label: "Reply time", value: "Within 30 minutes on WhatsApp" },
 ];

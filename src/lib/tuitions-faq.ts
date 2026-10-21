@@ -25,8 +25,8 @@ export const TUITIONS_FAQS: { q: string; a: string }[] = [
     a: "We run weekday batches from 4 PM to 8 PM, Monday to Friday. WhatsApp us to check current slot availability for your preferred grade.",
   },
   {
-    q: "Where are your centres in Bangalore?",
-    a: "We have two centres in north-east Bengaluru — Kammanahalli and Kalyan Nagar — a short drive from HRBR Layout, Banaswadi and Lingarajapuram. WhatsApp us and we'll share the exact location pin for the centre nearest you.",
+    q: "Where is your tuition centre?",
+    a: "2nd Floor, Pooja Arcade, 50/2, Kammanahalli Main Road, St Thomas Town, Bengaluru 560084 — close to Kalyan Nagar, HRBR Layout, Banaswadi and Lingarajapuram. Use the map link on this page for directions, or WhatsApp us and we'll send the pin.",
   },
   {
     q: "Are the workbooks included in the fee?",

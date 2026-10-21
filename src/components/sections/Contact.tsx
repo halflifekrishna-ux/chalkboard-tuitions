@@ -6,6 +6,7 @@ import { Send, MessageCircle, Clock, CheckCircle, Mail } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { Spotlight } from "@/components/ui/spotlight";
 import { LocationMap } from "@/components/ui/location-map";
+import { CENTRE, CENTRE_ADDRESS } from "@/lib/tuitions-location";
 
 const WHATSAPP = "917411446381";
 const WHATSAPP_DISPLAY = "+91 74114 46381";
@@ -142,12 +143,19 @@ export function Contact() {
 
             {/* Location — interactive 3D map widget */}
             <div className="pt-1 pb-8">
-              <p className="font-semibold text-chalk text-sm mb-3">Our Locations</p>
-              <LocationMap
-                location="Kammanahalli & Kalyan Nagar"
-                sublocation="Bangalore, Karnataka"
-                coordinates="13.0275° N, 77.6477° E"
-              />
+              <p className="font-semibold text-chalk text-sm mb-3">Our Centre</p>
+              <LocationMap />
+              <address className="mt-4 text-sm not-italic leading-relaxed text-chalk/60">
+                {CENTRE.name}, {CENTRE_ADDRESS}
+              </address>
+              <a
+                href={CENTRE.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm font-semibold text-chalk-yellow hover:underline"
+              >
+                Get directions on Google Maps →
+              </a>
             </div>
 
             {/* Timings */}

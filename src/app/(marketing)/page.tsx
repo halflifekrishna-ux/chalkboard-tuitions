@@ -45,7 +45,7 @@ const orgSchema = {
         { "@id": `${SITE_URL}/tuitions#tuitions` },
         { "@id": `${SITE_URL}/learning-studio#studio` },
       ],
-      sameAs: ["https://www.instagram.com/chalkboard.tuitions/", "https://www.facebook.com/chalkboardtuitions"],
+      sameAs: ["https://www.instagram.com/chalkboard.tuitions/", "https://www.facebook.com/p/ChalkBoard-Tutions-61556611419426/"],
     },
     {
       "@type": "WebSite",

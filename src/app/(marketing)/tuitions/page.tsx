@@ -12,9 +12,9 @@ import { LegacyProof } from "@/components/marketing/LegacyProof";
 import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Tuitions in Kammanahalli & Kalyan Nagar | Chalkboard" },
+  title: { absolute: "Tuition Centre in Kammanahalli, Bengaluru | Chalkboard" },
   description:
-    "Small-batch tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bengaluru. Max 8 per batch. CBSE, ICSE & State Board. Book a free demo class.",
+    "Small-batch tuitions for Grades 1–10 in Kammanahalli, near Kalyan Nagar & HRBR Layout. Max 8 per batch. CBSE, ICSE & State Board. Free demo class.",
   keywords: [
     "tuition centre Kammanahalli",
     "tuition classes Kalyan Nagar",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${SITE_URL}/tuitions` },
   openGraph: {
-    title: "Small-Batch Tuitions in Kammanahalli & Kalyan Nagar, Bengaluru",
+    title: "Small-Batch Tuitions in Kammanahalli, Bengaluru",
     description:
       "Grades 1–10, CBSE · ICSE · State Board. Max 8 students per batch, five days a week. Book a free demo class.",
     url: `${SITE_URL}/tuitions`,

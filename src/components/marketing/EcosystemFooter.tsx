@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Mail, Phone, Instagram, Facebook } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/contact";
+import { CENTRE, CENTRE_ADDRESS } from "@/lib/tuitions-location";
 
 /**
  * EcosystemFooter — site-wide footer. Presents the master brand, the three
@@ -67,15 +68,21 @@ export function EcosystemFooter() {
                   <span className="block text-xs text-chalk/55">Learning Studio &amp; everything else</span>
                 </span>
               </a>
-              <div className="flex items-start gap-2.5 text-sm text-chalk/50">
-                <MapPin size={13} className="text-chalk-orange flex-shrink-0 mt-0.5" /> Kammanahalli & Kalyan Nagar, Bangalore
-              </div>
+              {/* The full address, exactly as on the Google Business Profile — it is
+                  on every page, so this is the NAP Google matches against. */}
+              <a href={CENTRE.mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2.5 text-sm text-chalk/50 hover:text-chalk-yellow transition-colors">
+                <MapPin size={13} className="text-chalk-orange flex-shrink-0 mt-1" />
+                <span>
+                  {CENTRE.name}, {CENTRE_ADDRESS}
+                  <span className="block text-xs text-chalk/55">Tuition centre · {CENTRE.hours.display}</span>
+                </span>
+              </a>
             </div>
             <div className="flex gap-2.5 mt-5">
               <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 hover:bg-chalk-yellow/20 border border-chalk/10 hover:border-chalk-yellow/40 rounded-lg flex items-center justify-center transition-all" aria-label="Instagram">
                 <Instagram size={15} className="text-chalk/60" />
               </a>
-              <a href="https://www.facebook.com/chalkboardtuitions" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 hover:bg-chalk-yellow/20 border border-chalk/10 hover:border-chalk-yellow/40 rounded-lg flex items-center justify-center transition-all" aria-label="Facebook">
+              <a href={CENTRE.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 hover:bg-chalk-yellow/20 border border-chalk/10 hover:border-chalk-yellow/40 rounded-lg flex items-center justify-center transition-all" aria-label="Facebook">
                 <Facebook size={15} className="text-chalk/60" />
               </a>
             </div>
