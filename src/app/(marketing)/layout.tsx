@@ -1,5 +1,6 @@
 import { EcosystemNavbar } from "@/components/marketing/EcosystemNavbar";
 import { EcosystemFooter } from "@/components/marketing/EcosystemFooter";
+import { Analytics } from "@/components/marketing/Analytics";
 
 /**
  * Marketing layout — shared ecosystem navigation + footer for every public page
@@ -12,6 +13,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <EcosystemNavbar />
       <main>{children}</main>
       <EcosystemFooter />
+      <Analytics />
     </>
   );
 }

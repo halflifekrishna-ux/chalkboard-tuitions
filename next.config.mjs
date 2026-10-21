@@ -13,12 +13,16 @@ const nextConfig = {
   // that one host retires them faster than canonicals alone. Only the exact
   // production alias — preview deployments keep working — and never /admin or
   // /api, so existing OS sessions and auth callbacks are untouched.
+  //
+  // The vercel.app homepage is deliberately NOT redirected: Search Console
+  // verifies that host's URL-prefix property by reading the
+  // google-site-verification tag on its homepage, and keeps re-checking it.
+  // Its canonical already points at www, so it stays out of results anyway.
   async redirects() {
     const has = [{ type: "host", value: "chalkboard-tuitions.vercel.app" }];
     const destination = "https://www.chalkboardlearning.in";
     return [
-      { source: "/", has, destination, permanent: true },
-      { source: "/:path((?!admin|api|_next).*)", has, destination: `${destination}/:path`, permanent: true },
+      { source: "/:path((?!admin|api|_next).+)", has, destination: `${destination}/:path`, permanent: true },
     ];
   },
   async headers() {

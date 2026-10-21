@@ -69,6 +69,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: OG_IMAGES,
   },
+  // Search Console ownership token for the chalkboard-tuitions.vercel.app
+  // URL-prefix property (used to watch the old URLs drop out of the index).
+  verification: { google: "4OkWSu2Uyy1YMkrG7Np2KO0-yhcvvQAbu8QkWZuFGSQ" },
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",
