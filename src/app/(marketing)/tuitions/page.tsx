@@ -9,8 +9,7 @@ import { FAQ } from "@/components/sections/FAQ";
 import { Contact } from "@/components/sections/Contact";
 import { JsonLd } from "@/components/JsonLd";
 import { LegacyProof } from "@/components/marketing/LegacyProof";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Tuitions in Kammanahalli & Kalyan Nagar, Bangalore — CBSE, ICSE & State Board",

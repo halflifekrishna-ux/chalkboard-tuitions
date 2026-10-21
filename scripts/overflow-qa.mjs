@@ -10,7 +10,7 @@
 import { chromium } from "playwright";
 
 const widths = [320, 360, 375, 390, 393, 414, 768, 1024, 1280, 1440];
-const routes = ["/", "/tuitions", "/about", "/learning-studio", "/os", "/contact"];
+const routes = ["/", "/tuitions", "/about", "/learning-studio", "/learning-studio/colleges", "/learning-studio/trainers", "/os", "/contact"];
 const base = process.env.BASE || "http://localhost:3000";
 
 const browser = await chromium.launch();

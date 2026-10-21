@@ -123,7 +123,13 @@ function StageShell({
   );
 }
 
-export function TransformBoring() {
+export function TransformBoring({
+  eyebrow = "What we actually do",
+  title = "Turn boring content into learning.",
+}: {
+  eyebrow?: string;
+  title?: string;
+}) {
   const [transformed, setTransformed] = useState(false);
   const [open, setOpen] = useState(0);
 
@@ -149,10 +155,10 @@ export function TransformBoring() {
       <div className="relative mx-auto max-w-2xl px-5 sm:px-6">
         <div className="text-center">
           <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
-            What we actually do
+            {eyebrow}
           </span>
           <h2 className="mx-auto mt-5 text-balance font-playfair text-[clamp(1.9rem,5.5vw,3.25rem)] font-bold leading-[1.1] tracking-tight">
-            Turn boring content into learning.
+            {title}
           </h2>
         </div>
 

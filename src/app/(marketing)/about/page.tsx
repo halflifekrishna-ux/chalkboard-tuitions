@@ -8,8 +8,8 @@ import { InMemoryQuotes } from "@/components/marketing/InMemoryQuotes";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 const WHATSAPP = "917411446381";
 
 export const metadata: Metadata = {

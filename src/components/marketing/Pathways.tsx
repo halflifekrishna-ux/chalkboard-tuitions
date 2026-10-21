@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { type LucideIcon, ArrowRight, GraduationCap, Briefcase, LogIn } from "lucide-react";
+import { type LucideIcon, ArrowRight, GraduationCap, Briefcase, School, LogIn } from "lucide-react";
 
 /**
- * Pathways — the homepage "choose your path" area. Composition encodes the
- * hierarchy: Tuitions (primary, widest) and Learning Studio (secondary) sit
- * side-by-side on desktop and stack on mobile; Chalkboard OS is a compact
- * full-width utility strip below. Each destination is one semantic link
+ * Pathways — the homepage "choose your path" area: one door per audience, so
+ * each reader chooses their story before reading any of it. Composition
+ * encodes the hierarchy: Tuitions (primary, tall) on the left, Learning
+ * Studio's two audiences — teams and colleges — stacked beside it on desktop;
+ * everything stacks on mobile. Chalkboard OS is a compact full-width utility
+ * strip below. Each destination is one semantic link
  * (one-tap). All information is always visible (no hover-only); hover/focus
  * only adds emphasis. Server component — zero client JS. Entrance uses CSS
  * `animate-fade-up`, which the global reduced-motion guard neutralises.
@@ -102,10 +104,10 @@ function PathwayCard({
 export function Pathways() {
   return (
     <div>
-      {/* Primary + secondary — side by side on desktop, stacked on mobile */}
-      <div className="grid gap-4 lg:grid-cols-5">
+      {/* Primary + the two Studio audiences — side by side on desktop, stacked on mobile */}
+      <div className="grid gap-4 lg:grid-cols-5 lg:grid-rows-2">
         <PathwayCard
-          className="lg:col-span-3"
+          className="lg:col-span-3 lg:row-span-2"
           href="/tuitions"
           eyebrow="For parents & students"
           title="Chalkboard Tuitions"
@@ -119,20 +121,31 @@ export function Pathways() {
         <PathwayCard
           className="lg:col-span-2"
           href="/learning-studio"
-          eyebrow="For colleges, organisations & professionals"
-          title="Chalkboard Learning Studio"
-          description="Training for teams that sell, support and deliver — and courses built from what your people already know."
-          tags={["Sales", "Support", "Team performance", "Course building"]}
-          cta="Explore Learning Studio"
+          eyebrow="Learning Studio · For teams"
+          title="Training for companies"
+          description="Interactive AI, sales, support and leadership training — and courses built from your own material."
+          tags={["AI at work", "Sales", "Support", "Course building"]}
+          cta="Explore training for teams"
           icon={Briefcase}
           delay={230}
+        />
+        <PathwayCard
+          className="lg:col-span-2"
+          href="/learning-studio/colleges"
+          eyebrow="Learning Studio · For colleges"
+          title="Colleges & universities"
+          description="Placement readiness, industry tracks and faculty development — practised, not lectured."
+          tags={["Placement", "Industry tracks", "Faculty"]}
+          cta="Explore college programmes"
+          icon={School}
+          delay={300}
         />
       </div>
 
       {/* Quiet OS utility strip — full width */}
       <Link
         href="/admin/login"
-        style={{ animationDelay: "340ms" }}
+        style={{ animationDelay: "380ms" }}
         className={`group mt-4 flex items-center justify-between gap-4 rounded-2xl border border-chalk/10 bg-chalk/[0.02] px-5 py-4 opacity-0 animate-fade-up transition-colors hover:bg-chalk/5 ${focusRing}`}
       >
         <div className="flex items-center gap-3 min-w-0">

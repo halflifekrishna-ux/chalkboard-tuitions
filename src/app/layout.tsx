@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans, Special_Elite } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
+import { SITE_URL } from "@/lib/site";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -24,8 +25,6 @@ const specialElite = Special_Elite({
   weight: "400",
   display: "swap",
 });
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

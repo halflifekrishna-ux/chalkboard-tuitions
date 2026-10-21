@@ -21,11 +21,10 @@ const columns = {
     { label: "Book Free Assessment", href: "/contact" },
   ],
   "Learning Studio": [
-    { label: "Overview", href: "/learning-studio" },
-    { label: "For Corporates", href: "/learning-studio#corporates" },
-    { label: "For Colleges", href: "/learning-studio#colleges" },
+    { label: "For Companies", href: "/learning-studio" },
+    { label: "For Colleges & Universities", href: "/learning-studio/colleges" },
     { label: "Enquire", href: "/learning-studio#enquire" },
-    { label: "For Trainers", href: "/learning-studio#trainers" },
+    { label: "For Trainers", href: "/learning-studio/trainers" },
   ],
   Chalkboard: [
     { label: "About", href: "/about" },

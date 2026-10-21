@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Clock, MessageCircle } from "lucide-react";
 import { Contact } from "@/components/sections/Contact";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact Chalkboard Tuitions — Book a Free Demo Class in Bangalore",

@@ -6,18 +6,17 @@ import { PortalShader } from "@/components/ui/portal-shader";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
 import { CONTACT_EMAIL } from "@/lib/contact";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { absolute: "Chalkboard — Learning, differently." },
   description:
-    "Chalkboard is a learning ecosystem in Bengaluru: Chalkboard Tuitions for Grades 1–10, and Chalkboard Learning Studio for sales, support and team training. Built on Home Tuitions Bangalore, teaching since 2018.",
+    "Chalkboard, Bengaluru: small-batch tuitions for Grades 1–10, interactive corporate training for teams, and placement programmes for colleges. Since 2018.",
   keywords: ["Chalkboard", "Chalkboard Learning", "Chalkboard Tuitions", "Chalkboard Learning Studio", "Chalkboard OS"],
   alternates: { canonical: SITE_URL },
   openGraph: {
     title: "Chalkboard — Learning, differently.",
-    description: "Tuitions for Grades 1–10 and training for teams at work — built on Home Tuitions Bangalore, teaching in Bengaluru since 2018.",
+    description: "Tuitions for Grades 1–10, training for teams at work, and placement programmes for colleges — teaching in Bengaluru since 2018.",
     url: SITE_URL,
     type: "website",
     siteName: "Chalkboard",
@@ -71,7 +70,8 @@ export default function HomePage() {
               <span className="italic font-bold text-chalk-yellow">differently.</span>
             </h1>
             <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/65 sm:text-xl">
-              One ecosystem for every stage of learning — from the classroom to the workplace.
+              School tuitions, corporate training and college programmes in Bengaluru — one team, one standard,
+              from the classroom to the workplace.
             </p>
           </div>
         </Container>

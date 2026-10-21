@@ -11,9 +11,9 @@ import { CONTACT_EMAIL } from "@/lib/contact";
  * which asks for a child's grade and board and replies over WhatsApp;
  * Learning Studio is email-only for now, so there is no phone field.
  *
- * Used in: (marketing)/learning-studio/page.tsx (#enquire).
+ * Used in: (marketing)/learning-studio/page.tsx and learning-studio/colleges (#enquire).
  */
-const AUDIENCES = ["Corporate team", "College / institution", "Individual professional"];
+const AUDIENCES = ["Corporate team", "College / institution", "Individual professional"] as const;
 const AREAS = [
   "AI & Generative AI",
   "Leadership & Management",
@@ -33,7 +33,7 @@ const label = "block text-[11px] font-semibold uppercase tracking-[0.16em] text-
 const field =
   "mt-2 block w-full rounded-md border border-chalk/15 bg-white/[0.04] px-3.5 py-3 text-[15px] text-chalk placeholder:text-chalk/55 focus:border-chalk-yellow/60 focus:outline-none focus:ring-1 focus:ring-chalk-yellow/40";
 
-export function StudioEnquiryForm() {
+export function StudioEnquiryForm({ defaultAudience }: { defaultAudience?: (typeof AUDIENCES)[number] }) {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
 
@@ -109,7 +109,7 @@ export function StudioEnquiryForm() {
         <div className="mt-3 flex flex-wrap gap-2">
           {AUDIENCES.map((a) => (
             <label key={a} className="cursor-pointer">
-              <input type="radio" name="audience" value={a} required className="peer sr-only" />
+              <input type="radio" name="audience" value={a} defaultChecked={a === defaultAudience} required className="peer sr-only" />
               <span className="inline-block rounded-md border border-chalk/15 px-3.5 py-2 text-sm text-chalk/70 transition-colors peer-checked:border-chalk-yellow peer-checked:bg-chalk-yellow/10 peer-checked:text-chalk peer-focus-visible:ring-2 peer-focus-visible:ring-chalk-yellow/60">
                 {a}
               </span>

@@ -1,6 +1,6 @@
 import { CONTACT_EMAIL } from "@/lib/contact";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://chalkboard-tuitions.vercel.app";
 const PHONE = "+917411446381";
 const INSTAGRAM = "https://www.instagram.com/chalkboard.tuitions/";
 const FACEBOOK = "https://www.facebook.com/chalkboardtuitions";

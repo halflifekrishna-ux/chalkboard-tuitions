@@ -11,12 +11,15 @@ import { ChevronDown } from "lucide-react";
  * purpose: Google requires the marked-up answers to be visible on the page, and
  * two hand-maintained copies drift apart the first time someone edits one.
  *
- * These also carry the page's commercial long-tail — corporate training in
+ * Each audience page passes its own list. These defaults carry the corporate
+ * page's commercial long-tail — corporate training in
  * Bengaluru, sales and support enablement, custom course building — without
  * turning the page into a wall of prose.
  */
 
-const FAQS = [
+export type Faq = { q: string; a: string };
+
+export const CORPORATE_FAQS: Faq[] = [
   {
     q: "What kind of training does Chalkboard Learning Studio run?",
     a: "Sales performance, customer support, team effectiveness, leadership and productivity programmes — for corporate teams, colleges and institutions in Bengaluru and remotely. Programmes are scoped to the gap you actually have, not picked off a catalogue.",
@@ -30,8 +33,8 @@ const FAQS = [
     a: "Both. In-person sessions across Bengaluru, live online delivery for distributed teams, and self-paced material when people need to learn on their own schedule.",
   },
   {
-    q: "Do you work with colleges?",
-    a: "Yes — placement readiness, campus training and faculty development. Programmes run alongside the academic calendar rather than competing with it.",
+    q: "Do you run AI and prompt-writing training for teams?",
+    a: "Yes. The lesson at the top of this page is a small piece of how we teach it: a short explanation, a choice, then writing a real prompt with feedback on what it is missing. Workshops apply the same method to the emails, reports and analysis your team actually produces.",
   },
   {
     q: "How does an engagement start?",
@@ -39,7 +42,7 @@ const FAQS = [
   },
 ];
 
-export function StudioFaq() {
+export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
@@ -54,7 +57,7 @@ export function StudioFaq() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
+            mainEntity: faqs.map((f) => ({
               "@type": "Question",
               name: f.q,
               acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -76,7 +79,7 @@ export function StudioFaq() {
         </h2>
 
         <dl className="mt-10 divide-y divide-board/10 border-t border-board/10">
-          {FAQS.map((f, i) => {
+          {faqs.map((f, i) => {
             const isOpen = open === i;
             return (
               <div key={f.q}>

@@ -40,6 +40,10 @@ export function EcosystemNavbar() {
   // Learning Studio is email-only: no Tuitions WhatsApp / demo CTA there —
   // its primary action is its own enquiry form.
   const isStudio = pathname === "/learning-studio" || pathname.startsWith("/learning-studio/");
+  // Each Studio audience page has its own form; send Enquire to the one in view.
+  const studioEnquire = pathname.startsWith("/learning-studio/colleges")
+    ? "/learning-studio/colleges#enquire"
+    : "/learning-studio#enquire";
 
   return (
     <>
@@ -83,7 +87,7 @@ export function EcosystemNavbar() {
 
             {isStudio && (
               <Link
-                href="/learning-studio#enquire"
+                href={studioEnquire}
                 className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-chalk-dark transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-chalk-yellow/30 active:scale-[0.98]"
                 style={{ background: "linear-gradient(135deg, #f4c430 0%, #c9a227 100%)" }}
               >
@@ -136,7 +140,7 @@ export function EcosystemNavbar() {
               </Link>
               {isStudio && (
                 <Link
-                  href="/learning-studio#enquire"
+                  href={studioEnquire}
                   onClick={() => setOpen(false)}
                   className="mt-2 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-chalk-dark text-sm"
                   style={{ background: "linear-gradient(135deg, #f4c430 0%, #c9a227 100%)" }}
