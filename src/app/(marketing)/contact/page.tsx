@@ -1,91 +1,35 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { MapPin, Clock, MessageCircle } from "lucide-react";
-import { Contact } from "@/components/sections/Contact";
 import { SITE_URL, OG_IMAGES } from "@/lib/site";
+import { isContactTopic } from "@/lib/contact";
+import { ContactRouter } from "@/components/marketing/ContactRouter";
 
 export const metadata: Metadata = {
-  title: "Book a Free Demo Class in Bangalore",
+  title: { absolute: "Contact Chalkboard — Tuitions, Training & Colleges" },
   description:
-    "Book a free demo class or ask about batches and timings at Chalkboard Tuitions, Kammanahalli Main Rd, Bengaluru. CBSE, ICSE and State Board.",
+    "Contact Chalkboard in Bengaluru: book a free tuition demo class in Kammanahalli, or enquire about corporate training, college programmes or training with us.",
   keywords: [
-    "tuition centre near me Bangalore",
+    "Chalkboard contact",
     "book free demo class Bangalore",
     "tuitions Kammanahalli contact",
-    "tuitions Kalyan Nagar contact",
+    "corporate training enquiry Bengaluru",
+    "college placement training enquiry",
   ],
   alternates: { canonical: `${SITE_URL}/contact` },
   openGraph: {
-    title: "Book a Free Demo Class — Chalkboard Tuitions, Bengaluru",
-    description:
-      "Tell us your child's grade and board, and we'll find a batch that fits. Kammanahalli, Bengaluru.",
+    title: "Contact Chalkboard",
+    description: "Tuitions, training for teams, college programmes — tell us what you need and we'll route you to the right people.",
     url: `${SITE_URL}/contact`,
     type: "website",
     images: OG_IMAGES,
   },
 };
 
-const facts = [
-  { icon: MapPin, label: "Our centre", value: "Pooja Arcade, Kammanahalli Main Rd" },
-  { icon: Clock, label: "Class timings", value: "4–8 PM, Monday to Friday" },
-  { icon: MessageCircle, label: "Reply time", value: "Within 30 minutes on WhatsApp" },
-];
-
 /**
- * /contact — the Chalkboard Tuitions contact page. The page owns the <h1> and a
- * short lede; the shared <Contact /> section below carries the form, map and
- * WhatsApp route. Learning Studio enquiries go to /learning-studio#enquire.
+ * /contact — the one contact page for all of Chalkboard. The ContactRouter
+ * asks what the visitor is contacting us about and shows the matching route.
+ * `?for=` preselects a route (from a CTA elsewhere, or a shared link); the
+ * canonical stays /contact so the variants never compete in search.
  */
-export default function ContactPage() {
-  return (
-    <>
-      <section className="relative overflow-hidden bg-board pt-28 pb-16 sm:pt-32">
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-20"
-          style={{ background: "radial-gradient(ellipse 60% 100% at 50% 0%, #f4c430, transparent 70%)" }}
-        />
-        <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
-            Talk to us
-          </span>
-          <h1 className="mt-5 font-playfair text-4xl font-black leading-[1.08] tracking-tight text-chalk sm:text-5xl lg:text-6xl">
-            Come see a class before
-            <span className="text-chalk-yellow"> you decide.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-chalk/65 sm:text-lg">
-            Sit your child in a real batch, meet the teacher, and watch how a room of eight
-            actually runs. Tell us the grade and board below and we&apos;ll find a slot that fits —
-            usually within the same week.
-          </p>
-
-          <dl className="mt-12 grid gap-4 sm:grid-cols-3">
-            {facts.map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-chalk/10 bg-chalk/[0.04] px-5 py-5 text-left backdrop-blur-sm"
-              >
-                <Icon size={16} className="text-chalk-yellow" aria-hidden />
-                <dt className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk/60">
-                  {label}
-                </dt>
-                <dd className="mt-1 text-sm font-medium leading-snug text-chalk/85">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <p className="mt-8 text-sm text-chalk/60">
-            Looking for corporate, college or trainer programmes? Head to{" "}
-            <Link
-              href="/learning-studio#enquire"
-              className="whitespace-nowrap font-semibold text-chalk/75 underline decoration-chalk/30 underline-offset-4 transition-colors hover:text-chalk-yellow"
-            >
-              Chalkboard Learning Studio →
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      <Contact />
-    </>
-  );
+export default function ContactPage({ searchParams }: { searchParams: { for?: string } }) {
+  return <ContactRouter initial={isContactTopic(searchParams.for) ? searchParams.for : null} />;
 }

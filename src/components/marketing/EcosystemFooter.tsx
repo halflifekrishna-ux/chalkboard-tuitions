@@ -19,12 +19,12 @@ const columns = {
     { label: "Overview", href: "/tuitions" },
     { label: "Courses & Boards", href: "/tuitions#pricing" },
     { label: "Locations", href: "/tuitions#contact" },
-    { label: "Book Free Assessment", href: "/contact" },
+    { label: "Book Free Demo Class", href: "/contact?for=tuitions" },
   ],
   "Learning Studio": [
     { label: "For Companies", href: "/learning-studio" },
     { label: "For Colleges & Universities", href: "/learning-studio/colleges" },
-    { label: "Enquire", href: "/learning-studio#enquire" },
+    { label: "Enquire", href: "/contact?for=company" },
     { label: "For Trainers", href: "/learning-studio/trainers" },
   ],
   Chalkboard: [

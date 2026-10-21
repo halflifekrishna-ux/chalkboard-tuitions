@@ -32,8 +32,13 @@ export function WhatsAppFab() {
   // Learning Studio is email-only, and /about carries the memorial to Uma
   // Maheshwari — a booking bubble hovering over that is the wrong note, and it
   // physically covers the closing lines. That page ends with its own CTA.
+  // /contact serves every audience and its Tuitions route has its own
+  // WhatsApp button; the bubble there only covered the form fields.
   const hidden =
-    pathname === "/" || pathname.startsWith("/learning-studio") || pathname.startsWith("/about");
+    pathname === "/" ||
+    pathname.startsWith("/learning-studio") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/contact");
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 1500);
