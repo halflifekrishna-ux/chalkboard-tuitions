@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 import { Reveal } from "@/components/marketing/Reveal";
 import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
 import { StudioFaq, type Faq } from "@/components/marketing/learning-studio/StudioFaq";
@@ -43,6 +43,7 @@ export const metadata: Metadata = {
       "Placement readiness, industry tracks and faculty development for colleges and universities — built as practice, not lectures.",
     url: PAGE_URL,
     type: "website",
+    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };

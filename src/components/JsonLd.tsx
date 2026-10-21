@@ -1,5 +1,6 @@
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { SITE_URL } from "@/lib/site";
+import { TUITIONS_FAQS } from "@/lib/tuitions-faq";
 
 const PHONE = "+917411446381";
 const INSTAGRAM = "https://www.instagram.com/chalkboard.tuitions/";
@@ -49,7 +50,7 @@ function branch({
     "@type": ["EducationalOrganization", "LocalBusiness"],
     "@id": `${SITE_URL}/#${id}`,
     name,
-    parentOrganization: { "@id": `${SITE_URL}/#organization` },
+    parentOrganization: { "@id": `${SITE_URL}/tuitions#tuitions` },
     url: `${SITE_URL}/tuitions`,
     image: `${SITE_URL}/logo-dark.png`,
     telephone: PHONE,
@@ -83,10 +84,13 @@ const schema = {
   "@graph": [
     {
       "@type": ["EducationalOrganization", "LocalBusiness"],
-      "@id": `${SITE_URL}/#organization`,
+      // The tuition business, not the umbrella: "Chalkboard" (the homepage's
+      // #organization) is its parent, alongside the Learning Studio.
+      "@id": `${SITE_URL}/tuitions#tuitions`,
       name: "Chalkboard Tuitions",
       alternateName: "Chalkboard Tuitions Bangalore",
-      url: SITE_URL,
+      url: `${SITE_URL}/tuitions`,
+      parentOrganization: { "@id": `${SITE_URL}/#organization` },
       logo: `${SITE_URL}/logo-dark.png`,
       image: `${SITE_URL}/logo-dark.png`,
       description:
@@ -142,102 +146,16 @@ const schema = {
       geo: { latitude: 13.0237, longitude: 77.6408 },
     }),
 
-    {
-      "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
-      url: SITE_URL,
-      name: "Chalkboard",
-      publisher: { "@id": `${SITE_URL}/#organization` },
-      inLanguage: "en-IN",
-    },
-
     // Mirrors the FAQ section rendered on this same page — Google requires the
     // answers to be visible on the page carrying this markup.
     {
       "@type": "FAQPage",
       "@id": `${SITE_URL}/tuitions#faq`,
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "What grades and boards do you cover?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "We cover Grades 1 through 10 across all three major boards — CBSE, ICSE, and Karnataka State Board (KSEEB). Every lesson is mapped to your child's specific board syllabus and exam pattern.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Why only 8 students per batch?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "We believe individual attention is non-negotiable. With 8 students, every teacher knows every child's name, weaknesses, and learning style. Every doubt gets addressed before the class ends.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How does the free demo class work?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Book a slot via WhatsApp or our contact form. We'll schedule a full demo class where your child participates alongside the batch. You see the quality, methodology, and environment before paying anything.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "What subjects do you teach?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "For Grades 1–5: Maths, English, Environmental Studies, Hindi/Kannada. For Grades 6–10: Maths, Science (Physics, Chemistry, Biology), Social Studies, English, Hindi, and Kannada.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "What are the class timings?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "We run weekday batches from 4 PM to 8 PM, Monday to Friday. WhatsApp us to check current slot availability for your preferred grade.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Where are your centres in Bangalore?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "We have two centres in north-east Bengaluru — Kammanahalli and Kalyan Nagar — serving families from HRBR Layout, Banaswadi, Lingarajapuram and the surrounding areas.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Are the workbooks included in the fee?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes — branded Chalkboard Tuitions workbooks are included in all packages. These are curated workbooks with exercises, solved examples, and board-pattern questions. No extra charges for materials.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How do you communicate with parents?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Three ways: weekly WhatsApp updates covering topics taught and homework assigned; monthly printed progress cards for Grades 8–10 after formal tests; and a direct WhatsApp line to reach us anytime.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Is there a registration or admission fee?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "There is a seasonal admission fee that varies by board and grade. We do run offers where the registration fee is fully waived — WhatsApp us to check current promotions before enrolling.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Can I switch from monthly to an annual plan?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes. Many parents start monthly and switch to annual in Month 2 or 3. Annual packages save you up to ₹6,000 compared to 12 months of monthly billing.",
-          },
-        },
-      ],
+      mainEntity: TUITIONS_FAQS.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
     },
   ],
 };

@@ -6,7 +6,7 @@ import { PortalShader } from "@/components/ui/portal-shader";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Pathways } from "@/components/marketing/Pathways";
 import { CONTACT_EMAIL } from "@/lib/contact";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { absolute: "Chalkboard — Learning, differently." },
@@ -19,22 +19,43 @@ export const metadata: Metadata = {
     description: "Tuitions for Grades 1–10, training for teams at work, and placement programmes for colleges — teaching in Bengaluru since 2018.",
     url: SITE_URL,
     type: "website",
+    images: OG_IMAGES,
     siteName: "Chalkboard",
   },
 };
 
 const orgSchema = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Chalkboard",
-  legalName: "Chalkboard Learning Services LLP",
-  url: SITE_URL,
-  email: CONTACT_EMAIL,
-  logo: `${SITE_URL}/logo-dark.png`,
-  description:
-    "Chalkboard is a modern learning ecosystem spanning school tuitions, professional & institutional learning, and the technology platform that powers them.",
-  brand: ["Chalkboard Tuitions", "Chalkboard Learning Studio", "Chalkboard OS"],
-  sameAs: ["https://www.instagram.com/chalkboard.tuitions/"],
+  "@graph": [
+    {
+      // The umbrella. The Tuitions business and the Learning Studio both name
+      // this as their parentOrganization.
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Chalkboard",
+      legalName: "Chalkboard Learning Services LLP",
+      url: SITE_URL,
+      email: CONTACT_EMAIL,
+      logo: `${SITE_URL}/logo-dark.png`,
+      description:
+        "Chalkboard is a learning company in Bengaluru: small-batch tuitions for Grades 1–10, interactive corporate training, and placement programmes for colleges.",
+      foundingDate: "2018",
+      areaServed: { "@type": "City", name: "Bengaluru" },
+      subOrganization: [
+        { "@id": `${SITE_URL}/tuitions#tuitions` },
+        { "@id": `${SITE_URL}/learning-studio#studio` },
+      ],
+      sameAs: ["https://www.instagram.com/chalkboard.tuitions/", "https://www.facebook.com/chalkboardtuitions"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Chalkboard",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: "en-IN",
+    },
+  ],
 };
 
 export default function HomePage() {

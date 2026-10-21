@@ -5,7 +5,7 @@ import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Button } from "@/components/ui/button";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Chalkboard OS — The Platform Powering Chalkboard",
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
       "Admissions, attendance, fees, parent communication and analytics for a learning centre — in one calm, reliable system.",
     url: `${SITE_URL}/os`,
     type: "website",
+    images: OG_IMAGES,
   },
 };
 

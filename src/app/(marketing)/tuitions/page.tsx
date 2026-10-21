@@ -9,12 +9,12 @@ import { FAQ } from "@/components/sections/FAQ";
 import { Contact } from "@/components/sections/Contact";
 import { JsonLd } from "@/components/JsonLd";
 import { LegacyProof } from "@/components/marketing/LegacyProof";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Tuitions in Kammanahalli & Kalyan Nagar, Bangalore — CBSE, ICSE & State Board",
+  title: { absolute: "Tuitions in Kammanahalli & Kalyan Nagar | Chalkboard" },
   description:
-    "Chalkboard Tuitions: expert small-batch daily tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bengaluru. Max 8 students per batch. CBSE, ICSE & Karnataka State Board. Book your free demo class.",
+    "Small-batch tuitions for Grades 1–10 in Kammanahalli & Kalyan Nagar, Bengaluru. Max 8 per batch. CBSE, ICSE & State Board. Book a free demo class.",
   keywords: [
     "tuition centre Kammanahalli",
     "tuition classes Kalyan Nagar",
@@ -30,6 +30,8 @@ export const metadata: Metadata = {
       "Grades 1–10, CBSE · ICSE · State Board. Max 8 students per batch, five days a week. Book a free demo class.",
     url: `${SITE_URL}/tuitions`,
     type: "website",
+    siteName: "Chalkboard",
+    images: OG_IMAGES,
   },
 };
 

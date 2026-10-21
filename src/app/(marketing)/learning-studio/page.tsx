@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 import { Reveal } from "@/components/marketing/Reveal";
 import { LogoMark } from "@/components/marketing/LogoMark";
 import { CourseBuild } from "@/components/marketing/learning-studio/CourseBuild";
@@ -53,6 +53,7 @@ export const metadata: Metadata = {
       "AI, sales, support and leadership training in Bengaluru — and custom courses built from your own material. Try a 60-second lesson on the page.",
     url: PAGE_URL,
     type: "website",
+    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };

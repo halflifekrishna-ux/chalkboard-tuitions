@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Eyebrow } from "@/components/marketing/learning-studio/StudioParts";
@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     description: "A network of trainers, subject experts and facilitators. Tell us what you teach.",
     url: PAGE_URL,
     type: "website",
+    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };

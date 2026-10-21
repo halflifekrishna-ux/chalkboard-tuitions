@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Clock, MessageCircle } from "lucide-react";
 import { Contact } from "@/components/sections/Contact";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact Chalkboard Tuitions — Book a Free Demo Class in Bangalore",
+  title: "Book a Free Demo Class in Bangalore",
   description:
-    "Book a free demo class with Chalkboard Tuitions, or ask about batches and timings in Kammanahalli & Kalyan Nagar, Bengaluru. Grades 1–10, CBSE, ICSE and State Board.",
+    "Book a free demo class or ask about batches and timings at Chalkboard Tuitions, Kammanahalli & Kalyan Nagar, Bengaluru. CBSE, ICSE and State Board.",
   keywords: [
     "tuition centre near me Bangalore",
     "book free demo class Bangalore",
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
       "Tell us your child's grade and board, and we'll find a batch that fits. Kammanahalli & Kalyan Nagar, Bengaluru.",
     url: `${SITE_URL}/contact`,
     type: "website",
+    images: OG_IMAGES,
   },
 };
 

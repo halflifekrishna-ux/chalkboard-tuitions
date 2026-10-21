@@ -8,14 +8,14 @@ import { InMemoryQuotes } from "@/components/marketing/InMemoryQuotes";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 const WHATSAPP = "917411446381";
 
 export const metadata: Metadata = {
-  title: "About Chalkboard — The Teacher This Was Built On",
+  title: { absolute: "About Chalkboard — The Teacher This Was Built On" },
   description:
-    "Chalkboard grew out of Home Tuitions Bangalore, founded by the late Uma Maheshwari, who taught until the end of her life. The same teachers, the same standard, a structure built to carry it further.",
+    "Chalkboard grew out of Home Tuitions Bangalore, founded by the late Uma Maheshwari, who taught until the end of her life. The same teachers, the same standard.",
   keywords: [
     "Home Tuitions Bangalore",
     "Uma Maheshwari",
@@ -29,6 +29,7 @@ export const metadata: Metadata = {
       "Chalkboard grew out of Home Tuitions Bangalore and the way one teacher insisted on being understood, not repeated.",
     url: `${SITE_URL}/about`,
     type: "website",
+    images: OG_IMAGES,
   },
 };
 

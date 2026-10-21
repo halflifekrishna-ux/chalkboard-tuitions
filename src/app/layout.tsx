@@ -3,7 +3,7 @@ import { Playfair_Display, DM_Sans, Special_Elite } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, OG_IMAGES } from "@/lib/site";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -60,14 +60,14 @@ export const metadata: Metadata = {
     url: SITE_URL,
     locale: "en_IN",
     siteName: "Chalkboard Tuitions",
-    // Card art comes from app/opengraph-image.tsx — a real 1200×630 landscape
-    // card. Setting `images` here would override it with the square logo.
+    images: OG_IMAGES,
   },
+  // No title/description here: pages don't set their own, so a fixed Tuitions
+  // line would show on the Studio pages. Without them, X falls back to each
+  // page's og:title and og:description.
   twitter: {
     card: "summary_large_image",
-    title: "Chalkboard Tuitions | Small-Batch Daily Tuitions in Bangalore",
-    description:
-      "Expert tuitions for Grades 1–10. Max 8 students per batch. Kammanahalli & Kalyan Nagar, Bengaluru.",
+    images: OG_IMAGES,
   },
   icons: {
     icon: "/icon.png",
@@ -94,7 +94,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="en-IN"
       className={`${playfair.variable} ${dmSans.variable} ${specialElite.variable}`}
       suppressHydrationWarning
     >
