@@ -63,7 +63,3 @@ The first shot shows the subject of the sentence. Pick the frame that best tease
 ## 7. Lock-in
 
 The 1 to 3 sentences after the hook confirm its promise. Pick one move: proof right away, picture the result, stack a second contrast, name the method, answer the objection, or say it concretely. Cut any intro, backstory or "before we start". The Chalkboard story comes after the payoff, as proof.
-
-## Honesty pass
-
-Every number traces to the brief or the facts file with a label: (yours) if the user gave it, (estimate) if you worked it out, or a [placeholder]. No view prediction, no trend claim without pasted examples (say in one line that you can't see live feeds), no fake secret, no claim about other people. If you declined something, say so in one line and give the honest swap.

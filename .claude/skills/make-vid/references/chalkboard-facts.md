@@ -34,7 +34,3 @@ Default: "Book a free assessment" with the website or the phone number. One call
 ## Tone
 
 Plain, warm, specific. Trust over polish, clarity over cleverness. Small true stakes: a Class 8 maths fear, a board exam month, a child who stops asking questions. No inflated outcomes.
-
-## Safe visuals
-
-Chalkboard and chalk, notebooks, pencils, a small group table with no faces, hands writing, the classroom (real photo supplied by the user), the logo files in public/ (logo-dark.png, logo-full.png, logo-light.png), motion graphics, text cards.

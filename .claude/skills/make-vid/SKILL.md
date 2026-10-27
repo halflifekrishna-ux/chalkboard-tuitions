@@ -36,24 +36,22 @@ Write a table, one row per beat:
 
 Read the script aloud in your head with the sound off, then with eyes closed. Both must still make sense.
 
-## Step 3: Cost quote and go
+## Step 3: Set up generation
 
-Present the asset list: each clip or image, the model you recommend, duration, and credit cost. Get costs from the tools, not memory:
+List the assets to make: each clip or image, the model you recommend and the duration. Get model choice and credits from the tools, not memory:
 
 1. Load the tools: `ToolSearch` with `select:mcp__higgsfield__models_explore,mcp__higgsfield__balance,mcp__higgsfield__generate_image,mcp__higgsfield__generate_video,mcp__higgsfield__generate_audio,mcp__higgsfield__jobs_wait`.
 2. Call `get_workflow_instructions` with no argument first, since a short video is a multi step workflow.
 3. `balance` for credits, `models_explore` with action `recommend` for model choice and price.
-4. Ask the user: "Generate these N assets for about X credits?" Stop and wait.
 
 If Higgsfield is unavailable or the balance is short, deliver the script, shot list and prompts anyway, and say which step is blocked. Canva's `generate-image` and `generate-design` are the fallback for stills and text cards.
 
 ## Step 4: Generate
 
-After a yes:
 - Batch independent clips with `generate_video_batch` or `generate_image_batch`, then `jobs_wait` with `timeout_seconds` 15 or less, repeated until done.
 - Prompts describe the scene, camera and light, and state "no text, no logos". Add text yourself as on-screen overlays, because generated text is unreliable.
 - Voice: only if the user wants a voiceover, with `generate_audio` or `create_voice`. Never clone a real person's voice without their say so.
-- Check every output against the script. Reject and regenerate (with a new quote if it costs more) anything with garbled text or that does not match the beat.
+- Check every output against the script. Reject and regenerate anything with garbled text or that does not match the beat.
 - Download kept files into `public/video-drafts/<slug>/` (create it; do not commit large media unless the user asks). Name files `01-hook.mp4`, `02-lockin.mp4` and so on.
 
 ## Step 5: Assemble
@@ -82,5 +80,4 @@ Use these headings, in this order. Keep it tight.
 
 - [ ] Topic is clear in the first sentence and the first shot, with sound off.
 - [ ] Hook payoff arrives within 5 seconds.
-- [ ] Credits were quoted and approved before any generation.
 - [ ] Contact line matches the facts file exactly.
