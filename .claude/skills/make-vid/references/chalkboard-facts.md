@@ -38,7 +38,3 @@ Plain, warm, specific. Trust over polish, clarity over cleverness. Small true st
 ## Safe visuals
 
 Chalkboard and chalk, notebooks, pencils, a small group table with no faces, hands writing, the classroom (real photo supplied by the user), the logo files in public/ (logo-dark.png, logo-full.png, logo-light.png), motion graphics, text cards.
-
-## Never show or say
-
-Realistic AI children, invented marks, toppers, rankings, parent quotes the user did not provide, "guaranteed", claims about other tutors or schools.

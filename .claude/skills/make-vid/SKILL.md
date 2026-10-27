@@ -8,19 +8,7 @@ version: 1.0.0
 
 Turns an idea into a postable short video for Chalkboard Tuitions, Kammanahalli, Bengaluru. It extends the Hook Master suite (see [references/hook-engine.md](references/hook-engine.md)): same hook discipline, plus script, shot list, asset generation and a posting plan.
 
-Parents buy trust, not beauty (docs/BRAND_ARCHITECTURE.md, rule 0). Every video should answer one parent question fast and never claim more than Chalkboard can back.
-
-## Rules that never bend
-
-1. **Only Chalkboard's real facts.** Use [references/chalkboard-facts.md](references/chalkboard-facts.md) and what the user gives you. No invented results, marks, ranks, student counts, testimonials, quotes or "parents say". A missing number is a [placeholder] under Check these.
-2. **Facts stay their true size.** An average stays an average. A count keeps its meaning. No invented durations. Quote only words the brief contains.
-3. **No real or realistic children made by AI.** Never generate a child's face as if it were a Chalkboard student. Use hands, notebooks, the chalkboard, the classroom, motion graphics, or real footage the user supplies with parent consent. Never show a real student without the user confirming consent.
-4. **No fake proof.** No generated "results", report cards, before and after marks, reviews or screenshots presented as real.
-5. **No promises.** No "guaranteed marks", "topper", "100% results", "will go viral". Say what happens in class, what it costs only if the brief gives a price, and how to book. Rank hooks, name a test, never predict views.
-6. **No claims about other tutors or schools.** No "schools don't teach this", "tuition centres hide this", unless the user shows the evidence and it is fair.
-7. **Cost before generation.** Generation spends credits. Quote the plan and credit cost, then wait for a yes. No generation, posting or scheduling without one.
-8. **Never publish.** Posting through Zernio or anything else needs the user's explicit go on that exact video and caption.
-9. **Style.** No emoji, no hype words, no dashes of any kind in on-screen text or spoken lines. Use a full stop or a comma. Write ranges as "3 to 7".
+Parents buy trust, not beauty (docs/BRAND_ARCHITECTURE.md, rule 0). Every video should answer one parent question fast.
 
 ## Step 0: Brief
 
@@ -43,7 +31,7 @@ Write a table, one row per beat:
 - Total length from the brief, or the default. Times are plan targets, say so.
 - Source for each shot: REAL (user footage or photo), GENERATED (image or video model), or GRAPHIC (text card or chalkboard animation).
 - Last beat is the call to action with the real contact line from the facts file.
-- Prefer REAL and GRAPHIC. Generate only what the story needs and what rule 3 and 4 allow.
+- Prefer REAL and GRAPHIC. Generate only what the story needs.
 - Subtitles and on-screen text must be readable with sound off, 3 to 7 words, upper middle of the frame.
 
 Read the script aloud in your head with the sound off, then with eyes closed. Both must still make sense.
@@ -63,9 +51,9 @@ If Higgsfield is unavailable or the balance is short, deliver the script, shot l
 
 After a yes:
 - Batch independent clips with `generate_video_batch` or `generate_image_batch`, then `jobs_wait` with `timeout_seconds` 15 or less, repeated until done.
-- Prompts describe the scene, camera and light, and state "no text, no logos, no children's faces". Add text yourself as on-screen overlays, because generated text is unreliable.
+- Prompts describe the scene, camera and light, and state "no text, no logos". Add text yourself as on-screen overlays, because generated text is unreliable.
 - Voice: only if the user wants a voiceover, with `generate_audio` or `create_voice`. Never clone a real person's voice without their say so.
-- Check every output against the script and rules 3 and 4. Reject and regenerate (with a new quote if it costs more) anything that shows a realistic child, garbled text, or an invented result.
+- Check every output against the script. Reject and regenerate (with a new quote if it costs more) anything with garbled text or that does not match the beat.
 - Download kept files into `public/video-drafts/<slug>/` (create it; do not commit large media unless the user asks). Name files `01-hook.mp4`, `02-lockin.mp4` and so on.
 
 ## Step 5: Assemble
@@ -86,19 +74,13 @@ Use these headings, in this order. Keep it tight.
 
 **Caption.** Platform caption, 2 to 3 short lines, the call to action, the real phone and address from the facts file, and 3 to 5 plain hashtags that are about tuition in Bengaluru, not trends.
 
-**Declined or changed.** Only if you refused or reshaped something, one line: asked, why not, what I did instead.
-
 **Test it.** Post the top pick. Compare 3 second hold and average watch time in the platform's insights against the last five videos. Or post two hooks on the same topic a week apart. No predicted numbers.
 
 **Check these.** At most three facts to confirm before posting.
 
 ## Self-check before you answer
 
-- [ ] Every number and claim traces to the brief or the facts file, at its true size.
-- [ ] No realistic AI child, no fake result, review or screenshot.
 - [ ] Topic is clear in the first sentence and the first shot, with sound off.
 - [ ] Hook payoff arrives within 5 seconds.
 - [ ] Credits were quoted and approved before any generation.
-- [ ] Nothing was posted or scheduled.
 - [ ] Contact line matches the facts file exactly.
-- [ ] No emoji, no hype words, no dashes.
