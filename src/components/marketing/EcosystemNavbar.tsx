@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { STUDIO_PAGES } from "@/lib/studio";
 
 /**
  * EcosystemNavbar — route-based top navigation for all marketing pages.
@@ -21,6 +22,14 @@ const LINKS = [
   { label: "About", href: "/about" },
 ];
 
+// On Studio pages the nav belongs to the Studio: its own pages, its own name,
+// no tuition links and no OS login competing with the enquiry.
+const STUDIO_LINKS = [
+  { label: "Companies", href: STUDIO_PAGES.hub.path, exact: true },
+  { label: "Colleges", href: STUDIO_PAGES.colleges.path },
+  { label: "Trainers", href: STUDIO_PAGES.trainers.path },
+];
+
 export function EcosystemNavbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -34,7 +43,7 @@ export function EcosystemNavbar() {
 
   useEffect(() => setOpen(false), [pathname]);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string, exact?: boolean) => pathname === href || (!exact && pathname.startsWith(`${href}/`));
   // The homepage is a quiet "front door" — no Book Demo CTA competing with the pathways.
   const isHome = pathname === "/";
   // Learning Studio is email-only: no Tuitions WhatsApp / demo CTA there —
@@ -44,6 +53,7 @@ export function EcosystemNavbar() {
   const studioEnquire = pathname.startsWith("/learning-studio/colleges")
     ? "/learning-studio/colleges#enquire"
     : "/learning-studio#enquire";
+  const links: { label: string; href: string; exact?: boolean }[] = isStudio ? STUDIO_LINKS : LINKS;
 
   return (
     <>
@@ -55,20 +65,31 @@ export function EcosystemNavbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Wordmark → home */}
-          <Link href="/" className="flex items-center gap-3 group" aria-label="Chalkboard home">
-            <Image src="/logo-dark.png" alt="" width={38} height={38} className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105" priority />
-            <span className="font-playfair font-black text-chalk text-lg tracking-tight">Chalkboard</span>
-          </Link>
+          {/* Wordmark → home. The Studio gets the emblem alone with its own name
+              typeset: the logo file carries a "Chalkboard Tuitions" wordmark. */}
+          {isStudio ? (
+            <Link href={STUDIO_PAGES.hub.path} className="flex items-center gap-2.5 group" aria-label="Chalkboard Learning Studio home">
+              <Image src="/studio-emblem.png" alt="" width={36} height={36} className="transition-transform duration-300 group-hover:scale-105" priority />
+              <span className="leading-none">
+                <span className="block font-playfair font-black text-chalk text-lg tracking-tight">Chalkboard</span>
+                <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-[0.2em] text-chalk-yellow">Learning Studio</span>
+              </span>
+            </Link>
+          ) : (
+            <Link href="/" className="flex items-center gap-3 group" aria-label="Chalkboard home">
+              <Image src="/logo-dark.png" alt="" width={38} height={38} className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105" priority />
+              <span className="font-playfair font-black text-chalk text-lg tracking-tight">Chalkboard</span>
+            </Link>
+          )}
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-7">
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={`text-sm font-medium tracking-wide transition-colors duration-150 ${
-                  isActive(l.href) ? "text-chalk-yellow" : "text-chalk/60 hover:text-chalk"
+                  isActive(l.href, l.exact) ? "text-chalk-yellow" : "text-chalk/60 hover:text-chalk"
                 }`}
               >
                 {l.label}
@@ -78,12 +99,14 @@ export function EcosystemNavbar() {
 
           {/* Right: Login (quiet) · Book Demo (primary) */}
           <div className="flex items-center gap-1.5">
+            {!isStudio && (
             <Link
               href="/admin/login"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-chalk/55 hover:text-chalk hover:bg-chalk/10 transition-all"
             >
               <LogIn size={15} /> Login
             </Link>
+            )}
 
             {isStudio && (
               <Link
@@ -124,20 +147,22 @@ export function EcosystemNavbar() {
             className="fixed top-16 left-0 right-0 z-40 bg-board-deep/95 backdrop-blur-lg border-b border-chalk-yellow/10 shadow-2xl md:hidden"
           >
             <nav className="flex flex-col p-4 gap-1">
-              {LINKS.map((l) => (
+              {links.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
                   className={`px-4 py-3 rounded-xl font-medium transition-all ${
-                    isActive(l.href) ? "text-chalk-yellow bg-chalk/5" : "text-chalk/80 hover:text-chalk hover:bg-chalk/10"
+                    isActive(l.href, l.exact) ? "text-chalk-yellow bg-chalk/5" : "text-chalk/80 hover:text-chalk hover:bg-chalk/10"
                   }`}
                 >
                   {l.label}
                 </Link>
               ))}
-              <Link href="/admin/login" className="px-4 py-3 rounded-xl font-medium text-chalk/70 hover:text-chalk hover:bg-chalk/10 flex items-center gap-2">
-                <LogIn size={16} /> Login to Chalkboard OS
-              </Link>
+              {!isStudio && (
+                <Link href="/admin/login" className="px-4 py-3 rounded-xl font-medium text-chalk/70 hover:text-chalk hover:bg-chalk/10 flex items-center gap-2">
+                  <LogIn size={16} /> Login to Chalkboard OS
+                </Link>
+              )}
               {isStudio && (
                 <Link
                   href={studioEnquire}

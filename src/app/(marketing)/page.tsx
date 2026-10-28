@@ -39,8 +39,9 @@ const orgSchema = {
       logo: `${SITE_URL}/logo-dark.png`,
       description:
         "Chalkboard is a learning company in Bengaluru: small-batch tuitions for Grades 1–10, interactive corporate training, and placement programmes for colleges.",
-      foundingDate: "2018",
-      areaServed: { "@type": "City", name: "Bengaluru" },
+      // No foundingDate: 2018 is when Home Tuitions Bangalore started, not
+      // Chalkboard or the LLP. That history belongs to the Tuitions pages.
+      address: { "@type": "PostalAddress", addressLocality: "Bengaluru", addressRegion: "Karnataka", addressCountry: "IN" },
       subOrganization: [
         { "@id": `${SITE_URL}/tuitions#tuitions` },
         { "@id": `${SITE_URL}/learning-studio#studio` },

@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 
 const pillars = [
   { icon: GraduationCap, name: "Chalkboard Tuitions", body: "Small-batch, personalised academic learning for Grades 1–10 across CBSE, ICSE and State Board." },
-  { icon: Briefcase, name: "Chalkboard Learning Studio", body: "Professional and institutional programs for colleges, corporates, and training partners." },
+  { icon: Briefcase, name: "Chalkboard Learning Studio", body: "Custom training for companies and colleges, built in Bengaluru and run on site or online." },
   { icon: MonitorSmartphone, name: "Chalkboard OS", body: "The technology platform that runs admissions, attendance, fees and communication — and will power learning experiences over time." },
 ];
 

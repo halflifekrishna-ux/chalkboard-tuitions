@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL, OG_IMAGES } from "@/lib/site";
+import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
 import { Reveal } from "@/components/marketing/Reveal";
 import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
 import { StudioFaq, type Faq } from "@/components/marketing/learning-studio/StudioFaq";
@@ -17,33 +17,23 @@ import { Eyebrow, StudioEnquire } from "@/components/marketing/learning-studio/S
  *               syllabus and freeze in the interview.
  *   2. Show   — TransformBoring: a textbook communication slide rebuilt as
  *               something a student has to do. That is the programme.
- *   3. Offer  — placement readiness, industry tracks, faculty development.
+ *   3. Offer  — placement readiness and industry tracks.
  *   4. Act    — college questions, then the enquiry form preset to colleges.
  */
 
-const PAGE_URL = `${SITE_URL}/learning-studio/colleges`;
+const PAGE = STUDIO_PAGES.colleges;
 
 export const metadata: Metadata = {
   title: { absolute: "Placement Training for Colleges in Bengaluru | Chalkboard" },
   description:
-    "Placement readiness, industry tech tracks and faculty development for colleges and universities in Bengaluru — programmes your students actually practise.",
-  keywords: [
-    "placement training for colleges Bangalore",
-    "campus placement training Bengaluru",
-    "placement readiness programme",
-    "soft skills training for students",
-    "faculty development programme Bangalore",
-    "college training partner Bengaluru",
-    "industry ready training for engineering students",
-  ],
-  alternates: { canonical: PAGE_URL },
+    "Placement readiness and industry tracks (SQL, Python, Power BI, FinTech) for colleges and universities. Live at East Point College, Bengaluru: 80 students, no session missed.",
+  alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Graduates who are ready on day one",
     description:
-      "Placement readiness, industry tracks and faculty development for colleges and universities — built as practice, not lectures.",
-    url: PAGE_URL,
+      "Placement readiness and industry tracks for colleges and universities — built as practice, not lectures.",
+    url: studioAlternates(PAGE.path).canonical,
     type: "website",
-    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };
@@ -51,29 +41,25 @@ export const metadata: Metadata = {
 const STRANDS = [
   {
     n: "01",
+    id: "placement-readiness",
     title: "Placement readiness",
     service: "Campus placement readiness training",
     body: "Interviews, group discussions and workplace communication — practised in scenarios with feedback, not explained on slides.",
   },
   {
     n: "02",
+    id: "industry-tracks",
     title: "Industry tracks",
     service: "Industry technology tracks for students",
-    body: "Short, applied tracks alongside the degree.",
-    tags: ["AI & Machine Learning", "Data Analytics", "Full Stack Development", "Cloud", "Cybersecurity"],
-  },
-  {
-    n: "03",
-    title: "Faculty development",
-    service: "Faculty development programmes",
-    body: "Help your teachers turn a lecture into something students do — the same method you can try below.",
+    body: "Applied tracks that run alongside the degree. These are the ones running now.",
+    tags: ["SQL", "Python", "Git & GitHub", "Excel", "Power BI", "FinTech"],
   },
 ];
 
 const COLLEGE_FAQS: Faq[] = [
   {
     q: "What programmes does Chalkboard Learning Studio run for colleges?",
-    a: "Placement readiness (interviews, group discussions, workplace communication), short industry tracks in AI, data, full stack, cloud and cybersecurity, and faculty development. Each is scoped to your students and your placement goals.",
+    a: "Placement readiness (interviews, group discussions, workplace communication) and applied industry tracks. The tracks running now cover SQL, Python, Git and GitHub, Excel and Power BI for BCA students, and FinTech for B.Com students. Each programme is scoped to your students and your placement goals.",
   },
   {
     q: "Will it clash with our academic calendar?",
@@ -81,11 +67,7 @@ const COLLEGE_FAQS: Faq[] = [
   },
   {
     q: "Do you train on campus in Bengaluru?",
-    a: "Yes — on campus across Bengaluru, and live online for institutions elsewhere in India.",
-  },
-  {
-    q: "Can you train our faculty to teach this way?",
-    a: "Yes. Faculty development covers how to turn existing lectures into scenarios, choices and practice — the same build as the communication module on this page.",
+    a: "Yes, on campus in Bengaluru. For institutions elsewhere, talk to us about live online delivery.",
   },
   {
     q: "How does it start?",
@@ -93,32 +75,19 @@ const COLLEGE_FAQS: Faq[] = [
   },
 ];
 
-const collegeSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${PAGE_URL}#programmes`,
-      name: "Chalkboard Learning Studio — programmes for colleges and universities",
-      url: PAGE_URL,
-      provider: { "@id": `${SITE_URL}/learning-studio#studio` },
-      areaServed: [
-        { "@type": "City", name: "Bengaluru" },
-        { "@type": "Country", name: "India" },
-      ],
-      audience: { "@type": "EducationalAudience", educationalRole: "student" },
-      serviceType: STRANDS.map((s) => s.service),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Learning Studio", item: `${SITE_URL}/learning-studio` },
-        { "@type": "ListItem", position: 3, name: "Colleges & universities", item: PAGE_URL },
-      ],
-    },
-  ],
-};
+const collegeSchema = studioGraph(
+  ...STRANDS.map((s) =>
+    studioService({
+      id: s.id,
+      name: s.service,
+      description: s.body,
+      path: PAGE.path,
+      serviceType: s.service,
+      audience: "college",
+    })
+  ),
+  breadcrumbs([STUDIO_PAGES.hub, PAGE])
+);
 
 export default function CollegesPage() {
   return (
@@ -141,8 +110,8 @@ export default function CollegesPage() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-chalk/70">
               Your students know the syllabus. Then the interviewer asks them to handle a disagreement, and they
-              freeze. Chalkboard Learning Studio runs placement readiness, industry tracks and faculty development
-              for colleges and universities in Bengaluru — built as practice, so the skill is there on the day.
+              freeze. Chalkboard Learning Studio runs placement readiness and industry tracks for colleges and
+              universities, built as practice, so the skill is there on the day.
             </p>
             <a
               href="#transform"
@@ -173,7 +142,7 @@ export default function CollegesPage() {
           <Reveal>
             <Eyebrow label="What We Run" />
             <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
-              Three strands.
+              Two strands.
               <br />
               One outcome: ready on day one.
             </h2>
@@ -183,7 +152,7 @@ export default function CollegesPage() {
             {STRANDS.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
-                  <span className="font-playfair text-2xl font-black text-gold/70 sm:text-3xl">{s.n}</span>
+                  <span className="font-playfair text-2xl font-black text-gold-deep sm:text-3xl">{s.n}</span>
                   <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
                   <div className="col-start-2 min-w-0 sm:col-start-3">
                     <p className="text-sm leading-relaxed text-gray-600 sm:text-base">{s.body}</p>

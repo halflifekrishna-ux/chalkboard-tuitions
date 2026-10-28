@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL, OG_IMAGES } from "@/lib/site";
+import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
 import { Reveal } from "@/components/marketing/Reveal";
-import { LogoMark } from "@/components/marketing/LogoMark";
 import { CourseBuild } from "@/components/marketing/learning-studio/CourseBuild";
 import { PromptLessonCard } from "@/components/marketing/learning-studio/PromptLesson";
 import { StudioFaq } from "@/components/marketing/learning-studio/StudioFaq";
@@ -28,32 +27,19 @@ import { Eyebrow, StudioEnquire } from "@/components/marketing/learning-studio/S
  * there, not here.
  */
 
-const PAGE_URL = `${SITE_URL}/learning-studio`;
+const PAGE = STUDIO_PAGES.hub;
 
 export const metadata: Metadata = {
   title: { absolute: "Corporate Training in Bengaluru | Chalkboard Learning Studio" },
   description:
     "Interactive corporate training in Bengaluru: AI training, sales, customer support and leadership workshops, plus custom courses built from your material.",
-  keywords: [
-    "corporate training Bengaluru",
-    "corporate training Bangalore",
-    "AI training for employees",
-    "prompt engineering workshop Bangalore",
-    "sales training Bengaluru",
-    "customer support training",
-    "leadership training Bengaluru",
-    "custom course development",
-    "instructional design Bangalore",
-    "learning and development partner",
-  ],
-  alternates: { canonical: PAGE_URL },
+  alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Corporate training your team learns by doing",
     description:
       "AI, sales, support and leadership training in Bengaluru — and custom courses built from your own material. Try a 60-second lesson on the page.",
-    url: PAGE_URL,
+    url: studioAlternates(PAGE.path).canonical,
     type: "website",
-    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };
@@ -62,84 +48,60 @@ export const metadata: Metadata = {
 const PRACTICES = [
   {
     n: "01",
+    id: "ai-training",
     title: "AI at work",
     service: "AI and prompt-writing training",
     body: "AI training that gets your team a usable first draft — for the emails, reports and analysis your team already writes. The lesson at the top of this page is a slice of it.",
   },
   {
     n: "02",
+    id: "sales-training",
     title: "Sales teams",
     service: "Sales performance training",
     body: "Discovery that earns the second meeting, objection handling, and the call after the no.",
   },
   {
     n: "03",
+    id: "support-training",
     title: "Customer support",
     service: "Customer support training",
     body: "De-escalation, first-contact resolution, and the tone that keeps a customer through a bad day.",
   },
   {
     n: "04",
+    id: "leadership-training",
     title: "How a team runs",
     service: "Team effectiveness and leadership programmes",
     body: "Handoffs, feedback that lands, and decisions that survive the meeting they were made in.",
   },
   {
     n: "05",
+    id: "custom-courses",
     title: "Courses built for you",
     service: "Custom course design and build",
-    body: "Your own material — a deck, an SOP, one expert’s head — storyboarded, then built as scenarios, simulations or practice people finish.",
+    body: "Your own material — a deck, an SOP, one expert’s head — storyboarded, then built as scenarios, simulations and practice.",
   },
 ];
 
-const studioSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "ProfessionalService",
-      "@id": `${PAGE_URL}#studio`,
-      name: "Chalkboard Learning Studio",
-      url: PAGE_URL,
-      parentOrganization: { "@id": `${SITE_URL}/#organization` },
-      description:
-        "Interactive corporate training and custom course design for companies in Bengaluru and online — AI and prompt writing, sales, customer support, team effectiveness and leadership.",
-      areaServed: [
-        { "@type": "City", name: "Bengaluru" },
-        { "@type": "Country", name: "India" },
-      ],
-      audience: { "@type": "BusinessAudience", name: "Companies and teams" },
-      serviceType: [
-        "Corporate training",
-        "AI and prompt-writing training",
-        "Sales training",
-        "Customer support training",
-        "Leadership development",
-        "Instructional design",
-      ],
-      hasOfferCatalog: {
-        "@type": "OfferCatalog",
-        name: "Learning Studio programmes for companies",
-        itemListElement: PRACTICES.map(({ service: name }) => ({
-          "@type": "Offer",
-          itemOffered: { "@type": "Service", name },
-        })),
-      },
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Learning Studio", item: PAGE_URL },
-      ],
-    },
-  ],
-};
+const studioSchema = studioGraph(
+  ...PRACTICES.map((p) =>
+    studioService({
+      id: p.id,
+      name: p.service,
+      description: p.body,
+      path: PAGE.path,
+      serviceType: p.service,
+      audience: "business",
+    })
+  ),
+  breadcrumbs([PAGE])
+);
 
 /* Facts we can stand behind, not invented headline numbers. */
 const HOW = [
   { k: "In person or online", v: "Workshops across Bengaluru, live online for distributed teams, self-paced when people need it." },
   { k: "Storyboard first", v: "You approve the flow before a single screen is built — no surprises at the end." },
-  { k: "Teaching since 2018", v: "The same teachers behind Home Tuitions Bangalore, and the same standard for how a thing gets taught." },
+  { k: "Running in colleges now", v: "Two programmes live at East Point College of Management in Bengaluru. 80 students, no session missed." },
 ];
 
 export default function LearningStudioPage() {
@@ -162,30 +124,14 @@ export default function LearningStudioPage() {
         <Container className="relative z-10 w-full">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="min-w-0 lg:col-span-5">
-              {/* The brand lockup: the page says whose studio this is before a word is read. */}
-              <div className="flex items-center gap-3.5">
-                <LogoMark
-                  className="w-[48px] shrink-0 rounded-xl ring-1 ring-chalk-yellow/25 sm:w-[56px]"
-                  sizes="56px"
-                  priority
-                />
-                <span className="leading-tight">
-                  <span className="block font-playfair text-xl font-black tracking-tight text-chalk sm:text-2xl">
-                    Chalkboard
-                  </span>
-                  <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
-                    Learning Studio · Bengaluru
-                  </span>
-                </span>
-              </div>
-              <h1 className="mt-7 break-words font-playfair font-black leading-[1.04] tracking-tight text-[clamp(2.25rem,6.2vw,4.25rem)]">
+              <h1 className="break-words font-playfair font-black leading-[1.04] tracking-tight text-[clamp(2.25rem,6.2vw,4.25rem)]">
                 Corporate training
                 <br />
                 <span className="italic text-chalk-yellow">people learn by doing.</span>
               </h1>
               <p className="mt-6 max-w-md text-lg leading-relaxed text-chalk/70">
                 We design and run interactive training for teams in Bengaluru and online — AI, sales, customer
-                support and leadership — and turn your own material into custom courses people finish.
+                support and leadership — and turn your own material into custom courses.
               </p>
               <p className="mt-4 max-w-md text-base font-semibold text-chalk">
                 Don&rsquo;t take our word for it. Take the 60-second lesson
@@ -236,7 +182,7 @@ export default function LearningStudioPage() {
             {PRACTICES.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
-                  <span className="font-playfair text-2xl font-black text-gold/70 sm:text-3xl">{s.n}</span>
+                  <span className="font-playfair text-2xl font-black text-gold-deep sm:text-3xl">{s.n}</span>
                   <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
                   <p className="col-start-2 min-w-0 text-sm leading-relaxed text-gray-600 sm:col-start-3 sm:text-base">{s.body}</p>
                 </div>
