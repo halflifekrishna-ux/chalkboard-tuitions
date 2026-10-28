@@ -41,7 +41,7 @@ const CRITERIA: Criterion[] = [
   {
     key: "Context",
     ask: "What does the AI need to know?",
-    coach: "Give it the situation — what happened before this email, and what they already know about you.",
+    coach: "Give it the situation: what happened before this email, and what they already know about you.",
     words: [
       "because", "already", "trial", "signed up", "downloaded", "last week", "last month",
       "after", "since", "currently", "churn", "renewal", "visited", "weeks ago", "days ago",
@@ -52,7 +52,7 @@ const CRITERIA: Criterion[] = [
   {
     key: "Objective",
     ask: "What should happen next?",
-    coach: "Name the one thing you want them to do — reply, book, upgrade, click. One, not four.",
+    coach: "Name the one thing you want them to do: reply, book, upgrade or click. Pick one.",
     words: [
       "book", "sign up", "reply", "buy", "purchase", "subscribe", "upgrade", "renew", "click",
       "register", "convert", "get them to", "so that", "goal", "objective", "demo",
@@ -62,7 +62,7 @@ const CRITERIA: Criterion[] = [
   {
     key: "Tone",
     ask: "How should it sound?",
-    coach: "Say how it should read — warm, blunt, formal, funny — and how long. Otherwise you get corporate mush.",
+    coach: "Say how it should read (warm, blunt, formal) and how long. Otherwise you get corporate mush.",
     words: [
       "tone", "friendly", "warm", "formal", "casual", "professional", "short", "brief",
       "concise", "playful", "direct", "confident", "polite", "punchy", "no jargon", "plain",
@@ -80,14 +80,14 @@ const OPTIONS = [
     text: "Tell me about marketing.",
     good: false,
     verdict:
-      "Close, and it’s what most people type. But that’s a topic, not an instruction — the AI has to guess who you are, who it’s for and what you’d call useful. It guesses the average, which is why the answer reads like a textbook.",
+      "Close, and it’s what most people type. But that’s a topic with no instruction attached. The AI has to guess who you are, who it’s for and what you’d call useful. It guesses the average, which is why the answer reads like a textbook.",
   },
   {
     id: "b",
     text: "You are a marketing manager. Give me 5 Instagram campaign ideas for a Bengaluru café targeting college students, with a ₹10,000 budget.",
     good: true,
     verdict:
-      "Exactly. The second prompt gives the AI context, role, audience and constraints — so the response can be much more useful.",
+      "Exactly. The second prompt gives the AI context, role, audience and constraints, so the answer has something to aim at.",
   },
 ];
 
@@ -104,7 +104,7 @@ function StepTag({ n, label, mechanic }: { n: number; label: string; mechanic: s
   );
 }
 
-/** The lesson card alone — the Studio hero puts it beside the headline. */
+/** The lesson card. Used on /learning-studio/ai-training, loaded when it scrolls near (PromptLessonLazy). */
 export function PromptLessonCard({ className = "" }: { className?: string }) {
   const [step, setStep] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
@@ -304,7 +304,7 @@ export function PromptLessonCard({ className = "" }: { className?: string }) {
                         </span>
                         <span className={hits[i] ? "text-chalk/60" : "text-chalk/80"}>
                           <strong className="font-semibold">{c.key}</strong>
-                          {hits[i] ? " — got it." : ` — ${c.coach}`}
+                          {hits[i] ? ": got it." : `: ${c.coach}`}
                         </span>
                       </li>
                     ))}
@@ -343,25 +343,18 @@ export function PromptLessonCard({ className = "" }: { className?: string }) {
                 That was the point
               </span>
               <p className="mt-4 font-playfair text-2xl leading-snug sm:text-[1.75rem]">
-                This is what an interactive course can look like.
+                That&rsquo;s how we teach AI.
               </p>
               <p className="mt-4 text-[15px] leading-relaxed text-chalk/70">
-                We don&rsquo;t just put information on a screen. We design learning experiences where people
-                learn by doing.
+                A short explanation, then a choice, then you write something real and see what it&rsquo;s missing.
+                A workshop does the same thing with the emails, reports and code your team already writes.
               </p>
-              <p className="mt-4 text-[15px] leading-relaxed text-chalk/55">
-                Three mechanics in ninety seconds: a short teach, a choice between two near-identical
-                options, and something you had to write yourself while the screen told you what was still
-                missing. Swap the subject for onboarding, a safety drill, a product launch or a
-                compliance module — the build is the same.
-              </p>
-
               <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
                 <a
                   href="#enquire"
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#f4c430_0%,#c9a227_100%)] py-3.5 text-sm font-bold text-chalk-dark"
                 >
-                  Build one from your material
+                  Bring this to your team
                 </a>
                 <button
                   onClick={reset}
@@ -375,30 +368,5 @@ export function PromptLessonCard({ className = "" }: { className?: string }) {
         </AnimatePresence>
       </div>
     </div>
-  );
-}
-
-export function PromptLesson() {
-  return (
-    <section
-      id="interactive"
-      className="relative scroll-mt-20 overflow-hidden bg-white py-20 text-board sm:py-28"
-    >
-      <div className="mx-auto max-w-2xl px-5 sm:px-6">
-        <div className="text-center">
-          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-gold-deep sm:text-[13px]">
-            Try it on yourself
-          </span>
-          <h2 className="mt-5 text-balance font-playfair text-[clamp(1.9rem,5.5vw,3.25rem)] font-bold leading-[1.1] tracking-tight text-board">
-            See what we mean by interactive.
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-gray-600">
-            For the next thirty seconds this page stops being a website and becomes a lesson. You&rsquo;ll
-            leave it knowing something you can use today.
-          </p>
-        </div>
-        <PromptLessonCard className="mt-10" />
-      </div>
-    </section>
   );
 }
