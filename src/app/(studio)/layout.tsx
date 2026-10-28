@@ -27,7 +27,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   return (
     <>
       <EcosystemNavbar />
-      <main>{children}</main>
+      <main className="studio">{children}</main>
       <StudioFooter />
       <Analytics />
     </>

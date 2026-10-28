@@ -135,7 +135,7 @@ const hubSchema = studioGraph(
 export default function LearningStudioHub() {
   const ai = linkTo("aiTraining");
   const courses = linkTo("customCourses");
-  const work = linkTo("work");
+  const work = linkTo("eastPoint");
 
   return (
     <>
