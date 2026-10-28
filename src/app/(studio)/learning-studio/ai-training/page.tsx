@@ -279,7 +279,7 @@ export default function AiTrainingPage() {
         <Inner>
           <Kicker tone="dark">Already in a classroom</Kicker>
           <h2 id="proof" className="sr-only">
-            AI training running at East Point College of Management
+            What educators say about how we teach AI
           </h2>
           <blockquote className="sx-focus mt-10 max-w-4xl">
             <p className="font-playfair text-[clamp(1.9rem,5vw,3.4rem)] leading-[1.15]">
@@ -288,14 +288,14 @@ export default function AiTrainingPage() {
             <footer className="mt-6 text-base text-chalk/70">Faculty, East Point College of Management</footer>
           </blockquote>
           <p className="sx-rise mt-10 max-w-xl text-lg leading-relaxed text-chalk/75">
-            Students in our two programs there write first and use AI second. Your team gets the same rule, applied to
-            its own work.
+            Our students write first and use AI second, and our 2026 Advanced Excel program taught AI-assisted analysis through
+            real-world case studies. Your team gets the same rule, applied to its own work.
           </p>
           <Link
-            href={STUDIO_PAGES.colleges.path}
+            href={STUDIO_PAGES.work.path}
             className="sx-rise mt-8 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/40 underline-offset-4 hover:decoration-chalk-yellow"
           >
-            See the college programs <ArrowRight size={15} aria-hidden />
+            See our programs and their results <ArrowRight size={15} aria-hidden />
           </Link>
         </Inner>
       </Scene>

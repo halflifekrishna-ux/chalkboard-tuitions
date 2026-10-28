@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowDown } from "lucide-react";
-import { STUDIO_PAGES, linkTo, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
-import { Scene, Inner, Kicker, Statement, BigStat, Steps, TrackCard } from "@/components/marketing/learning-studio/Scene";
+import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
+import { programsFor, FIRST_YEAR } from "@/lib/portfolio";
+import { ProgramGrid } from "@/components/marketing/learning-studio/Portfolio";
+import { Scene, Inner, Kicker, Statement, BigStat, Steps } from "@/components/marketing/learning-studio/Scene";
 import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
 import { StudioFaq, type Faq } from "@/components/marketing/learning-studio/StudioFaq";
 import { StudioEnquire } from "@/components/marketing/learning-studio/StudioParts";
@@ -16,9 +18,9 @@ import { StudioEnquire } from "@/components/marketing/learning-studio/StudioPart
  * students' search (institutes selling to individuals), so the page speaks to
  * the college buying for its students.
  *
- * Proof is real and specific: two MOU programs at East Point College of
- * Management, 80 students, no session missed. Only tracks that actually run
- * are listed. Faculty development is not an offer, so it isn't here.
+ * Proof comes from src/lib/portfolio.ts: every college program we've run,
+ * each with its own results. Only tracks we've taught are listed. Faculty
+ * development is not an offer, so it isn't here.
  */
 
 const PAGE = STUDIO_PAGES.colleges;
@@ -26,11 +28,11 @@ const PAGE = STUDIO_PAGES.colleges;
 export const metadata: Metadata = {
   title: { absolute: "Campus Recruitment Training for Colleges | Chalkboard Learning Studio" },
   description:
-    "Placement readiness and industry tracks (SQL, Python, Power BI, FinTech) run as practice. Live at East Point College, Bengaluru: 80 students, no session missed.",
+    "Placement readiness and industry tracks run as practice: SQL, Python, Excel, Power BI, cybersecurity and FinTech. Six college programs since 2023, every one measured.",
   alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Placement and industry training for colleges, run as practice",
-    description: "Two programs live at East Point College of Management, Bengaluru. 80 students, no session missed, both continuing next semester.",
+    description: "Six college programs since 2023: placement accelerators, Advanced Excel, cybersecurity and FinTech. 97% rated our Excel program 4 or 5 out of 5.",
     url: studioAlternates(PAGE.path).canonical,
     type: "website",
     siteName: "Chalkboard Learning Studio",
@@ -46,22 +48,11 @@ const STRANDS = [
   {
     id: "industry-tracks",
     service: "Industry tracks for students",
-    body: "Applied tracks alongside the degree: SQL, Python, Git and GitHub, Excel, Power BI and FinTech.",
+    body: "Applied tracks alongside the degree: SQL, Python, Git and GitHub, Excel, Power BI, cybersecurity and FinTech.",
   },
 ];
 
-const PROGRAMS = [
-  {
-    title: "BCA Placement Accelerator",
-    body: "The tools technical rounds test, learned hands-on alongside the degree.",
-    pills: ["SQL", "Python", "Git & GitHub", "Excel", "Power BI"],
-  },
-  {
-    title: "B.Com Industry Accelerator",
-    body: "A FinTech track and a general branch, run alongside the degree.",
-    pills: ["FinTech", "General branch"],
-  },
-];
+const COLLEGE_PROGRAMS = programsFor("college");
 
 const STEPS = [
   {
@@ -85,7 +76,7 @@ const STEPS = [
 const COLLEGE_FAQS: Faq[] = [
   {
     q: "What does Chalkboard Learning Studio run for colleges?",
-    a: "Campus recruitment training and applied industry tracks. The tracks running now cover SQL, Python, Git and GitHub, Excel and Power BI for BCA students, and FinTech for B.Com students. Each program is scoped to your students and the roles they're applying for.",
+    a: "Campus recruitment training and applied industry tracks. We've run programs in SQL, Python, Git and GitHub, Excel, Power BI, cybersecurity and FinTech. Each program is scoped to your students and the roles they're applying for.",
   },
   {
     q: "What is campus recruitment training?",
@@ -93,11 +84,11 @@ const COLLEGE_FAQS: Faq[] = [
   },
   {
     q: "How is it set up with the college?",
-    a: "Usually through an MOU with the college. Both programs at East Point College of Management run that way.",
+    a: "Usually through an MOU with the college, which is how our current placement programs run. Shorter skill programs can also run as a single engagement.",
   },
   {
     q: "Will it clash with our academic calendar?",
-    a: "No. We plan around your semester, exams and placement season. At East Point both programs run alongside the degree.",
+    a: "No. We plan around your semester, exams and placement season, and our programs run alongside the degree.",
   },
   {
     q: "Do you train on campus?",
@@ -117,7 +108,6 @@ const collegeSchema = studioGraph(
 );
 
 export default function CollegesPage() {
-  const work = linkTo("eastPoint");
 
   return (
     <>
@@ -152,7 +142,7 @@ export default function CollegesPage() {
               Talk to us about your students <ArrowRight size={16} aria-hidden />
             </Link>
             <Link href="#programs" className="inline-flex items-center gap-2 text-sm font-semibold text-chalk/80 hover:text-chalk-yellow">
-              Programs running now <ArrowDown size={15} aria-hidden />
+              Programs we&rsquo;ve run <ArrowDown size={15} aria-hidden />
             </Link>
           </div>
         </Inner>
@@ -176,14 +166,12 @@ export default function CollegesPage() {
       {/* ── Programs running now ── */}
       <Scene tone="cream" id="programs" labelledBy="programs-heading">
         <Inner>
-          <Kicker tone="cream">Running now at East Point College of Management</Kicker>
+          <Kicker tone="cream">Programs we&rsquo;ve run</Kicker>
           <h2 id="programs-heading" className="sx-focus mt-8 max-w-3xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
-            Two programs, both run under an MOU.
+            {COLLEGE_PROGRAMS.length} college programs since {FIRST_YEAR}.
           </h2>
-          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
-            {PROGRAMS.map((p) => (
-              <TrackCard key={p.title} tone="cream" kicker="East Point College of Management" title={p.title} body={p.body} pills={p.pills} />
-            ))}
+          <div className="mt-12">
+            <ProgramGrid programs={COLLEGE_PROGRAMS} tone="cream" />
           </div>
           <p className="sx-rise mt-8 max-w-xl text-base leading-relaxed text-ink/80">
             Building something different for your students? Tracks are designed around the roles your recruiters hire for.
@@ -196,14 +184,14 @@ export default function CollegesPage() {
         <Inner>
           <Kicker tone="dark">What happened</Kicker>
           <h2 id="proof" className="sr-only">
-            Results at East Point College of Management
+            How our college programs run
           </h2>
           <div className="mt-10 grid grid-cols-1 gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-end lg:gap-20">
             <BigStat
               tone="dark"
               value="0"
               label="sessions missed"
-              source="Across 80 students in two cohorts at East Point College of Management, Bengaluru. Both programs continue into the next semester."
+              source="Across the 2026 placement and industry programs, 80 students in all. Both continue into the next semester."
             />
             <div className="sx-rise">
               <h3 className="font-playfair text-2xl font-bold sm:text-3xl">A trainer left mid-program</h3>
@@ -217,14 +205,12 @@ export default function CollegesPage() {
                 </p>
                 <footer className="mt-3 text-sm text-chalk/70">Faculty, East Point College of Management</footer>
               </blockquote>
-              {work.live && (
-                <Link
-                  href={work.href}
-                  className="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/40 underline-offset-4 hover:decoration-chalk-yellow"
-                >
-                  Read the East Point case study <ArrowRight size={15} aria-hidden />
-                </Link>
-              )}
+              <Link
+                href={STUDIO_PAGES.work.path}
+                className="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/40 underline-offset-4 hover:decoration-chalk-yellow"
+              >
+                See every program and its results <ArrowRight size={15} aria-hidden />
+              </Link>
             </div>
           </div>
         </Inner>
