@@ -9,8 +9,12 @@ Grew out of Home Tuitions Bangalore, which has taught since 2018.
 
 ## Chalkboard Learning Studio
 Custom training built around what people need to be able to do. Based in Bengaluru, India; delivers on site and online.
-- [Training for companies](https://www.chalkboardlearning.in/learning-studio): AI at work (learners draft first, then use AI to refine), sales, customer support and leadership. Also builds custom courses from a company's own material.
-- [Colleges and universities](https://www.chalkboardlearning.in/learning-studio/colleges): Placement readiness and industry tracks. Running now at East Point College of Management, Bengaluru: a BCA Placement Accelerator (SQL, Python, Git/GitHub, Excel, Power BI) and a B.Com Industry Accelerator (FinTech track and a general branch). 80 students across both cohorts, no session missed.
+- [Overview](https://www.chalkboardlearning.in/learning-studio): Training for companies (AI at work, sales, customer support, leadership) and colleges (placement readiness, industry tracks). A diagnosis first, then a design.
+- [AI training for teams](https://www.chalkboardlearning.in/learning-studio/ai-training): Hands-on generative AI training built on one rule: learners write the first draft themselves, then use AI to refine it. Covers prompt writing, AI-assisted work and checking AI output.
+- [Colleges and universities](https://www.chalkboardlearning.in/learning-studio/colleges): Campus recruitment training and industry tracks, set up under MOU. Running now at East Point College of Management, Bengaluru: a BCA Placement Accelerator (SQL, Python, Git/GitHub, Excel, Power BI) and a B.Com Industry Accelerator (FinTech track and a general branch). 80 students across both cohorts, no session missed.
+- [Custom courses](https://www.chalkboardlearning.in/learning-studio/custom-courses): Courses built from a company's own material, in the client's authoring tool (Storyline, Rise, Captivate and others), packaged as SCORM or xAPI with learner reporting. A new service, opening to first partners.
+- [Our work](https://www.chalkboardlearning.in/learning-studio/work): The East Point College case study.
+- [Insights](https://www.chalkboardlearning.in/learning-studio/insights): Writing on AI at work, college readiness and course design.
 - [Trainers](https://www.chalkboardlearning.in/learning-studio/trainers): Freelance trainers, subject experts and facilitators can send their profile.
 
 ## About

@@ -4,6 +4,12 @@ const nextConfig = {
     remotePatterns: [],
   },
   experimental: {
+    // Studio share images read these from disk (src/lib/studio-og.tsx). They
+    // are prerendered at build time, but if one ever renders on demand the
+    // function needs the files bundled with it.
+    outputFileTracingIncludes: {
+      "/learning-studio/**": ["./src/assets/fonts/**", "./public/studio-emblem.png"],
+    },
     serverActions: {
       // photo (5 MB) and document (10 MB) uploads go through Server Actions
       bodySizeLimit: "12mb",

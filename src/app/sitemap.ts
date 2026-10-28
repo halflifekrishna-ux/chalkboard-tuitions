@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { STUDIO_PAGES, studioUrl } from "@/lib/studio";
+import { POSTS, postPath } from "@/lib/insights";
 
 /**
  * Public routes only. /admin is the OS and is noindex + auth-guarded, so it
@@ -19,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(p.updated),
       changeFrequency: "monthly" as const,
       priority: p.path === STUDIO_PAGES.hub.path ? 0.9 : 0.7,
+    })),
+    ...POSTS.map((p) => ({
+      url: studioUrl(postPath(p.slug)),
+      lastModified: new Date(p.updated),
+      changeFrequency: "yearly" as const,
+      priority: 0.6,
     })),
     { url: `${SITE_URL}/about`, lastModified, changeFrequency: "yearly", priority: 0.5 },
     { url: `${SITE_URL}/os`, lastModified, changeFrequency: "yearly", priority: 0.4 },
