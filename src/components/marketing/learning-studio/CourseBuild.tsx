@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ACTS, DELIVERABLES, HEADING } from "./courseBuildContent";
 
 /**
  * CourseBuild — the Studio's signature section: a chalkboard that assembles a
@@ -27,12 +27,7 @@ import { ArrowDown } from "lucide-react";
  * why framer-motion's `offset` shorthand under-delivers here.
  */
 
-const ACTS = [
-  { kicker: "01 · You hand it over", line: "A deck, an SOP, or one expert who knows it all. However messy." },
-  { kicker: "02 · We storyboard it", line: "You approve the flow before a single screen gets built." },
-  { kicker: "03 · We build it", line: "Decisions to make, things to drag, scores to chase." },
-  { kicker: "04 · You see who did what", line: "Who finished, who struggled, exactly where they dropped off." },
-] as const;
+
 
 /** Where the raw thinking starts: scattered, angled, unordered. */
 const SCATTER = [
@@ -275,36 +270,11 @@ function Stacked() {
 }
 
 
-/* What a buyer receives. The animation shows the process; this says what lands
-   on their desk, which is what turns a nice scroll into an enquiry. */
-const DELIVERABLES = [
-  { k: "You bring", v: "The expertise your people already have — and the thing they keep getting wrong." },
-  { k: "You sign off", v: "A storyboard, before a single screen is built." },
-  { k: "You get", v: "Working modules: branching scenarios, simulations, gamified practice." },
-  { k: "It runs", v: "On your platform or ours. Classroom, sales floor or support desk." },
-  { k: "You track", v: "Completions, scores, and the exact screen people quit on." },
-  { k: "You own it", v: "The files are yours. Change them later with us or without us." },
-];
+
 
 function Deliverables() {
   return (
     <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-6 sm:pb-24">
-      {/* The lesson further down is the proof; this is the pointer to it. */}
-      <a
-        href="#interactive"
-        className="group mb-8 flex w-full items-center gap-4 rounded-2xl border border-chalk-yellow/30 bg-chalk-yellow/[0.07] p-5 text-left transition-colors hover:border-chalk-yellow/60 hover:bg-chalk-yellow/10"
-      >
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-chalk-yellow/15 text-chalk-yellow transition-transform group-hover:translate-y-0.5">
-          <ArrowDown size={18} />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[15px] font-bold text-chalk">Want to feel the difference?</span>
-          <span className="mt-0.5 block text-sm text-chalk/55">
-            Further down, this page turns into a short lesson. Thirty seconds, and you&rsquo;ll learn something.
-          </span>
-        </span>
-      </a>
-
       <dl className="grid gap-px overflow-hidden rounded-2xl border border-chalk/10 bg-chalk/25 sm:grid-cols-2">
         {DELIVERABLES.map((d) => (
           <div key={d.k} className="bg-board-deep p-5 sm:p-6">
@@ -324,7 +294,7 @@ function Deliverables() {
           Talk about building one
         </a>
         <p className="text-xs text-chalk/60">
-          Simulations, branching scenarios, gamified practice — whatever the material actually needs.
+          Simulations, branching scenarios or practice: whatever the material needs.
         </p>
       </div>
     </div>
@@ -357,10 +327,10 @@ export function CourseBuild() {
   const header = (
     <div className="text-center">
       <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-chalk-yellow sm:text-[13px]">
-        How it gets built
+        {HEADING.kicker}
       </span>
       <h2 className="mx-auto mt-5 max-w-3xl text-balance font-playfair text-[clamp(1.6rem,5.4vw,3.25rem)] font-bold leading-[1.1] tracking-tight text-chalk">
-        Outsource the whole thing — your raw material in, a finished course out.
+        {HEADING.title}
       </h2>
     </div>
   );
@@ -382,7 +352,7 @@ export function CourseBuild() {
   return (
     <section id="course-building" className="relative scroll-mt-20 bg-board-deep text-chalk">
       <div ref={trackRef} className={`relative ${mobile ? "h-[340svh]" : "h-[420svh]"}`}>
-        {/* pt-16 keeps the eyebrow clear of the fixed navbar — without it the
+        {/* pt-16 keeps the eyebrow clear of the fixed navbar. Without it the
             centred block puts the section label right under the header bar. */}
         <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden bg-board-deep bg-chalk-lines pt-16">
           <div className="mx-auto w-full max-w-5xl px-5 sm:px-6">
