@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:copy": "node scripts/copy-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

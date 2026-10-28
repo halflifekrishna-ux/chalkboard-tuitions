@@ -3,6 +3,7 @@ import { EcosystemNavbar } from "@/components/marketing/EcosystemNavbar";
 import { StudioFooter } from "@/components/marketing/learning-studio/StudioFooter";
 import { Analytics } from "@/components/marketing/Analytics";
 import { STUDIO_NAME } from "@/lib/studio";
+import "./studio.css";
 
 /**
  * Learning Studio layout. Its own route group so the Studio gets its own

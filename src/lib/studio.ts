@@ -17,13 +17,28 @@ export type StudioPage = {
   name: string;
   /** Last real content change (YYYY-MM-DD). Feeds sitemap lastModified, so bump it only when the page changes. */
   updated: string;
+  /** Label in the Studio nav. Pages without one are reached from the hub and footer. */
+  nav?: string;
 };
 
+// Insertion order is nav order.
 export const STUDIO_PAGES = {
   hub: { path: STUDIO_PATH, name: "Learning Studio", updated: "2026-10-28" },
-  colleges: { path: `${STUDIO_PATH}/colleges`, name: "Colleges & universities", updated: "2026-10-28" },
-  trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28" },
+  colleges: { path: `${STUDIO_PATH}/colleges`, name: "Colleges & universities", updated: "2026-10-28", nav: "Colleges" },
+  trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28", nav: "Trainers" },
 } satisfies Record<string, StudioPage>;
+
+/** Pages planned but not built yet. Links to them fall back to the enquiry form until they exist. */
+export type PlannedPage = "aiTraining" | "customCourses" | "work" | "insights";
+
+/**
+ * Where a link to a Studio page should go. A page that isn't in the registry
+ * yet sends people to the enquiry form, so no phase ever ships a broken link.
+ */
+export function linkTo(key: keyof typeof STUDIO_PAGES | PlannedPage): { href: string; live: boolean } {
+  const page = (STUDIO_PAGES as Record<string, StudioPage>)[key];
+  return page ? { href: page.path, live: true } : { href: `${STUDIO_PATH}#enquire`, live: false };
+}
 
 export const studioUrl = (path: string) => `${SITE_URL}${path}`;
 

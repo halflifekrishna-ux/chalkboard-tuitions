@@ -29,7 +29,7 @@ export function Eyebrow({ label, tone = "light" }: { label: string; tone?: "ligh
 /** The other doors, said once at the bottom of the ask — for the reader who landed on the wrong page. */
 const ELSEWHERE = {
   companies: { href: "/learning-studio", label: "Training for companies" },
-  colleges: { href: "/learning-studio/colleges", label: "Programmes for colleges" },
+  colleges: { href: "/learning-studio/colleges", label: "Programs for colleges" },
   trainers: { href: "/learning-studio/trainers", label: "Train with us" },
   tuitions: { href: "/tuitions", label: "School tuitions" },
 } as const;

@@ -11,43 +11,17 @@ import { ChevronDown } from "lucide-react";
  * it's open or not (the old version unmounted closed answers, so four of five
  * marked-up answers weren't on the page), and it ships no client JavaScript.
  *
- * Each audience page passes its own list. These defaults carry the corporate
- * page's commercial long-tail — corporate training in
- * Bengaluru, sales and support enablement, custom course building — without
- * turning the page into a wall of prose.
+ * Each page passes its own list, written for that page's reader.
  */
 
 export type Faq = { q: string; a: string };
 
-export const CORPORATE_FAQS: Faq[] = [
-  {
-    q: "What kind of training does Chalkboard Learning Studio run?",
-    a: "Sales performance, customer support, team effectiveness, leadership and productivity programmes — for corporate teams, colleges and institutions in Bengaluru and remotely. Programmes are scoped to the gap you actually have, not picked off a catalogue.",
-  },
-  {
-    q: "Can you build a course out of our own material?",
-    a: "Yes. We take what your experts already know and shape it into something people can learn from — storyboarded end to end, then built as branching scenarios, simulations or gamified practice, depending on what the material needs.",
-  },
-  {
-    q: "Do you deliver in person in Bangalore, or online?",
-    a: "Both. In-person sessions across Bengaluru, live online delivery for distributed teams, and self-paced material when people need to learn on their own schedule.",
-  },
-  {
-    q: "Do you run AI and prompt-writing training for teams?",
-    a: "Yes. The lesson at the top of this page is a small piece of how we teach it: a short explanation, a choice, then writing a real prompt with feedback on what it is missing. Workshops apply the same method to the emails, reports and analysis your team actually produces.",
-  },
-  {
-    q: "How does an engagement start?",
-    a: "A short scoping conversation about the outcome you need and who it is for. We come back with a proposed shape, a timeline and what it costs before anything is built.",
-  },
-];
-
-export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
+export function StudioFaq({ faqs }: { faqs: Faq[] }) {
   return (
     <section
       id="faq"
       aria-labelledby="studio-faq-heading"
-      className="relative scroll-mt-20 overflow-hidden bg-cream-bg py-20 text-board sm:py-28"
+      className="relative scroll-mt-20 overflow-hidden bg-chalk py-24 text-ink sm:py-32"
     >
       <script
         type="application/ld+json"
@@ -65,13 +39,13 @@ export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
       />
 
       <div className="mx-auto max-w-3xl px-5 sm:px-6">
-        <span className="inline-flex items-center gap-2.5 text-[12px] font-bold uppercase tracking-[0.18em] text-gold-deep sm:text-[13px]">
+        <span className="inline-flex items-center gap-2.5 text-[12px] font-bold uppercase tracking-[0.18em] text-gold-ink sm:text-[13px]">
           <span className="h-px w-6 bg-gold/50" />
           Common questions
         </span>
         <h2
           id="studio-faq-heading"
-          className="mt-5 font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board"
+          className="sx-focus mt-5 font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight"
         >
           Before you ask.
         </h2>
@@ -80,14 +54,14 @@ export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
           {faqs.map((f, i) => (
             <details key={f.q} open={i === 0} className="group">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left [&::-webkit-details-marker]:hidden">
-                <h3 className="text-base font-semibold text-board sm:text-lg">{f.q}</h3>
+                <h3 className="text-base font-semibold sm:text-lg">{f.q}</h3>
                 <ChevronDown
                   size={18}
                   aria-hidden
                   className="mt-0.5 shrink-0 text-gold-deep transition-transform duration-300 group-open:rotate-180"
                 />
               </summary>
-              <p className="pb-6 pr-10 text-[15px] leading-relaxed text-gray-600">{f.a}</p>
+              <p className="pb-6 pr-10 text-base leading-relaxed text-ink/75">{f.a}</p>
             </details>
           ))}
         </div>
