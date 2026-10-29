@@ -87,3 +87,10 @@
     animation: sx-draw 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
   }
 }
+
+/* Playfair defaults to old-style figures, which make "80" or "0" in a
+   headline look small. Studio headings use lining figures. Scoped to the
+   Studio's <main> so other pages keep their typesetting. */
+.studio :is(h1, h2, h3, blockquote) {
+  font-variant-numeric: lining-nums;
+}

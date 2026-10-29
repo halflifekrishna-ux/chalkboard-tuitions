@@ -117,7 +117,7 @@ const collegeSchema = studioGraph(
 );
 
 export default function CollegesPage() {
-  const work = linkTo("work");
+  const work = linkTo("eastPoint");
 
   return (
     <>
