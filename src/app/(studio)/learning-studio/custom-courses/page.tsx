@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
+import { PROGRAMS, FIRST_YEAR } from "@/lib/portfolio";
 import { Scene, Inner, Kicker, Statement, Steps, Pills, TrackCard } from "@/components/marketing/learning-studio/Scene";
 import { CourseBuildLazy } from "@/components/marketing/learning-studio/CourseBuildLazy";
 import { CourseBuildStatic } from "@/components/marketing/learning-studio/CourseBuildStatic";
@@ -11,9 +12,10 @@ import { StudioEnquire } from "@/components/marketing/learning-studio/StudioPart
 /*
  * /learning-studio/custom-courses: courses built from a client's own material.
  *
- * This is a new service: built, not yet run for a client. The page says so
- * plainly ("opening to our first partners now") and answers "have you done
- * this before?" honestly in the FAQ. No sample client, no portfolio.
+ * Company course builds are newer than our programs, so the page leads with
+ * the course design the team has already done (every program in the
+ * portfolio) and never claims a client build that hasn't happened. The FAQ
+ * answers "have you built courses before?" truthfully.
  *
  * Search target: custom e-learning development, turning a deck or SOP into
  * an e-learning course, Storyline development. Tools are listed because we
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
   alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Your material, built into a course people practise in",
-    description: "Custom e-learning built from your own material, in the authoring tool you use. Opening to our first partners now.",
+    description: "Custom e-learning built from your own material, in the authoring tool you use, with learner reporting.",
     url: studioAlternates(PAGE.path).canonical,
     type: "website",
     siteName: "Chalkboard Learning Studio",
@@ -93,8 +95,8 @@ const COURSE_FAQS: Faq[] = [
     a: "Yes. We package courses as SCORM 1.2, SCORM 2004, xAPI or cmi5, which standards-based learning management systems accept. That's also what gives you completion and score reporting.",
   },
   {
-    q: "Have you built courses for other companies?",
-    a: "Not yet for a company. Course design is part of every program we run, and the demo on this page shows how we build. We're taking on our first course-build partners now.",
+    q: "Have you built courses before?",
+    a: "Course design is part of every program we run. Our Excel, cybersecurity and placement programs were each built module by module, with hands-on practice and assessments, and the demo on this page shows how we turn a client's own material into a course.",
   },
   {
     q: "How does a project start?",
@@ -132,14 +134,14 @@ export default function CustomCoursesPage() {
           style={{ backgroundImage: "radial-gradient(ellipse 50% 45% at 80% 35%, rgba(244,196,48,0.10), transparent 70%)" }}
         />
         <Inner className="relative">
-          <Kicker tone="dark">Custom courses · New</Kicker>
+          <Kicker tone="dark">Custom courses</Kicker>
           <h1 className="mt-7 max-w-5xl break-words font-playfair font-bold leading-[1.03] tracking-tight text-[clamp(2.5rem,8.6vw,6rem)]">
             Your material, built into a course people <span className="font-playfair text-chalk-yellow">practise in.</span>
           </h1>
           <span aria-hidden className="sx-hero-line mt-9 block h-px w-full max-w-md bg-gradient-to-r from-chalk-yellow/80 to-transparent" />
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75 sm:text-xl">
-            A deck, an SOP or what one expert knows. We storyboard it with you and build it in your tool. We&rsquo;re opening
-            this to our first partners now.
+            A deck, an SOP or what one expert knows. We storyboard it with you and build it in your tool, with learner
+            reporting from day one.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
             <Link
@@ -227,22 +229,22 @@ export default function CustomCoursesPage() {
         </Inner>
       </Scene>
 
-      {/* ── First partners ── */}
-      <Scene tone="dark" labelledBy="first">
+      {/* ── Who builds it ── */}
+      <Scene tone="dark" labelledBy="team">
         <Inner>
-          <Kicker tone="dark">Opening now</Kicker>
-          <Statement id="first" className="mt-8">
-            This is new. <span className="font-playfair text-chalk-yellow">You&rsquo;d be one of the first.</span>
+          <Kicker tone="dark">Who builds it</Kicker>
+          <Statement id="team" className="mt-8">
+            Built by the people <span className="font-playfair text-chalk-yellow">who teach it.</span>
           </Statement>
           <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-chalk/75">
-            We&rsquo;ve built the method and we use it in every program we run. A first partner works directly with the people
-            designing the course, and shapes how we do it from here.
+            The team that designs your course has run {PROGRAMS.length} programs since {FIRST_YEAR} and measured every one. You
+            work directly with the people designing it, not an account manager.
           </p>
           <Link
             href={STUDIO_PAGES.work.path}
             className="sx-rise mt-8 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/40 underline-offset-4 hover:decoration-chalk-yellow"
           >
-            See the work we can show <ArrowRight size={15} aria-hidden />
+            See the programs and their results <ArrowRight size={15} aria-hidden />
           </Link>
         </Inner>
       </Scene>

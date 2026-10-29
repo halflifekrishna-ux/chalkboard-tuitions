@@ -24,13 +24,13 @@ export type StudioPage = {
 // Insertion order is nav order.
 export const STUDIO_PAGES = {
   hub: { path: STUDIO_PATH, name: "Learning Studio", updated: "2026-10-28" },
+  companies: { path: `${STUDIO_PATH}/companies`, name: "Training for companies", updated: "2026-10-28", nav: "Companies" },
+  colleges: { path: `${STUDIO_PATH}/colleges`, name: "Programs for colleges", updated: "2026-10-28", nav: "Colleges" },
   aiTraining: { path: `${STUDIO_PATH}/ai-training`, name: "AI training", updated: "2026-10-28", nav: "AI training" },
-  colleges: { path: `${STUDIO_PATH}/colleges`, name: "Colleges & universities", updated: "2026-10-28", nav: "Colleges" },
   customCourses: { path: `${STUDIO_PATH}/custom-courses`, name: "Custom courses", updated: "2026-10-28", nav: "Custom courses" },
   work: { path: `${STUDIO_PATH}/work`, name: "Our work", updated: "2026-10-28", nav: "Our work" },
-  eastPoint: { path: `${STUDIO_PATH}/work/east-point-college`, name: "East Point College", updated: "2026-10-28" },
   insights: { path: `${STUDIO_PATH}/insights`, name: "Insights", updated: "2026-10-28", nav: "Insights" },
-  trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28", nav: "Trainers" },
+  trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28" },
 } satisfies Record<string, StudioPage>;
 
 /** Pages planned but not built yet. Links to them fall back to the enquiry form until they exist. */

@@ -8,6 +8,6 @@ export default function Image() {
   return studioOgImage({
     eyebrow: "Custom e-learning development",
     title: "Your material, built into a course people practise in.",
-    line: "Storyline, Rise, Captivate or your tool. SCORM and xAPI. Opening to our first partners now.",
+    line: "Storyline, Rise, Captivate or your tool. SCORM and xAPI, with learner reporting.",
   });
 }
