@@ -20,6 +20,16 @@ module.exports = {
         "chalk-dark": "#1a1a2e",
         "chalk-pink": "#e8a0b4",
         "chalk-blue": "#4a9eca",
+        // Learning Studio palette. Board (#1e3a2f), gold, chalk-yellow and
+        // chalk (cream) above are shared; these four are the Studio's own.
+        ink: "#16241D",
+        panel: "#2A5142",
+        sage: "#7A8A81",
+        // Sage at small sizes on cream is ~3.3:1. This one reads (5.4:1).
+        "sage-deep": "#56655D",
+        // Small gold text on cream. gold-deep measures 4.3:1 there; this is 5.6:1.
+        "gold-ink": "#715A10",
+        rust: "#B0431E",
       },
       fontFamily: {
         playfair: ["var(--font-playfair)", "serif"],

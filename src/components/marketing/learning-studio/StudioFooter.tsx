@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/contact";
-import { STUDIO_PAGES } from "@/lib/studio";
+import { STUDIO_PAGES, type StudioPage } from "@/lib/studio";
 
 /**
  * StudioFooter — the footer on Learning Studio pages, in place of the
@@ -12,10 +12,12 @@ import { STUDIO_PAGES } from "@/lib/studio";
  * Used in: (studio)/layout.tsx.
  */
 const columns = {
+  // Every Studio page, from the registry, so a new page is never an orphan.
   "Learning Studio": [
-    { label: "Training for companies", href: STUDIO_PAGES.hub.path },
-    { label: "Programmes for colleges", href: STUDIO_PAGES.colleges.path },
-    { label: "Train with us", href: STUDIO_PAGES.trainers.path },
+    ...Object.values(STUDIO_PAGES as Record<string, StudioPage>).map((p) => ({
+      label: p.path === STUDIO_PAGES.hub.path ? "Overview" : p.name,
+      href: p.path,
+    })),
     { label: "Start a conversation", href: `${STUDIO_PAGES.hub.path}#enquire` },
   ],
   Chalkboard: [

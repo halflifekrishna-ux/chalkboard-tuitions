@@ -32,20 +32,20 @@ export const metadata: Metadata = {
 };
 
 const LOOKING_FOR = [
-  { k: "Subject experts", v: "You know a field deeply — AI, sales, support, data, engineering, leadership — and can teach it." },
+  { k: "Subject experts", v: "You know a field deeply, whether that's AI, sales, support, data or engineering, and you can teach it." },
   { k: "Facilitators", v: "You can hold a room, run an exercise and make a quiet group talk." },
   { k: "Course designers", v: "You can take a messy brief and storyboard it into something people learn from." },
 ];
 
 const TRAINER_ASKS = [
   "The topics and skills you train",
-  "Formats you deliver — workshops, bootcamps, longer programmes",
-  "Who you've trained — teams, students, faculty",
+  "Formats you deliver: workshops, bootcamps, longer programs",
+  "Who you've trained: teams, students, faculty",
   "A short proposal or a sample session outline",
   "Your CV, and a LinkedIn or portfolio link",
 ];
 
-const TRAINER_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Trainer profile — [Your name]")}&body=${encodeURIComponent(
+const TRAINER_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Trainer profile: [Your name]")}&body=${encodeURIComponent(
   "Name:\nTopics / skills I train:\nFormats (workshop, bootcamp, programme):\nAudiences I've trained:\nLinkedIn / portfolio:\n\nShort proposal or session idea:\n\n(Please attach your CV.)"
 )}`;
 
@@ -94,10 +94,10 @@ export default function TrainersPage() {
           </div>
           <Reveal delay={120}>
             <p className="mt-12 max-w-2xl text-base leading-relaxed text-gray-600">
-              Everything we build is interactive — learners decide, practise and get feedback rather than watch.
+              Everything we build is interactive. Learners make decisions, practise and get feedback.
               See what that looks like on{" "}
               <Link href="/learning-studio" className="font-semibold text-board underline decoration-gold/50 underline-offset-4">
-                the companies page
+                the Studio overview
               </Link>
               .
             </p>
@@ -114,7 +114,7 @@ export default function TrainersPage() {
                 Send us your profile.
               </h2>
               <p className="mt-5 max-w-md text-base leading-relaxed text-gray-600">
-                One email with the five things listed here — that is all we need to start.
+                One email with the five things listed here. That's all we need to start.
               </p>
             </Reveal>
             <Reveal delay={100} className="min-w-0 lg:col-span-7">

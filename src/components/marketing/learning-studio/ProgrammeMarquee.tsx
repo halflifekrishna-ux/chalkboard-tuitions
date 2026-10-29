@@ -13,18 +13,20 @@ import { cn } from "@/lib/utils";
  *   labels should be comfortably readable, not a flashy ticker.
  * - Frozen by the sitewide prefers-reduced-motion guard in globals.css.
  *
- * Used in: (marketing)/learning-studio/page.tsx (section 02, corporate side).
+ * Used in: (studio)/learning-studio/page.tsx (the question section).
  */
 export function ProgrammeMarquee({
   items,
   direction = "left",
   durationClass,
   className,
+  tone = "dark",
 }: {
   items: string[];
   direction?: "left" | "right";
   durationClass: string;
   className?: string;
+  tone?: "dark" | "cream";
 }) {
   return (
     // data-allow-overflow: the row is meant to run past its clip box; tells
@@ -42,7 +44,10 @@ export function ProgrammeMarquee({
             {group.map((label, i) => (
               <span
                 key={`${gi}-${i}`}
-                className="rounded-[3px] border border-chalk/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-chalk/55 sm:text-xs"
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium sm:text-[15px]",
+                  tone === "dark" ? "border-chalk/20 text-chalk/75" : "border-board/20 text-ink/75"
+                )}
               >
                 {label}
               </span>

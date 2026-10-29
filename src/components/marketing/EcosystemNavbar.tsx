@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { STUDIO_PAGES } from "@/lib/studio";
+import { STUDIO_PAGES, type StudioPage } from "@/lib/studio";
 
 /**
  * EcosystemNavbar — route-based top navigation for all marketing pages.
@@ -24,11 +24,9 @@ const LINKS = [
 
 // On Studio pages the nav belongs to the Studio: its own pages, its own name,
 // no tuition links and no OS login competing with the enquiry.
-const STUDIO_LINKS = [
-  { label: "Companies", href: STUDIO_PAGES.hub.path, exact: true },
-  { label: "Colleges", href: STUDIO_PAGES.colleges.path },
-  { label: "Trainers", href: STUDIO_PAGES.trainers.path },
-];
+const STUDIO_LINKS = Object.values(STUDIO_PAGES as Record<string, StudioPage>)
+  .filter((p) => p.nav)
+  .map((p) => ({ label: p.nav as string, href: p.path }));
 
 export function EcosystemNavbar() {
   const [open, setOpen] = useState(false);

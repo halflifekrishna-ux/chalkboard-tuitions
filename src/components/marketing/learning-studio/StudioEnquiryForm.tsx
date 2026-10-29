@@ -64,7 +64,7 @@ export function StudioEnquiryForm({ defaultAudience }: { defaultAudience?: (type
     return (
       <div role="status" className="rounded-lg border border-chalk-yellow/30 bg-chalk/[0.03] p-8 sm:p-10">
         <CheckCircle2 size={28} className="text-chalk-yellow" aria-hidden />
-        <h3 className="mt-4 font-playfair text-2xl font-bold text-chalk">Thanks — we have your enquiry.</h3>
+        <h3 className="mt-4 font-playfair text-2xl font-bold text-chalk">Thanks. We have your enquiry.</h3>
         <p className="mt-3 text-base leading-relaxed text-chalk/60">
           We&rsquo;ll reply by email. You can also write to us at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="break-all font-semibold text-chalk underline decoration-chalk/30 underline-offset-4">
@@ -148,7 +148,7 @@ export function StudioEnquiryForm({ defaultAudience }: { defaultAudience?: (type
           required
           rows={5}
           maxLength={4000}
-          placeholder="E.g. Our managers need to use AI tools confidently in day-to-day work — about 40 people across two teams."
+          placeholder="E.g. Our managers need to use AI tools confidently in day-to-day work. About 40 people across two teams."
           className={`${field} resize-y`}
         />
       </div>
