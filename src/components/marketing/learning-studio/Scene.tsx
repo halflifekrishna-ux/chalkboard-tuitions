@@ -34,7 +34,7 @@ export function Scene({
       id={id}
       aria-labelledby={labelledBy}
       className={cn(
-        "relative scroll-mt-16 overflow-hidden py-24 sm:py-32",
+        "relative scroll-mt-16 overflow-clip py-24 sm:py-32",
         tone === "dark" ? "bg-board text-chalk" : "bg-chalk text-ink",
         className
       )}
@@ -89,6 +89,24 @@ export function Statement({
 }
 
 /** A giant number with its source underneath in small muted type. */
+/**
+ * A number that counts up from 0 as it scrolls into view (CSS only, see
+ * .sx-count in studio.css). The real value stays in the HTML for crawlers and
+ * screen readers; without scroll-timeline support or with reduced motion the
+ * final number simply shows.
+ */
+export function CountUp({ value }: { value: string }) {
+  const m = value.match(/^(\d+)(.*)$/);
+  if (!m) return <>{value}</>;
+  return (
+    <>
+      <span className="sr-only">{value}</span>
+      <span aria-hidden className="sx-count font-playfair tabular-nums" style={{ "--to": Number(m[1]) } as React.CSSProperties} />
+      <span aria-hidden className="font-playfair">{m[2]}</span>
+    </>
+  );
+}
+
 export function BigStat({ value, label, source, tone }: { value: string; label: string; source: string; tone: Tone }) {
   return (
     <figure className="sx-rise">
@@ -98,7 +116,7 @@ export function BigStat({ value, label, source, tone }: { value: string; label: 
           tone === "dark" ? "text-chalk-yellow" : "text-board"
         )}
       >
-        {value}
+        <CountUp value={value} />
       </p>
       <figcaption className="mt-4 max-w-md">
         <span className="block text-xl font-semibold sm:text-2xl">{label}</span>
