@@ -225,7 +225,8 @@ export default function CollegesPage() {
           </Statement>
           <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-ink/80">
             The same goes for a pitch or a block of code. A student who drafted it can tell when AI makes it worse, and
-            that&rsquo;s what an interviewer is testing for.
+            that&rsquo;s what an interviewer is testing for. It&rsquo;s how our programs at East Point College of
+            Management teach AI.
           </p>
           <Link
             href={STUDIO_PAGES.aiTraining.path}
