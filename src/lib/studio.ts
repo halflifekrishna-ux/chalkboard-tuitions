@@ -29,11 +29,12 @@ export const STUDIO_PAGES = {
   customCourses: { path: `${STUDIO_PATH}/custom-courses`, name: "Custom courses", updated: "2026-10-28", nav: "Custom courses" },
   work: { path: `${STUDIO_PATH}/work`, name: "Our work", updated: "2026-10-28", nav: "Our work" },
   eastPoint: { path: `${STUDIO_PATH}/work/east-point-college`, name: "East Point College", updated: "2026-10-28" },
+  insights: { path: `${STUDIO_PATH}/insights`, name: "Insights", updated: "2026-10-28", nav: "Insights" },
   trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28", nav: "Trainers" },
 } satisfies Record<string, StudioPage>;
 
 /** Pages planned but not built yet. Links to them fall back to the enquiry form until they exist. */
-export type PlannedPage = "insights";
+export type PlannedPage = never;
 
 /**
  * Where a link to a Studio page should go. A page that isn't in the registry

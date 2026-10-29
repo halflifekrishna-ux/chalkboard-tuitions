@@ -81,12 +81,13 @@ export function EcosystemNavbar() {
           )}
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-7">
+          {/* The Studio has more pages, so its full nav waits for lg; below that it's the menu. */}
+          <nav className={`hidden items-center gap-7 ${isStudio ? "lg:flex" : "md:flex"}`}>
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`text-sm font-medium tracking-wide transition-colors duration-150 ${
+                className={`whitespace-nowrap text-sm font-medium tracking-wide transition-colors duration-150 ${
                   isActive(l.href, l.exact) ? "text-chalk-yellow" : "text-chalk/60 hover:text-chalk"
                 }`}
               >
@@ -127,7 +128,7 @@ export function EcosystemNavbar() {
               </a>
             )}
 
-            <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg text-chalk hover:bg-chalk/10 transition-colors" aria-label="Toggle menu">
+            <button onClick={() => setOpen(!open)} className={`p-2 rounded-lg text-chalk hover:bg-chalk/10 transition-colors ${isStudio ? "lg:hidden" : "md:hidden"}`} aria-label="Toggle menu">
               {open ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
@@ -142,7 +143,7 @@ export function EcosystemNavbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-16 left-0 right-0 z-40 bg-board-deep/95 backdrop-blur-lg border-b border-chalk-yellow/10 shadow-2xl md:hidden"
+            className={`fixed top-16 left-0 right-0 z-40 bg-board-deep/95 backdrop-blur-lg border-b border-chalk-yellow/10 shadow-2xl ${isStudio ? "lg:hidden" : "md:hidden"}`}
           >
             <nav className="flex flex-col p-4 gap-1">
               {links.map((l) => (
