@@ -380,3 +380,33 @@
   0%, 64% { transform: none; box-shadow: none; }
   74%, 100% { transform: translateY(-12px); box-shadow: 0 26px 60px rgba(30, 58, 47, 0.2), 0 0 0 1px rgba(201, 162, 39, 0.9), 0 0 44px rgba(244, 196, 48, 0.28); }
 }
+
+/* ── Count-up numbers (CountUp in Scene.tsx) ──
+ * The counter shows --count. By default --count is the final value, so without
+ * @property or scroll timelines, or with reduced motion, the number is static.
+ */
+@property --count {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+.sx-count {
+  --count: var(--to);
+  counter-reset: count var(--count);
+}
+.sx-count::before {
+  content: counter(count);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sx-count {
+      animation: sx-count linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+  }
+}
+@keyframes sx-count {
+  from { --count: 0; }
+  to { --count: var(--to); }
+}

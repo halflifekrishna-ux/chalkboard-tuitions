@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { PROGRAMS, FIRST_YEAR, type Program } from "@/lib/portfolio";
-import { Pills } from "@/components/marketing/learning-studio/Scene";
+import { Pills, CountUp } from "@/components/marketing/learning-studio/Scene";
 
 /**
  * Portfolio pieces, all reading src/lib/portfolio.ts. A card per program:
@@ -33,7 +33,9 @@ export function ProgramCard({ p, tone }: { p: Program; tone: Tone }) {
       {p.result && (
         <div className={cn("mt-auto pt-6", "border-t", dark ? "border-chalk/15" : "border-board/15", "mt-6")}>
           <p className="flex items-baseline gap-3">
-            <span className={cn("font-playfair text-4xl font-black leading-none lining-nums", dark ? "text-chalk-yellow" : "text-board")}>{p.result.value}</span>
+            <span className={cn("font-playfair text-4xl font-black leading-none lining-nums", dark ? "text-chalk-yellow" : "text-board")}>
+              <CountUp value={p.result.value} />
+            </span>
             <span className="text-sm font-semibold">{p.result.label}</span>
           </p>
           <p className={cn("mt-2 text-xs leading-relaxed", dark ? "text-chalk/60" : "text-sage-deep")}>{p.result.basis}</p>
@@ -68,7 +70,7 @@ export function StatBand({ tone }: { tone: Tone }) {
       {PORTFOLIO_STATS.map((s) => (
         <li key={s.label} className={cn("sx-rise border-t pt-5", dark ? "border-chalk/20" : "border-board/20")}>
           <p className={cn("font-playfair text-[clamp(3rem,11vw,5rem)] font-black leading-none tracking-tight lining-nums", dark ? "text-chalk-yellow" : "text-board")}>
-            {s.value}
+            <CountUp value={s.value} />
           </p>
           <p className="mt-3 text-base font-semibold">{s.label}</p>
           <p className={cn("mt-1 text-xs", dark ? "text-chalk/60" : "text-sage-deep")}>{s.basis}</p>

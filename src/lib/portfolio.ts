@@ -4,7 +4,8 @@
  * figure from that program's own feedback survey or schedule. Nothing here is
  * rounded up, summed across cohorts or estimated.
  *
- * Sources (kept by the team): East Point executive summaries dated
+ * Sources (kept by the team): East Point executive summaries, issued under
+ * the SkillZen Consulting name by the same team, dated
  * 10 Oct 2023 (cybersecurity; Advanced Excel), 23 Jan 2025 (Advanced Excel)
  * and 30 Mar 2026 (Advanced Excel), plus the 2026 MOU programs.
  *
@@ -63,6 +64,7 @@ export const PROGRAMS: Program[] = [
     summary: "From worksheet basics to lookups, data cleansing and AI-assisted analysis, built around real case studies and a final assessment.",
     topics: ["XLOOKUP", "Logical functions", "Data cleansing", "AI-assisted analysis"],
     facts: ["15 sessions", "30 hours", "Mock test and final assessment"],
+    result: { value: "98%", label: "positive feedback", basis: "From the program's own feedback survey." },
   },
   {
     id: "advanced-excel-2025",
@@ -85,8 +87,8 @@ export const PROGRAMS: Program[] = [
     year: 2023,
     summary: "Networking fundamentals through reconnaissance, scanning, system hacking and social engineering, with live labs in Kali Linux.",
     topics: ["Networking", "Kali Linux", "Reconnaissance", "Social engineering"],
-    facts: ["7 modules", "Hands-on labs"],
-    result: { value: "100%", label: "said the sessions were engaging", basis: "All 22 students who answered the feedback survey. 95% were satisfied or very satisfied with the content." },
+    facts: ["64 students", "7 modules", "Hands-on labs"],
+    result: { value: "100%", label: "said the sessions were engaging", basis: "All 22 of the 64 students who answered the feedback survey. 95% were satisfied or very satisfied with the content." },
   },
   {
     id: "advanced-excel-2023",
@@ -98,6 +100,7 @@ export const PROGRAMS: Program[] = [
     summary: "The first Excel program at the college: sixteen modules from worksheets to lookups, logic and macros.",
     topics: ["Formulae", "Lookups", "Logical functions", "Macros"],
     facts: ["16 modules", "6 weeks"],
+    result: { value: "98%", label: "positive feedback", basis: "From the program's own feedback survey." },
   },
 ];
 
