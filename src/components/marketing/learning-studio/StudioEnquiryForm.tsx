@@ -14,15 +14,16 @@ import { CONTACT_EMAIL } from "@/lib/contact";
  * Used in: (marketing)/learning-studio/page.tsx and learning-studio/colleges (#enquire).
  */
 const AUDIENCES = ["Corporate team", "College / institution", "Individual professional"] as const;
+// What the Studio actually offers. Faculty development and "digital
+// transformation" were listed here once; neither is an offer.
 const AREAS = [
-  "AI & Generative AI",
-  "Leadership & Management",
-  "Data & Analytics",
-  "Communication & Collaboration",
-  "Digital Transformation",
-  "Technology & Engineering Skills",
-  "Placement & Career Readiness",
-  "Faculty Development",
+  "AI at work & generative AI",
+  "Sales",
+  "Customer support",
+  "Leadership & how a team runs",
+  "A course built from our material",
+  "Placement readiness",
+  "Industry tracks (SQL, Python, Power BI, FinTech)",
   "Not sure yet",
 ];
 const SIZES = ["Under 20 people", "20–50", "50–200", "200+", "Not sure yet"];

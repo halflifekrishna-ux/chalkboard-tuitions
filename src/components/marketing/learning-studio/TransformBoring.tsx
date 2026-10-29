@@ -177,15 +177,15 @@ export function TransformBoring({
               {/* Deliberately dull: a slide nobody finished. */}
               <div className="rounded-xl bg-[#f4f2ed] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:p-8">
                 <div className="flex items-baseline justify-between gap-4 border-b border-black/10 pb-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">
                     Module 1 · Communication Skills
                   </span>
-                  <span className="text-[11px] text-gray-400">Slide 14 / 62</span>
+                  <span className="text-[11px] text-gray-600">Slide 14 / 62</span>
                 </div>
                 <p className="mt-5 font-playfair text-[15px] leading-[1.75] text-gray-700 sm:text-base">{BORING}</p>
                 <div className="mt-7 flex items-center justify-between gap-4 border-t border-black/10 pt-4">
-                  <span className="text-[11px] text-gray-400">0% complete · 45 min remaining</span>
-                  <span className="rounded bg-gray-200 px-3 py-1.5 text-[11px] font-semibold text-gray-400">
+                  <span className="text-[11px] text-gray-600">0% complete · 45 min remaining</span>
+                  <span className="rounded bg-gray-200 px-3 py-1.5 text-[11px] font-semibold text-gray-700">
                     Next ›
                   </span>
                 </div>

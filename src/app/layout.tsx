@@ -19,11 +19,14 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+// Only the Tuitions page uses this face. Not preloaded, so other pages stop
+// paying for it on first paint; Tuitions still loads it when it's used.
 const specialElite = Special_Elite({
   subsets: ["latin"],
   variable: "--font-special-elite",
   weight: "400",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

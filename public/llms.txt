@@ -1,14 +1,16 @@
 # Chalkboard
 
-> Chalkboard is a learning company in Bengaluru, India. It runs small-batch school tuitions, interactive corporate training and placement programmes for colleges. It grew out of Home Tuitions Bangalore, which has taught since 2018.
+> Chalkboard is a learning company in Bengaluru, India. It runs small-batch school tuitions, interactive corporate training and placement programmes for colleges.
 
 ## Chalkboard Tuitions
+Grew out of Home Tuitions Bangalore, which has taught since 2018.
 - [Tuitions](https://www.chalkboardlearning.in/tuitions): Daily small-batch tuitions for Grades 1–10 at 2nd Floor, Pooja Arcade, 50/2, Kammanahalli Main Rd, St Thomas Town, Bengaluru 560084 — near Kalyan Nagar, HRBR Layout and Banaswadi. Phone/WhatsApp +91 74114 46381. Maximum 8 students per batch. CBSE, ICSE and Karnataka State Board. Weekday batches, 4 PM to 8 PM. Free demo class.
 - [Contact](https://www.chalkboardlearning.in/contact): Book a free demo class.
 
 ## Chalkboard Learning Studio
-- [Corporate training](https://www.chalkboardlearning.in/learning-studio): Interactive training for teams in Bengaluru and online: AI at work, sales, customer support, team effectiveness and leadership. Also builds custom courses from a company's own material.
-- [Colleges and universities](https://www.chalkboardlearning.in/learning-studio/colleges): Placement readiness, industry technology tracks and faculty development.
+Custom training built around what people need to be able to do. Based in Bengaluru, India; delivers on site and online.
+- [Training for companies](https://www.chalkboardlearning.in/learning-studio): AI at work (learners draft first, then use AI to refine), sales, customer support and leadership. Also builds custom courses from a company's own material.
+- [Colleges and universities](https://www.chalkboardlearning.in/learning-studio/colleges): Placement readiness and industry tracks. Running now at East Point College of Management, Bengaluru: a BCA Placement Accelerator (SQL, Python, Git/GitHub, Excel, Power BI) and a B.Com Industry Accelerator (FinTech track and a general branch). 80 students across both cohorts, no session missed.
 - [Trainers](https://www.chalkboardlearning.in/learning-studio/trainers): Freelance trainers, subject experts and facilitators can send their profile.
 
 ## About

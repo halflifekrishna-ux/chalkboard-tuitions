@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 /**
@@ -10,6 +6,10 @@ import { ChevronDown } from "lucide-react";
  * The accordion and the FAQPage JSON-LD are rendered from this one array on
  * purpose: Google requires the marked-up answers to be visible on the page, and
  * two hand-maintained copies drift apart the first time someone edits one.
+ *
+ * Native <details>, not a JS accordion: every answer is in the HTML whether
+ * it's open or not (the old version unmounted closed answers, so four of five
+ * marked-up answers weren't on the page), and it ships no client JavaScript.
  *
  * Each audience page passes its own list. These defaults carry the corporate
  * page's commercial long-tail — corporate training in
@@ -43,8 +43,6 @@ export const CORPORATE_FAQS: Faq[] = [
 ];
 
 export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
-  const [open, setOpen] = useState<number | null>(0);
-
   return (
     <section
       id="faq"
@@ -78,41 +76,21 @@ export function StudioFaq({ faqs = CORPORATE_FAQS }: { faqs?: Faq[] }) {
           Before you ask.
         </h2>
 
-        <dl className="mt-10 divide-y divide-board/10 border-t border-board/10">
-          {faqs.map((f, i) => {
-            const isOpen = open === i;
-            return (
-              <div key={f.q}>
-                <dt>
-                  <button
-                    onClick={() => setOpen(isOpen ? null : i)}
-                    aria-expanded={isOpen}
-                    className="flex w-full items-start justify-between gap-6 py-5 text-left"
-                  >
-                    <span className="text-base font-semibold text-board sm:text-lg">{f.q}</span>
-                    <ChevronDown
-                      size={18}
-                      className={`mt-0.5 shrink-0 text-gold transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                </dt>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.dd
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                      className="overflow-hidden"
-                    >
-                      <p className="pb-6 pr-10 text-[15px] leading-relaxed text-gray-600">{f.a}</p>
-                    </motion.dd>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </dl>
+        <div className="mt-10 divide-y divide-board/10 border-t border-board/10">
+          {faqs.map((f, i) => (
+            <details key={f.q} open={i === 0} className="group">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left [&::-webkit-details-marker]:hidden">
+                <h3 className="text-base font-semibold text-board sm:text-lg">{f.q}</h3>
+                <ChevronDown
+                  size={18}
+                  aria-hidden
+                  className="mt-0.5 shrink-0 text-gold-deep transition-transform duration-300 group-open:rotate-180"
+                />
+              </summary>
+              <p className="pb-6 pr-10 text-[15px] leading-relaxed text-gray-600">{f.a}</p>
+            </details>
+          ))}
+        </div>
       </div>
     </section>
   );

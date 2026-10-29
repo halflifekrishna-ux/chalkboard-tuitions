@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { SITE_URL, OG_IMAGES } from "@/lib/site";
+import { STUDIO_PAGES, studioAlternates, studioGraph, breadcrumbs } from "@/lib/studio";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Eyebrow } from "@/components/marketing/learning-studio/StudioParts";
@@ -15,19 +15,18 @@ import { Eyebrow } from "@/components/marketing/learning-studio/StudioParts";
  * arrive in a consistent shape.
  */
 
-const PAGE_URL = `${SITE_URL}/learning-studio/trainers`;
+const PAGE = STUDIO_PAGES.trainers;
 
 export const metadata: Metadata = {
   title: "Freelance Trainers & Facilitators, Bengaluru",
   description:
     "Chalkboard Learning Studio is building a network of trainers, subject experts and facilitators in Bengaluru. Tell us what you teach and who you have trained.",
-  alternates: { canonical: PAGE_URL },
+  alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Train with Chalkboard Learning Studio",
     description: "A network of trainers, subject experts and facilitators. Tell us what you teach.",
-    url: PAGE_URL,
+    url: studioAlternates(PAGE.path).canonical,
     type: "website",
-    images: OG_IMAGES,
     siteName: "Chalkboard Learning Studio",
   },
 };
@@ -50,20 +49,12 @@ const TRAINER_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Tr
   "Name:\nTopics / skills I train:\nFormats (workshop, bootcamp, programme):\nAudiences I've trained:\nLinkedIn / portfolio:\n\nShort proposal or session idea:\n\n(Please attach your CV.)"
 )}`;
 
-const breadcrumbSchema = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE_URL },
-    { "@type": "ListItem", position: 2, name: "Learning Studio", item: `${SITE_URL}/learning-studio` },
-    { "@type": "ListItem", position: 3, name: "Trainers", item: PAGE_URL },
-  ],
-};
+const trainersSchema = studioGraph(breadcrumbs([STUDIO_PAGES.hub, PAGE]));
 
 export default function TrainersPage() {
   return (
     <div className="bg-cream-bg">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(trainersSchema) }} />
       <noscript>
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
       </noscript>
@@ -91,16 +82,16 @@ export default function TrainersPage() {
           <Reveal>
             <Eyebrow label="Who We Work With" />
           </Reveal>
-          <dl className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {LOOKING_FOR.map((l, i) => (
               <Reveal key={l.k} delay={i * 80} className="min-w-0">
                 <div className="border-t-2 border-gold/60 pt-4">
-                  <dt className="font-playfair text-xl font-bold text-board">{l.k}</dt>
-                  <dd className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">{l.v}</dd>
+                  <h2 className="font-playfair text-xl font-bold text-board">{l.k}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">{l.v}</p>
                 </div>
               </Reveal>
             ))}
-          </dl>
+          </div>
           <Reveal delay={120}>
             <p className="mt-12 max-w-2xl text-base leading-relaxed text-gray-600">
               Everything we build is interactive — learners decide, practise and get feedback rather than watch.
@@ -127,7 +118,7 @@ export default function TrainersPage() {
               </p>
             </Reveal>
             <Reveal delay={100} className="min-w-0 lg:col-span-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">Email us with</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Email us with</p>
               <ul className="mt-4 divide-y divide-board/10 border-y border-board/10">
                 {TRAINER_ASKS.map((t) => (
                   <li key={t} className="py-3.5 text-base text-board">
