@@ -94,3 +94,289 @@
 .studio :is(h1, h2, h3, blockquote) {
   font-variant-numeric: lining-nums;
 }
+
+/* ══ AI training page ═════════════════════════════════════════════════════
+   Pieces live in components/marketing/learning-studio/AiMotion.tsx. Static
+   states first (what reduced motion and older browsers see), then motion. */
+
+/* Words of a WordReveal heading keep the heading's face (globals.css sets
+   every <span> to the sans). */
+.ai-words span {
+  font: inherit;
+}
+
+/* The rule, static: line already struck, refined line already underlined. */
+.ai-strike {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(176, 67, 30, 0.6);
+}
+.ai-sweep-text {
+  background-image: linear-gradient(#c9a227, #c9a227);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 2px;
+  padding-bottom: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Neural field, static. */
+.ai-link {
+  stroke: rgba(244, 196, 48, 0.22);
+  stroke-width: 1;
+  stroke-dasharray: 6 10;
+}
+.ai-node {
+  fill: rgba(244, 196, 48, 0.55);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Glowing frame around the live lesson. */
+@property --ai-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 120deg;
+}
+.ai-frame {
+  border-radius: 1.05rem;
+  padding: 1px;
+  background: conic-gradient(from var(--ai-a), rgba(244, 196, 48, 0.15) 0deg, rgba(244, 196, 48, 0.95) 50deg, rgba(244, 196, 48, 0.15) 110deg, rgba(244, 196, 48, 0.15) 360deg);
+  box-shadow: 0 0 60px rgba(244, 196, 48, 0.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ── Time-based loops (hero, frame) ── */
+  .ai-demo-draft,
+  .ai-demo-refined {
+    -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
+    mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
+    -webkit-mask-size: 260% 100%;
+    mask-size: 260% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .ai-demo-draft {
+    animation: ai-type 10s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  .ai-demo-refined {
+    animation: ai-refine 10s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  .ai-demo-caret {
+    animation: ai-caret 0.9s steps(1) infinite;
+  }
+  .ai-demo-scan {
+    animation: ai-scan 10s ease-in-out infinite;
+  }
+  .ai-demo-kept {
+    animation: ai-kept 10s ease-out infinite;
+  }
+  .ai-demo-status {
+    animation: ai-status 10s ease-in-out infinite;
+  }
+  .ai-demo-glow {
+    background: radial-gradient(closest-side, rgba(244, 196, 48, 0.16), transparent);
+    animation: ai-breathe 6s ease-in-out infinite;
+  }
+  .ai-link {
+    animation: ai-flow 6s linear infinite;
+  }
+  .ai-node {
+    animation: ai-pulse 3.6s ease-in-out infinite;
+  }
+  .ai-frame {
+    animation: ai-spin 6s linear infinite;
+  }
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .ai-shine {
+      background: linear-gradient(110deg, #f4c430 35%, #fff3c4 50%, #f4c430 65%);
+      background-size: 260% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: ai-shine 5.5s ease-in-out infinite;
+    }
+  }
+
+  /* ── Scroll-driven ── */
+  @supports (animation-timeline: view()) {
+    .ai-words {
+      view-timeline-name: --words;
+    }
+    .ai-words span {
+      animation: ai-word linear both;
+      animation-timeline: --words;
+      animation-range: cover calc(18% + var(--i) / var(--n) * 30%) cover calc(24% + var(--i) / var(--n) * 30%);
+    }
+
+    .ai-tilt {
+      transform-origin: center bottom;
+      animation: ai-tilt linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 32%;
+    }
+
+    /* The rule: a tall track with a pinned stage inside it. */
+    .ai-rule-track {
+      view-timeline-name: --rule;
+      height: 320svh;
+    }
+    .ai-rule-stage {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 4rem;
+    }
+    .ai-rule-progress {
+      display: flex;
+    }
+    .ai-rule-bar {
+      animation: ai-bar linear both;
+      animation-timeline: --rule;
+      animation-range: contain 0% contain 100%;
+    }
+    .ai-strike,
+    .ai-sweep-text,
+    .ai-card {
+      animation-timeline: --rule;
+      animation-range: contain 0% contain 100%;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+    }
+    .ai-strike {
+      animation-name: ai-strike;
+    }
+    .ai-sweep-text {
+      animation-name: ai-sweep;
+    }
+
+    /* Phone and tablet: one card at a time, each replacing the last. */
+    @media (max-width: 1023px) {
+      .ai-rule-cards > li {
+        grid-area: 1 / 1;
+        align-self: center;
+      }
+      .ai-card-1 {
+        animation-name: ai-m1;
+      }
+      .ai-card-2 {
+        animation-name: ai-m2;
+      }
+      .ai-card-3 {
+        animation-name: ai-m3;
+      }
+    }
+    /* Wide screens: all three side by side, lighting up in turn. */
+    @media (min-width: 1024px) {
+      .ai-rule-track {
+        height: 260svh;
+      }
+      .ai-card-1 {
+        animation-name: ai-d1;
+      }
+      .ai-card-2 {
+        animation-name: ai-d2;
+      }
+      .ai-card-3 {
+        animation-name: ai-d3;
+      }
+    }
+  }
+}
+
+@keyframes ai-type {
+  0%, 4% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 1; }
+  24%, 90% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 1; }
+  97%, 100% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 0; }
+}
+@keyframes ai-refine {
+  0%, 34% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 1; }
+  54%, 90% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 1; }
+  97%, 100% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 0; }
+}
+@keyframes ai-caret {
+  50% { opacity: 0; }
+}
+@keyframes ai-scan {
+  0%, 30% { opacity: 0; transform: translateY(0); }
+  34% { opacity: 1; }
+  52% { opacity: 1; transform: translateY(96px); }
+  56%, 100% { opacity: 0; transform: translateY(96px); }
+}
+@keyframes ai-kept {
+  0%, 54% { opacity: 0; transform: translateY(8px); }
+  62%, 90% { opacity: 1; transform: none; }
+  97%, 100% { opacity: 0; }
+}
+@keyframes ai-status {
+  0%, 28%, 58%, 100% { box-shadow: 0 0 0 0 rgba(244, 196, 48, 0); background: transparent; }
+  40% { box-shadow: 0 0 18px 2px rgba(244, 196, 48, 0.35); background: rgba(244, 196, 48, 0.12); }
+}
+@keyframes ai-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+@keyframes ai-flow {
+  to { stroke-dashoffset: -64; }
+}
+@keyframes ai-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.6); }
+}
+@keyframes ai-spin {
+  to { --ai-a: 480deg; }
+}
+@keyframes ai-shine {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+@keyframes ai-word {
+  from { color: rgba(245, 240, 232, 0.45); }
+  to { color: #f5f0e8; }
+}
+@keyframes ai-tilt {
+  from { transform: perspective(900px) rotateX(16deg) translateY(36px); }
+}
+@keyframes ai-bar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes ai-strike {
+  0%, 6% { text-decoration-color: transparent; }
+  24%, 100% { text-decoration-color: rgba(176, 67, 30, 0.85); }
+}
+@keyframes ai-sweep {
+  0%, 72% { background-size: 0% 2px; }
+  92%, 100% { background-size: 100% 2px; }
+}
+@keyframes ai-m1 {
+  0%, 28% { opacity: 1; transform: none; }
+  36%, 100% { opacity: 0; transform: translateY(-48px) scale(0.95); }
+}
+@keyframes ai-m2 {
+  0%, 30% { opacity: 0; transform: translateY(64px) scale(0.97); }
+  38%, 60% { opacity: 1; transform: none; }
+  68%, 100% { opacity: 0; transform: translateY(-48px) scale(0.95); }
+}
+@keyframes ai-m3 {
+  0%, 62% { opacity: 0; transform: translateY(64px) scale(0.97); }
+  70%, 100% { opacity: 1; transform: none; }
+}
+@keyframes ai-d1 {
+  0%, 4% { transform: none; box-shadow: none; }
+  12%, 26% { transform: translateY(-8px); box-shadow: 0 18px 40px rgba(176, 67, 30, 0.16); }
+  34%, 100% { transform: none; box-shadow: none; }
+}
+@keyframes ai-d2 {
+  0%, 34% { transform: none; box-shadow: none; }
+  42%, 60% { transform: translateY(-10px); box-shadow: 0 22px 50px rgba(30, 58, 47, 0.16), 0 0 0 1px rgba(201, 162, 39, 0.6); }
+  68%, 100% { transform: none; box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.25); }
+}
+@keyframes ai-d3 {
+  0%, 64% { transform: none; box-shadow: none; }
+  74%, 100% { transform: translateY(-12px); box-shadow: 0 26px 60px rgba(30, 58, 47, 0.2), 0 0 0 1px rgba(201, 162, 39, 0.9), 0 0 44px rgba(244, 196, 48, 0.28); }
+}

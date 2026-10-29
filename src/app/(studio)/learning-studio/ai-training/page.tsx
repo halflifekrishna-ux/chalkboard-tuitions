@@ -4,6 +4,7 @@ import { ArrowRight, ArrowDown } from "lucide-react";
 import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
 import { Scene, Inner, Kicker, Statement, Pills, Steps } from "@/components/marketing/learning-studio/Scene";
 import { PromptLessonLazy } from "@/components/marketing/learning-studio/PromptLessonLazy";
+import { HeroDemo, NeuralField, WordReveal, RuleSequence, type RuleCard } from "@/components/marketing/learning-studio/AiMotion";
 import { StudioFaq, type Faq } from "@/components/marketing/learning-studio/StudioFaq";
 import { StudioEnquire } from "@/components/marketing/learning-studio/StudioParts";
 
@@ -18,6 +19,11 @@ import { StudioEnquire } from "@/components/marketing/learning-studio/StudioPart
  *
  * Search target: AI training for (non-technical) teams, generative AI
  * workshops for employees. The rule is the angle nobody else in that SERP has.
+ *
+ * This is the Studio's showcase page, so it carries the richest motion: the
+ * hero's draft-then-refine loop, the pinned rule sequence, words that light
+ * up as you read, a glowing frame around the live lesson. All of it is CSS
+ * (see AiMotion.tsx and studio.css), built for a phone first.
  */
 
 const PAGE = STUDIO_PAGES.aiTraining;
@@ -37,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 /* The exercise, shown three ways. Illustrative copy, not a client's work. */
-const DRAFTS = [
+const DRAFTS: [RuleCard, RuleCard, RuleCard] = [
   {
     tag: "AI first",
     text: "Results-driven professional with strong analytical skills and a passion for leveraging data to drive impact.",
@@ -48,13 +54,11 @@ const DRAFTS = [
     tag: "Their own draft",
     text: "Made a Power BI dashboard for the college canteen that showed which items sold out by noon.",
     note: "Rough, and true to them.",
-    bad: false,
   },
   {
     tag: "Then refined with AI",
     text: "Built a Power BI dashboard of canteen sales by hour, showing which items sold out before noon and when to restock.",
     note: "Still theirs. Now it reads well.",
-    bad: false,
   },
 ];
 
@@ -144,10 +148,12 @@ export default function AiTrainingPage() {
           className="pointer-events-none absolute inset-0"
           style={{ backgroundImage: "radial-gradient(ellipse 50% 45% at 80% 35%, rgba(244,196,48,0.10), transparent 70%)" }}
         />
-        <Inner className="relative">
+        <NeuralField className="absolute -right-24 top-16 w-[620px] max-w-none opacity-60 sm:-right-10 lg:right-0 lg:top-1/2 lg:w-[700px] lg:-translate-y-1/2 lg:opacity-70" />
+        <Inner className="relative grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-12">
+          <div className="min-w-0 lg:col-span-7">
           <Kicker tone="dark">AI training for teams</Kicker>
-          <h1 className="mt-7 max-w-5xl break-words font-playfair font-bold leading-[1.03] tracking-tight text-[clamp(2.6rem,9vw,6.25rem)]">
-            AI training where your team writes the <span className="font-playfair text-chalk-yellow">first draft.</span>
+          <h1 className="mt-7 max-w-5xl break-words font-playfair font-bold leading-[1.03] tracking-tight text-[clamp(2.5rem,8.6vw,5.25rem)]">
+            AI training where your team writes the <span className="ai-shine font-playfair text-chalk-yellow">first draft.</span>
           </h1>
           <span aria-hidden className="sx-hero-line mt-9 block h-px w-full max-w-md bg-gradient-to-r from-chalk-yellow/80 to-transparent" />
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75 sm:text-xl">
@@ -165,50 +171,36 @@ export default function AiTrainingPage() {
               Try a 60-second lesson <ArrowDown size={15} aria-hidden />
             </Link>
           </div>
+          </div>
+          <HeroDemo className="min-w-0 lg:col-span-5" />
         </Inner>
       </section>
 
-      {/* ── The rule, shown ── */}
-      <Scene tone="cream" labelledBy="rule">
+      {/* ── The rule, played as you scroll ──
+          A plain section (no overflow clipping) so the stage can pin. */}
+      <section aria-labelledby="rule" className="relative bg-chalk pt-24 text-ink sm:pt-32">
         <Inner>
           <Kicker tone="cream">The rule</Kicker>
           <Statement id="rule" className="mt-8">
             The draft comes <span className="font-playfair text-gold-deep">before</span> the AI.
           </Statement>
-          <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-ink/80">
-            Here&rsquo;s the exercise with one line from a student&rsquo;s resume. Same skill, three ways to get there.
-          </p>
-
-          <ol className="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {DRAFTS.map((d, i) => (
-              <li
-                key={d.tag}
-                className={
-                  "sx-rise flex flex-col rounded-2xl border p-6 sm:p-7 " +
-                  (d.bad ? "border-rust/30 bg-rust/[0.05]" : "border-board/15 bg-white/70")
-                }
-              >
-                <span className={"text-[11px] font-semibold uppercase tracking-[0.2em] " + (d.bad ? "text-rust" : "text-gold-ink")}>
-                  {String(i + 1).padStart(2, "0")} · {d.tag}
-                </span>
-                <p className={"mt-4 font-playfair text-xl leading-snug sm:text-[1.4rem] " + (d.bad ? "text-ink/70 line-through decoration-rust/40" : "text-ink")}>
-                  &ldquo;{d.text}&rdquo;
-                </p>
-                <p className={"mt-auto pt-6 text-sm font-semibold " + (d.bad ? "text-rust" : "text-board")}>{d.note}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-6 text-sm text-sage-deep">An example of the exercise. Teams do it with their own emails, reports and code.</p>
+          <RuleSequence
+            cards={DRAFTS}
+            intro="Here's the exercise with one line from a student's resume. Same skill, three ways to get there."
+          />
+          <p className="pb-24 pt-6 text-sm text-sage-deep sm:pb-32">An example of the exercise. Teams do it with their own emails, reports and code.</p>
         </Inner>
-      </Scene>
+      </section>
 
       {/* ── Why it works ── */}
       <Scene tone="dark" labelledBy="why">
         <Inner>
           <Kicker tone="dark">Why draft first</Kicker>
-          <h2 id="why" className="sx-focus mt-8 max-w-4xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
-            The thinking stays with the person. The speed comes from the tool.
-          </h2>
+          <WordReveal
+            id="why"
+            text="The thinking stays with the person. The speed comes from the tool."
+            className="mt-8 max-w-4xl font-playfair text-[clamp(2.4rem,7vw,4.75rem)] font-bold leading-[1.06] tracking-tight"
+          />
           <div className="mt-14 grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
             <div className="sx-rise border-t border-chalk-yellow/40 pt-6">
               <h3 className="font-playfair text-2xl font-bold">They can tell when AI is wrong</h3>
@@ -258,7 +250,9 @@ export default function AiTrainingPage() {
               workshop works the same way.
             </p>
           </div>
-          <PromptLessonLazy className="min-w-0 lg:col-span-7" />
+          <div className="ai-frame min-w-0 lg:col-span-7">
+            <PromptLessonLazy />
+          </div>
         </Inner>
       </Scene>
 
@@ -271,7 +265,7 @@ export default function AiTrainingPage() {
           </h2>
           <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-2">
             {FORMATS.map((f) => (
-              <div key={f.title} className="sx-rise rounded-2xl border border-board/15 bg-white/70 p-7 sm:p-9">
+              <div key={f.title} className="ai-tilt rounded-2xl border border-board/15 bg-white/70 p-7 sm:p-9">
                 <h3 className="font-playfair text-2xl font-bold sm:text-3xl">{f.title}</h3>
                 <p className="mt-4 text-lg leading-relaxed text-ink/80">{f.body}</p>
               </div>

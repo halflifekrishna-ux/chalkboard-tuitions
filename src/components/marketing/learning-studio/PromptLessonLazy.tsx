@@ -17,7 +17,7 @@ const PromptLessonCard = dynamic(() => import("./PromptLesson").then((m) => m.Pr
 });
 
 function Placeholder() {
-  return <div aria-hidden className="min-h-[380px] rounded-2xl border border-chalk/15 bg-white/[0.03]" />;
+  return <div aria-hidden className="min-h-[380px] rounded-2xl bg-board-deep" />;
 }
 
 export function PromptLessonLazy({ className }: { className?: string }) {
@@ -42,7 +42,7 @@ export function PromptLessonLazy({ className }: { className?: string }) {
 
   return (
     <div ref={ref} className={className}>
-      {near ? <PromptLessonCard className="ring-1 ring-chalk-yellow/20" /> : <Placeholder />}
+      {near ? <PromptLessonCard /> : <Placeholder />}
     </div>
   );
 }
