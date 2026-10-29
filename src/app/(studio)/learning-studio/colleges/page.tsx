@@ -1,37 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDown } from "lucide-react";
-import { Container } from "@/components/ui/container";
-import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
-import { Reveal } from "@/components/marketing/Reveal";
+import { ArrowRight, ArrowDown } from "lucide-react";
+import { STUDIO_PAGES, linkTo, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
+import { Scene, Inner, Kicker, Statement, BigStat, Steps, TrackCard } from "@/components/marketing/learning-studio/Scene";
 import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
 import { StudioFaq, type Faq } from "@/components/marketing/learning-studio/StudioFaq";
-import { Eyebrow, StudioEnquire } from "@/components/marketing/learning-studio/StudioParts";
+import { StudioEnquire } from "@/components/marketing/learning-studio/StudioParts";
 
 /*
- * /learning-studio/colleges — the colleges & universities page. Same studio,
- * different reader (a placement officer, a dean, a training & placement cell),
- * so a different story:
+ * /learning-studio/colleges: for a placement officer, a dean or a training
+ * and placement cell.
  *
- *   1. Hook   — the gap every placement cell knows: students who know the
- *               syllabus and freeze in the interview.
- *   2. Show   — TransformBoring: a textbook communication slide rebuilt as
- *               something a student has to do. That is the programme.
- *   3. Offer  — placement readiness and industry tracks.
- *   4. Act    — college questions, then the enquiry form preset to colleges.
+ * Search target: "campus recruitment training for colleges" and "training
+ * partner for colleges". The audit found "placement training … Bangalore" is a
+ * students' search (institutes selling to individuals), so the page speaks to
+ * the college buying for its students.
+ *
+ * Proof is real and specific: two MOU programs at East Point College of
+ * Management, 80 students, no session missed. Only tracks that actually run
+ * are listed. Faculty development is not an offer, so it isn't here.
  */
 
 const PAGE = STUDIO_PAGES.colleges;
 
 export const metadata: Metadata = {
-  title: { absolute: "Placement Training for Colleges in Bengaluru | Chalkboard" },
+  title: { absolute: "Campus Recruitment Training for Colleges | Chalkboard Learning Studio" },
   description:
-    "Placement readiness and industry tracks (SQL, Python, Power BI, FinTech) for colleges and universities. Live at East Point College, Bengaluru: 80 students, no session missed.",
+    "Placement readiness and industry tracks (SQL, Python, Power BI, FinTech) run as practice. Live at East Point College, Bengaluru: 80 students, no session missed.",
   alternates: studioAlternates(PAGE.path),
   openGraph: {
-    title: "Graduates who are ready on day one",
-    description:
-      "Placement readiness and industry tracks for colleges and universities — built as practice, not lectures.",
+    title: "Placement and industry training for colleges, run as practice",
+    description: "Two programs live at East Point College of Management, Bengaluru. 80 students, no session missed, both continuing next semester.",
     url: studioAlternates(PAGE.path).canonical,
     type: "website",
     siteName: "Chalkboard Learning Studio",
@@ -40,154 +39,236 @@ export const metadata: Metadata = {
 
 const STRANDS = [
   {
-    n: "01",
     id: "placement-readiness",
-    title: "Placement readiness",
-    service: "Campus placement readiness training",
-    body: "Interviews, group discussions and workplace communication — practised in scenarios with feedback, not explained on slides.",
+    service: "Campus recruitment training",
+    body: "Preparation for placement drives, run as practice with feedback on every attempt.",
   },
   {
-    n: "02",
     id: "industry-tracks",
-    title: "Industry tracks",
-    service: "Industry technology tracks for students",
-    body: "Applied tracks that run alongside the degree. These are the ones running now.",
-    tags: ["SQL", "Python", "Git & GitHub", "Excel", "Power BI", "FinTech"],
+    service: "Industry tracks for students",
+    body: "Applied tracks alongside the degree: SQL, Python, Git and GitHub, Excel, Power BI and FinTech.",
+  },
+];
+
+const PROGRAMS = [
+  {
+    title: "BCA Placement Accelerator",
+    body: "The tools technical rounds test, learned hands-on alongside the degree.",
+    pills: ["SQL", "Python", "Git & GitHub", "Excel", "Power BI"],
+  },
+  {
+    title: "B.Com Industry Accelerator",
+    body: "A FinTech track and a general branch, run alongside the degree.",
+    pills: ["FinTech", "General branch"],
+  },
+];
+
+const STEPS = [
+  {
+    title: "Scope it with your placement cell",
+    body: "Which students, which roles your recruiters hire for, and what they can't yet do in an interview.",
+  },
+  {
+    title: "Fit it to the semester",
+    body: "Sessions planned around exams and placement season, alongside the degree rather than on top of it.",
+  },
+  {
+    title: "Run it on campus",
+    body: "Students practise on real tasks and get feedback on every attempt. Trainers plan as one team, so a change of trainer doesn't cost a session.",
+  },
+  {
+    title: "Report back",
+    body: "Attendance and progress for every student, so the college sees where each one stands before the drive.",
   },
 ];
 
 const COLLEGE_FAQS: Faq[] = [
   {
-    q: "What programmes does Chalkboard Learning Studio run for colleges?",
-    a: "Placement readiness (interviews, group discussions, workplace communication) and applied industry tracks. The tracks running now cover SQL, Python, Git and GitHub, Excel and Power BI for BCA students, and FinTech for B.Com students. Each programme is scoped to your students and your placement goals.",
+    q: "What does Chalkboard Learning Studio run for colleges?",
+    a: "Campus recruitment training and applied industry tracks. The tracks running now cover SQL, Python, Git and GitHub, Excel and Power BI for BCA students, and FinTech for B.Com students. Each program is scoped to your students and the roles they're applying for.",
+  },
+  {
+    q: "What is campus recruitment training?",
+    a: "Training that prepares final-year students for placement drives and the rounds recruiters run. Ours is built as practice: students attempt the task, get feedback and try again, so the skill is there on the day.",
+  },
+  {
+    q: "How is it set up with the college?",
+    a: "Usually through an MOU with the college. Both programs at East Point College of Management run that way.",
   },
   {
     q: "Will it clash with our academic calendar?",
-    a: "No. Programmes are planned around your semester, exam and placement-season dates — alongside the academic calendar rather than competing with it.",
+    a: "No. We plan around your semester, exams and placement season. At East Point both programs run alongside the degree.",
   },
   {
-    q: "Do you train on campus in Bengaluru?",
-    a: "Yes, on campus in Bengaluru. For institutions elsewhere, talk to us about live online delivery.",
+    q: "Do you train on campus?",
+    a: "Yes, on campus in Bengaluru. For colleges elsewhere, ask us about live online delivery.",
   },
   {
     q: "How does it start?",
-    a: "A short conversation with your placement or training cell about the students, the timeline and the outcome you need. We come back with a proposed programme and what it costs.",
+    a: "A conversation with your placement or training cell about the students, the timeline and the outcome you need. We come back with a proposed program and what it costs.",
   },
 ];
 
 const collegeSchema = studioGraph(
   ...STRANDS.map((s) =>
-    studioService({
-      id: s.id,
-      name: s.service,
-      description: s.body,
-      path: PAGE.path,
-      serviceType: s.service,
-      audience: "college",
-    })
+    studioService({ id: s.id, name: s.service, description: s.body, path: PAGE.path, serviceType: s.service, audience: "college" })
   ),
   breadcrumbs([STUDIO_PAGES.hub, PAGE])
 );
 
 export default function CollegesPage() {
+  const work = linkTo("work");
+
   return (
-    <div className="bg-board-deep">
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collegeSchema) }} />
       <noscript>
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
       </noscript>
 
-      {/* ── 1 · Hook — the gap every placement cell knows ── */}
-      <section className="relative flex min-h-[86svh] items-center overflow-hidden bg-board-deep pb-24 pt-28 text-chalk sm:pt-32">
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-[88svh] items-center overflow-hidden bg-board pb-20 pt-28 text-chalk sm:pt-32">
         <div aria-hidden className="grid-dots pointer-events-none" />
-        <Container className="relative z-10">
-          <div className="max-w-3xl">
-            <Eyebrow label="Learning Studio · Colleges & Universities" tone="dark" />
-            <h1 className="mt-6 break-words font-playfair font-black leading-[1.04] tracking-tight text-[clamp(2.4rem,7vw,4.75rem)]">
-              Placement training
-              <br />
-              <span className="italic text-chalk-yellow">students practise, not sit through.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-chalk/70">
-              Your students know the syllabus. Then the interviewer asks them to handle a disagreement, and they
-              freeze. Chalkboard Learning Studio runs placement readiness and industry tracks for colleges and
-              universities, built as practice, so the skill is there on the day.
-            </p>
-            <a
-              href="#transform"
-              className="mt-9 inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold text-chalk-dark"
-              style={{ background: "linear-gradient(135deg, #f4c430 0%, #c9a227 100%)" }}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: "radial-gradient(ellipse 50% 45% at 80% 35%, rgba(244,196,48,0.10), transparent 70%)" }}
+        />
+        <Inner className="relative">
+          <Kicker tone="dark">For colleges and universities</Kicker>
+          <h1 className="mt-7 max-w-5xl break-words font-playfair font-bold leading-[1.03] tracking-tight text-[clamp(2.5rem,8.4vw,5.75rem)]">
+            Placement and industry training, built so students can <span className="font-playfair text-chalk-yellow">do the work.</span>
+          </h1>
+          <span aria-hidden className="sx-hero-line mt-9 block h-px w-full max-w-md bg-gradient-to-r from-chalk-yellow/80 to-transparent" />
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75 sm:text-xl">
+            Your students know the syllabus. Recruiters ask them to use it. We run campus recruitment training and industry
+            tracks as practice, inside your semester.
+          </p>
+          <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <Link
+              href="#enquire"
+              className="inline-flex items-center gap-2 rounded-full bg-chalk-yellow px-6 py-3.5 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5"
             >
-              Try what your students would do <ArrowDown size={15} />
-            </a>
-            <p className="mt-8 text-sm text-chalk/55">
-              Training a company team?{" "}
-              <Link href="/learning-studio" className="whitespace-nowrap font-semibold text-chalk/70 underline decoration-chalk/25 underline-offset-4 hover:text-chalk-yellow">
-                That&rsquo;s here →
-              </Link>
-            </p>
+              Talk to us about your students <ArrowRight size={16} aria-hidden />
+            </Link>
+            <Link href="#programs" className="inline-flex items-center gap-2 text-sm font-semibold text-chalk/80 hover:text-chalk-yellow">
+              Programs running now <ArrowDown size={15} aria-hidden />
+            </Link>
           </div>
-        </Container>
+        </Inner>
       </section>
 
-      {/* ── 2 · Show — the programme, as a student meets it ── */}
-      <TransformBoring
-        eyebrow="Try it as a student"
-        title="The communication chapter, rebuilt as something you do."
-      />
+      {/* ── The gap ── */}
+      <Scene tone="cream" labelledBy="gap">
+        <Inner>
+          <Kicker tone="cream">The gap</Kicker>
+          <Statement id="gap" className="mt-8">
+            Knowing the answer and saying it in the interview are <span className="font-playfair text-gold-deep">two different skills.</span>
+          </Statement>
+          <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-ink/80">
+            Lectures build the first one. Only practice builds the second. Try one chapter the way your students would.
+          </p>
+        </Inner>
+      </Scene>
 
-      {/* ── 3 · Offer ── */}
-      <section className="relative overflow-hidden bg-cream-bg py-20 text-board sm:py-28">
-        <Container className="relative">
-          <Reveal>
-            <Eyebrow label="What We Run" />
-            <h2 className="mt-5 max-w-2xl break-words font-playfair text-[clamp(1.75rem,4.8vw,3rem)] font-bold leading-[1.12] tracking-tight text-board">
-              Two strands.
-              <br />
-              One outcome: ready on day one.
-            </h2>
-          </Reveal>
+      <TransformBoring eyebrow="Try it as a student" title="The communication chapter, rebuilt as something you do." />
 
-          <div className="mt-14 divide-y divide-board/10 border-t border-board/10">
-            {STRANDS.map((s, i) => (
-              <Reveal key={s.n} delay={i * 80}>
-                <div className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr_2fr] sm:items-baseline sm:gap-8 sm:py-8">
-                  <span className="font-playfair text-2xl font-black text-gold-deep sm:text-3xl">{s.n}</span>
-                  <h3 className="font-playfair text-lg font-bold text-board sm:text-xl">{s.title}</h3>
-                  <div className="col-start-2 min-w-0 sm:col-start-3">
-                    <p className="text-sm leading-relaxed text-gray-600 sm:text-base">{s.body}</p>
-                    {s.tags && (
-                      <ul className="mt-3 flex flex-wrap gap-2">
-                        {s.tags.map((t) => (
-                          <li key={t} className="rounded-full border border-board/15 px-3 py-1 text-xs font-medium text-board/75">
-                            {t}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </Reveal>
+      {/* ── Programs running now ── */}
+      <Scene tone="cream" id="programs" labelledBy="programs-heading">
+        <Inner>
+          <Kicker tone="cream">Running now at East Point College of Management</Kicker>
+          <h2 id="programs-heading" className="sx-focus mt-8 max-w-3xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
+            Two programs, both run under an MOU.
+          </h2>
+          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
+            {PROGRAMS.map((p) => (
+              <TrackCard key={p.title} tone="cream" kicker="East Point College of Management" title={p.title} body={p.body} pills={p.pills} />
             ))}
           </div>
-        </Container>
-      </section>
+          <p className="sx-rise mt-8 max-w-xl text-base leading-relaxed text-ink/80">
+            Building something different for your students? Tracks are designed around the roles your recruiters hire for.
+          </p>
+        </Inner>
+      </Scene>
 
-      {/* ── 4 · Act ── */}
+      {/* ── Proof ── */}
+      <Scene tone="dark" labelledBy="proof">
+        <Inner>
+          <Kicker tone="dark">What happened</Kicker>
+          <h2 id="proof" className="sr-only">
+            Results at East Point College of Management
+          </h2>
+          <div className="mt-10 grid grid-cols-1 gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-end lg:gap-20">
+            <BigStat
+              tone="dark"
+              value="0"
+              label="sessions missed"
+              source="Across 80 students in two cohorts at East Point College of Management, Bengaluru. Both programs continue into the next semester."
+            />
+            <div className="sx-rise">
+              <h3 className="font-playfair text-2xl font-bold sm:text-3xl">A trainer left mid-program</h3>
+              <p className="mt-4 text-lg leading-relaxed text-chalk/75">
+                We rebuilt the curriculum around the trainer who stayed. The timetable held, and students didn&rsquo;t lose a
+                single session.
+              </p>
+              <blockquote className="mt-10 border-l-2 border-chalk-yellow/60 pl-5">
+                <p className="font-playfair text-xl leading-snug sm:text-2xl">
+                  &ldquo;Nobody in Bangalore is doing interactive training like this, or going this deep on AI with students.&rdquo;
+                </p>
+                <footer className="mt-3 text-sm text-chalk/70">Faculty, East Point College of Management</footer>
+              </blockquote>
+              {work.live && (
+                <Link
+                  href={work.href}
+                  className="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-chalk-yellow underline decoration-chalk-yellow/40 underline-offset-4 hover:decoration-chalk-yellow"
+                >
+                  Read the East Point case study <ArrowRight size={15} aria-hidden />
+                </Link>
+              )}
+            </div>
+          </div>
+        </Inner>
+      </Scene>
+
+      {/* ── Draft first, with students ── */}
+      <Scene tone="cream" labelledBy="ai-rule">
+        <Inner>
+          <Kicker tone="cream">AI, taught properly</Kicker>
+          <Statement id="ai-rule" className="mt-8">
+            Students write the resume first. <span className="font-playfair text-gold-deep">AI comes second.</span>
+          </Statement>
+          <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-ink/80">
+            The same goes for a pitch or a block of code. A student who drafted it can tell when AI makes it worse, and
+            that&rsquo;s what an interviewer is testing for.
+          </p>
+          <Link
+            href={STUDIO_PAGES.aiTraining.path}
+            className="sx-rise mt-8 inline-flex items-center gap-2 text-sm font-semibold text-board underline decoration-gold-deep/50 underline-offset-4 hover:decoration-gold-deep"
+          >
+            How we teach AI <ArrowRight size={15} aria-hidden />
+          </Link>
+        </Inner>
+      </Scene>
+
+      {/* ── How it runs ── */}
+      <Scene tone="dark" labelledBy="how">
+        <Inner>
+          <Kicker tone="dark">How a college program runs</Kicker>
+          <Statement id="how" className="mt-8">
+            Planned with your placement cell. Run on your campus.
+          </Statement>
+          <Steps steps={STEPS} tone="dark" />
+        </Inner>
+      </Scene>
+
       <StudioFaq faqs={COLLEGE_FAQS} />
 
       <StudioEnquire
-        title={
-          <>
-            Placement season
-            <br />
-            coming up?
-          </>
-        }
-        line="Tell us about your students, your timeline and what needs to change. We reply by email with a proposed programme and cost."
+        title={<>Placement season coming up?</>}
+        line="Tell us about your students, your timeline and what needs to change. We reply by email with a proposed program and what it costs."
         defaultAudience="College / institution"
-        elsewhere={["companies", "trainers", "tuitions"]}
+        elsewhere={["companies", "trainers"]}
       />
-    </div>
+    </>
   );
 }

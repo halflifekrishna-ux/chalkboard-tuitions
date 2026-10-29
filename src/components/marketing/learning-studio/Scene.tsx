@@ -159,7 +159,7 @@ export function Pills({ items, tone }: { items: string[]; tone: Tone }) {
   );
 }
 
-/** A card for one audience or track. The whole card is the link. */
+/** A card for one audience or track. With an href the whole card is the link; without one it's a plain card. */
 export function TrackCard({
   href,
   kicker,
@@ -169,17 +169,18 @@ export function TrackCard({
   cta,
   tone,
 }: {
-  href: string;
+  href?: string;
   kicker: string;
   title: string;
   body: string;
   pills?: string[];
-  cta: string;
+  cta?: string;
   tone: Tone;
 }) {
+  const Box = href ? Link : "div";
   return (
-    <Link
-      href={href}
+    <Box
+      href={href as string}
       className={cn(
         "sx-rise group flex h-full flex-col rounded-2xl border p-6 transition-colors sm:p-8",
         tone === "dark"
@@ -197,15 +198,17 @@ export function TrackCard({
           <Pills items={pills} tone={tone} />
         </div>
       )}
-      <span
-        className={cn(
-          "mt-auto inline-flex items-center gap-1.5 pt-7 text-sm font-semibold",
-          tone === "dark" ? "text-chalk" : "text-board"
-        )}
-      >
-        {cta}
-        <ArrowUpRight size={16} aria-hidden className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-      </span>
-    </Link>
+      {href && cta && (
+        <span
+          className={cn(
+            "mt-auto inline-flex items-center gap-1.5 pt-7 text-sm font-semibold",
+            tone === "dark" ? "text-chalk" : "text-board"
+          )}
+        >
+          {cta}
+          <ArrowUpRight size={16} aria-hidden className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </span>
+      )}
+    </Box>
   );
 }

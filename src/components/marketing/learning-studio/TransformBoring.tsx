@@ -29,10 +29,10 @@ const DECISIONS = [
       "You reached for the evidence. She hears prove it, and the room watches her get audited. You won the file and lost her.",
   },
   {
-    label: "“Fair — let’s fix the handover, not the blame.”",
+    label: "“Fair. Let’s fix the handover, and leave the blame out of it.”",
     best: true,
     verdict:
-      "You moved the argument off her and onto the process. She can agree with that without losing the room — which is the only way she agrees at all.",
+      "You moved the argument off her and onto the process. She can agree with that without losing the room, and that’s the only way she agrees at all.",
   },
   {
     label: "Say nothing. Move the meeting on.",
@@ -45,9 +45,9 @@ const DECISIONS = [
    damage. Tapping the wrong chunk has to teach something too, so each carries
    its own note. */
 const LINE = [
-  { text: "I hear you", note: "That part is fine — it buys you the half second you need." },
-  { text: "— you clearly didn’t read it —", bad: true, note: "" },
-  { text: "so let’s agree where the handover lives.", note: "That part is fine — it points at the fix, not the person." },
+  { text: "I hear you,", note: "That part is fine. It buys you the half second you need." },
+  { text: "you clearly didn’t read it,", bad: true, note: "" },
+  { text: "so let’s agree where the handover lives.", note: "That part is fine. It points at the fix and leaves the person alone." },
 ];
 
 const STAGES = ["Scenario", "Decision", "Feedback", "Practice", "Reflection"] as const;
@@ -291,14 +291,14 @@ export function TransformBoring({
                 {/* 3 — Feedback: the consequence of their own choice */}
                 <StageShell i={2} open={open === 2} done={done[2]} onToggle={() => go(2)}>
                   {pick === null ? (
-                    <p className="text-sm text-chalk/60">Make the call above first — this stage answers it.</p>
+                    <p className="text-sm text-chalk/60">Make the call above first. This stage answers it.</p>
                   ) : (
                     <>
                       <p className="text-[15px] leading-relaxed text-chalk/85">{DECISIONS[pick].verdict}</p>
                       {!DECISIONS[pick].best && (
                         <p className="mt-3 rounded-xl border border-chalk/10 bg-chalk/[0.04] p-4 text-sm leading-relaxed text-chalk/60">
                           The line that works moves the argument off her and onto the process:{" "}
-                          <span className="text-chalk/85">&ldquo;Fair — let&rsquo;s fix the handover, not the blame.&rdquo;</span>
+                          <span className="text-chalk/85">&ldquo;Fair. Let&rsquo;s fix the handover, and leave the blame out of it.&rdquo;</span>
                         </p>
                       )}
                       <p className="mt-4 border-t border-chalk/10 pt-4 text-sm leading-relaxed text-chalk/50">
@@ -378,7 +378,7 @@ export function TransformBoring({
                 {/* 5 — Reflection: self-assessment, the stage most courses skip */}
                 <StageShell i={4} open={open === 4} done={done[4]} onToggle={() => go(4)}>
                   <label htmlFor="tb-confidence" className="block text-[15px] text-chalk/85">
-                    Honestly — on the day, in the room, would you have said the right thing?
+                    Honestly: on the day, in the room, would you have said the right thing?
                   </label>
                   <input
                     id="tb-confidence"
@@ -400,8 +400,8 @@ export function TransformBoring({
                   <p className="mt-4 text-[15px] text-chalk-yellow">{CONFIDENCE[confidence]}</p>
                   <p className="mt-2 text-sm leading-relaxed text-chalk/55">
                     {confidence >= 3
-                      ? "Then the training isn't for you — it's for the four people on your team who wouldn't. Same gap, measured one person at a time."
-                      : "That gap — between knowing the right answer and producing it under pressure — is the only thing worth training. A slide can't close it. Reps can."}
+                      ? "Then the training is for the four people on your team who wouldn't. Same gap, measured one person at a time."
+                      : "That gap, between knowing the right answer and producing it under pressure, is the thing worth training. A slide can't close it. Practice can."}
                   </p>
                 </StageShell>
               </ol>
@@ -414,9 +414,8 @@ export function TransformBoring({
                     className="mt-8 rounded-2xl border border-chalk-yellow/25 bg-chalk-yellow/[0.06] p-5 sm:p-6"
                   >
                     <p className="text-[15px] leading-relaxed text-chalk/85">
-                      You just used five different mechanics — a reveal, a branching choice, a consequence, an
-                      error hunt and a self-assessment. Most courses use one, and it&rsquo;s usually a quiz at the
-                      end.
+                      You just used five mechanics: a reveal, a branching choice, a consequence, an error hunt and a
+                      self-assessment. Most courses use one, and it&rsquo;s usually a quiz at the end.
                     </p>
                     <a
                       href="#enquire"
