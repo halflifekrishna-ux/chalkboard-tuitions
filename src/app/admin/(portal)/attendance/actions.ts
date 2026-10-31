@@ -343,7 +343,7 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
     },
     ...savedRows
       .filter((r) => (prevByStudent.get(r.student_id)?.status ?? null) !== r.status)
-      .map((r) => ({ actor_id: admin.id, student_id: r.student_id, entity_type: "attendance", entity_id: sessionId, action: `marked_${r.status}`, summary: `Marked ${r.status} — ${label}` })),
+      .map((r) => ({ actor_id: admin.id, student_id: r.student_id, entity_type: "attendance", entity_id: sessionId, action: `marked_${r.status}`, summary: `Marked ${r.status} — ${label}`, metadata: { session_id: sessionId } })),
   ]);
 
   // 5. Attendance durably committed. Build WhatsApp queue items.
