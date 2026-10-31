@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { uploadFile, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
+import { createStudentRecord, upsertParent } from "@/lib/os/students";
 import { studentSchema, communicationSchema, documentSchema, type StudentFormValues } from "./schema";
 
 export interface ActionState {
@@ -13,40 +14,6 @@ export interface ActionState {
 
 function parseForm(formData: FormData) {
   return studentSchema.safeParse(Object.fromEntries(formData.entries()));
-}
-
-/** Find-or-create the parent by phone, then return its id. */
-async function upsertParent(
-  supabase: ReturnType<typeof createServerSupabase>,
-  v: StudentFormValues
-): Promise<string> {
-  const { data: existing } = await supabase
-    .from("parents")
-    .select("id")
-    .eq("phone", v.parent_phone)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  const parentFields = {
-    full_name: v.parent_name,
-    phone: v.parent_phone,
-    whatsapp_number: v.parent_whatsapp || v.parent_phone,
-    email: v.parent_email || null,
-    relationship: v.parent_relationship,
-  };
-
-  if (existing) {
-    await supabase.from("parents").update(parentFields).eq("id", existing.id);
-    return existing.id;
-  }
-
-  const { data: created, error } = await supabase
-    .from("parents")
-    .insert(parentFields)
-    .select("id")
-    .single();
-  if (error || !created) throw new Error(error?.message ?? "Could not save parent");
-  return created.id;
 }
 
 async function logActivity(
@@ -83,48 +50,17 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
 
   const supabase = createServerSupabase();
 
-  const { data: branch } = await supabase.from("branches").select("id").eq("is_active", true).limit(1).single();
-  if (!branch) return { error: "No active branch found. Run the database migration first." };
-
-  let parentId: string;
   let photoPath: string | null;
   try {
-    parentId = await upsertParent(supabase, v);
     photoPath = await maybeUploadPhoto(formData, crypto.randomUUID());
   } catch (e) {
     return { error: (e as Error).message };
   }
 
-  const { data: student, error } = await supabase
-    .from("students")
-    .insert({
-      photo_path: photoPath,
-      branch_id: branch.id,
-      parent_id: parentId,
-      full_name: v.full_name,
-      grade: v.grade,
-      board: v.board,
-      status: v.status,
-      school_name: v.school_name || null,
-      emergency_contact: v.emergency_contact || null,
-      notes: v.notes || null,
-    })
-    .select("id, student_code")
-    .single();
-
-  if (error || !student) return { error: error?.message ?? "Could not create student" };
-
-  await logActivity(supabase, admin.id, student.id, "created", `${v.full_name} joined Chalkboard (${student.student_code})`);
-
-  if (v.batch_id) {
-    await supabase.from("batch_students").upsert(
-      { batch_id: v.batch_id, student_id: student.id },
-      { onConflict: "batch_id,student_id", ignoreDuplicates: true }
-    );
-    const { data: batch } = await supabase.from("batches").select("name").eq("id", v.batch_id).single();
-    await logActivity(supabase, admin.id, student.id, "enrolled", `${v.full_name} enrolled in ${batch?.name ?? "batch"}`);
-    revalidatePath(`/admin/batches/${v.batch_id}`);
-  }
+  const created = await createStudentRecord(supabase, admin.id, v, photoPath);
+  if ("error" in created) return { error: created.error };
+  const student = created.student;
+  if (v.batch_id) revalidatePath(`/admin/batches/${v.batch_id}`);
 
   // Came in from a lead: close the loop so the CRM shows it converted.
   if (v.lead_id) {
