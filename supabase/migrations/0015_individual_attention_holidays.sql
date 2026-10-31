@@ -101,7 +101,8 @@ update public.batches b
 set session_category = 'individual_attention',
     student_id = one.student_id
 from (
-  select batch_id, min(student_id) as student_id
+  -- There is no min(uuid), and count = 1 means the array holds exactly one id.
+  select batch_id, (array_agg(student_id))[1] as student_id
   from public.batch_students
   group by batch_id
   having count(*) = 1
