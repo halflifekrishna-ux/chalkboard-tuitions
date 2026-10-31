@@ -34,8 +34,10 @@ export function WhatsAppFab() {
   // physically covers the closing lines. That page ends with its own CTA.
   // /contact serves every audience and its Tuitions route has its own
   // WhatsApp button; the bubble there only covered the form fields.
+  // Chalkboard OS is a staff tool, so a customer enquiry button has no place there.
   const hidden =
     pathname === "/" ||
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/learning-studio") ||
     pathname.startsWith("/about") ||
     pathname.startsWith("/contact");

@@ -268,29 +268,43 @@ export async function finishSession(input: unknown): Promise<FinishResult> {
   }
 
   // 1. Session (idempotent on batch+date+time) + which subjects were covered + class notes.
-  const { data: session, error: sErr } = await supabase
-    .from("sessions")
-    .upsert(
-      {
-        batch_id: batchId,
-        session_date: sessionDate,
-        start_time: startTime ?? null,
-        end_time: endTime ?? null,
-        subject_ids: subjectIds,
-        session_category: category,
-        student_id: iaStudent,
-        status: "completed",
-        topic_covered: topic || null,
-        homework_assigned: homework || null,
-        teacher_notes: teacherNotes || null,
-        rating: rating ?? null,
-        completed_at: new Date().toISOString(),
-        completed_by: admin.id,
-      },
-      { onConflict: "batch_id,session_date,start_time" }
-    )
-    .select("id")
-    .single();
+  //    Not an upsert: the unique index is partial (0013), and PostgREST can't send
+  //    the predicate ON CONFLICT would need to match it.
+  const sessionFields = {
+    end_time: endTime ?? null,
+    subject_ids: subjectIds,
+    session_category: category,
+    student_id: iaStudent,
+    status: "completed",
+    topic_covered: topic || null,
+    homework_assigned: homework || null,
+    teacher_notes: teacherNotes || null,
+    rating: rating ?? null,
+    completed_at: new Date().toISOString(),
+    completed_by: admin.id,
+  };
+  const findSession = () => {
+    const query = supabase.from("sessions").select("id").eq("batch_id", batchId).eq("session_date", sessionDate);
+    return (startTime ? query.eq("start_time", startTime) : query.is("start_time", null)).maybeSingle();
+  };
+  const updateSession = (id: string) =>
+    supabase.from("sessions").update(sessionFields).eq("id", id).select("id").single();
+
+  const { data: found, error: findErr } = await findSession();
+  if (findErr) return { ok: false, error: friendlyError(findErr, "Couldn't check this session. Your marks are kept — please try again.") };
+
+  let { data: session, error: sErr } = found
+    ? await updateSession(found.id)
+    : await supabase
+        .from("sessions")
+        .insert({ ...sessionFields, batch_id: batchId, session_date: sessionDate, start_time: startTime ?? null })
+        .select("id")
+        .single();
+  if (sErr?.code === "23505") {
+    // A double tap (or another device) created it a moment ago — use that one.
+    const { data: again } = await findSession();
+    if (again) ({ data: session, error: sErr } = await updateSession(again.id));
+  }
   if (sErr || !session) return { ok: false, error: sErr?.message ?? "Could not save session" };
   const sessionId = session.id;
 
