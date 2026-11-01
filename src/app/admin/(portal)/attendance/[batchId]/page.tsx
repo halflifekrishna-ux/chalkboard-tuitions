@@ -1,3 +1,4 @@
+import { isOnRegister } from "@/lib/os/enrolment";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -27,7 +28,7 @@ export default async function MarkAttendancePage({
     .from("batches")
     // `students!student_id` is explicit: batches reaches students both directly
     // (Individual Attention) and through batch_students.
-    .select("id, name, grade, start_time, end_time, room, session_category, student_id, student:students!student_id(id, full_name, admission_number, photo_path)")
+    .select("id, name, grade, start_time, end_time, room, session_category, student_id, student:students!student_id(id, full_name, admission_number, photo_path, status)")
     .eq("id", params.batchId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -53,11 +54,11 @@ export default async function MarkAttendancePage({
   // roster is exactly that student — never the rest of the class.
   const category = ((batch.session_category as SessionCategory | null) ?? "combined_class") as SessionCategory;
   const isIndividual = category === "individual_attention";
-  const iaStudent = batch.student as unknown as Person | null;
+  const iaStudent = batch.student as unknown as (Person & { status: string }) | null;
 
   let students: Person[] = [];
   if (isIndividual) {
-    students = iaStudent ? [iaStudent] : [];
+    students = iaStudent && isOnRegister(iaStudent.status) ? [iaStudent] : [];
   } else {
     const { data: enrol } = await supabase
       .from("batch_students")
@@ -66,7 +67,7 @@ export default async function MarkAttendancePage({
 
     students = (enrol ?? [])
       .map((e) => e.student as unknown as (Person & { status: string }) | null)
-      .filter((s): s is Person & { status: string } => !!s && s.status !== "archived" && s.status !== "dropped")
+      .filter((s): s is Person & { status: string } => !!s && isOnRegister(s.status))
       .sort((a, b) => a.full_name.localeCompare(b.full_name));
   }
 

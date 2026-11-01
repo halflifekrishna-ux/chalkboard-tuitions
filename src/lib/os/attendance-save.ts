@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { enqueueMessages, processQueue, type QueueItem, type TemplateKey } from "./whatsapp";
 import { STATUS_TO_TEMPLATE, type AttendanceStatus } from "./attendance";
 import { friendlyError } from "./errors";
+import { OFF_REGISTER_STATUSES } from "./enrolment";
 import type { SessionCategory } from "./session-meta";
 
 type Db = SupabaseClient;
@@ -41,7 +42,7 @@ export interface FinishResult {
 export async function saveAttendance(supabase: Db, admin: { id: string }, input: unknown): Promise<FinishResult> {
   const parsed = markSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { batchId, sessionDate, startTime, endTime, subjectIds, marks, topic, homework, teacherNotes, rating } = parsed.data;
+  const { batchId, sessionDate, startTime, endTime, subjectIds, marks: submitted, topic, homework, teacherNotes, rating } = parsed.data;
 
   // 0. Individual Attention means the whole session belongs to ONE student —
   //    nobody else can be marked in it.
@@ -50,8 +51,19 @@ export async function saveAttendance(supabase: Db, admin: { id: string }, input:
   if (clsErr) return { ok: false, error: friendlyError(clsErr, "Couldn't load this class. Your marks are kept — please try again.") };
   const category = ((cls?.session_category as SessionCategory | null) ?? "combined_class") as SessionCategory;
   const iaStudent = category === "individual_attention" ? ((cls?.student_id as string | null) ?? null) : null;
-  if (category === "individual_attention" && (marks.length !== 1 || marks[0].studentId !== iaStudent)) {
+  if (category === "individual_attention" && (submitted.length !== 1 || submitted[0].studentId !== iaStudent)) {
     return { ok: false, error: "This is an Individual Attention class, so only its own student can be marked. Refresh the page and try again." };
+  }
+
+  // A register opened before someone left can still send them. No mark, and no message to their parent.
+  const { data: gone } = submitted.length
+    ? await supabase.from("students").select("id").in("id", submitted.map((m) => m.studentId)).in("status", [...OFF_REGISTER_STATUSES])
+    : { data: [] as { id: string }[] };
+  const goneIds = new Set((gone ?? []).map((s) => s.id));
+  const marks = submitted.filter((m) => !goneIds.has(m.studentId));
+  // Nobody left to mark: stop before the session's notes and status are overwritten.
+  if (submitted.length && !marks.length) {
+    return { ok: false, error: "Everyone on this register has left, so there's nothing to save. Refresh the page." };
   }
 
   // 1. Session (idempotent on batch+date+time) + which subjects were covered + class notes.

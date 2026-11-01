@@ -4,6 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { StudentForm } from "@/components/admin/StudentForm";
+import { hasExited } from "@/lib/os/enrolment";
+import { STATUS_LABELS, type StudentStatus } from "@/lib/os/types";
 import { updateStudent } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -52,11 +54,13 @@ export default async function EditStudentPage({ params }: { params: { id: string
       <StudentForm
         action={updateWithId}
         submitLabel="Save Changes"
+        exitedLabel={hasExited(student.status) ? STATUS_LABELS[student.status as StudentStatus] : undefined}
         defaultValues={{
           full_name: student.full_name,
           grade: student.grade,
           board: student.board,
           status,
+          joined_on: student.joined_on,
           school_name: student.school_name ?? "",
           emergency_contact: student.emergency_contact ?? "",
           notes: student.notes ?? "",

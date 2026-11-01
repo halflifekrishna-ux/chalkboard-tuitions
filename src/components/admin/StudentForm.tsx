@@ -67,6 +67,7 @@ export function StudentForm({
   draftKey,
   batches,
   leadId,
+  exitedLabel,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   defaultValues?: Partial<StudentFormValues>;
@@ -76,6 +77,8 @@ export function StudentForm({
   batches?: { id: string; name: string; grade: number }[];
   /** Set when converting a CRM lead — the lead closes as converted on save. */
   leadId?: string;
+  /** Set when the student has left: status then changes only through Rejoin. */
+  exitedLabel?: string;
 }) {
   const [state, formAction] = useFormState<ActionState, FormData>(action, {});
   const { formRef, restored, clear } = useFormDraft(draftKey ?? "student-disabled");
@@ -130,19 +133,27 @@ export function StudentForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Status" error={errors.status?.message}>
-          <select {...register("status")} className={inputCls} style={inputStyle}>
-            <option value="active" style={{ color: "#162d24" }}>Active</option>
-            <option value="inactive" style={{ color: "#162d24" }}>Inactive</option>
-            <option value="graduated" style={{ color: "#162d24" }}>Graduated</option>
-            <option value="dropped" style={{ color: "#162d24" }}>Dropped</option>
-            <option value="transferred" style={{ color: "#162d24" }}>Transferred</option>
-            <option value="archived" style={{ color: "#162d24" }}>Archived</option>
-          </select>
+          {exitedLabel ? (
+            <>
+              <input type="hidden" {...register("status")} />
+              <p className="rounded-xl px-4 py-3 text-sm" style={inputStyle}>{exitedLabel}</p>
+            </>
+          ) : (
+            <select {...register("status")} className={inputCls} style={inputStyle}>
+              <option value="active" style={{ color: "#162d24" }}>Active</option>
+              <option value="inactive" style={{ color: "#162d24" }}>Inactive</option>
+              <option value="archived" style={{ color: "#162d24" }}>Archived</option>
+            </select>
+          )}
         </Field>
         <Field label="School (optional)" error={errors.school_name?.message}>
           <input {...register("school_name")} className={inputCls} style={inputStyle} />
         </Field>
       </div>
+
+      <Field label="Joined on" error={errors.joined_on?.message}>
+        <input type="date" {...register("joined_on")} className={inputCls} style={inputStyle} />
+      </Field>
 
       {batches && batches.length > 0 && (
         <Field label="Batch (optional)">

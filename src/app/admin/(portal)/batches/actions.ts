@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { archiveClassRecord } from "@/lib/os/class-save";
 import { redirect } from "next/navigation";
+import { isOnRegister } from "@/lib/os/enrolment";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { batchSchema, batchSubjectSchema } from "./schema";
@@ -103,6 +104,8 @@ export async function setBatchEnrolment(batchId: string, studentId: string, enro
   const supabase = createServerSupabase();
 
   if (enrolled) {
+    const { data: person } = await supabase.from("students").select("status").eq("id", studentId).single();
+    if (person && !isOnRegister(person.status)) return;
     await supabase.from("batch_students").upsert(
       { batch_id: batchId, student_id: studentId },
       { onConflict: "batch_id,student_id", ignoreDuplicates: true }

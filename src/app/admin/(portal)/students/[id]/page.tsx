@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Phone, MessageCircle, QrCode, Archive } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
+import { can } from "@/lib/os/permissions";
+import { EnrolmentHistory, type EnrolmentEntry } from "@/components/admin/EnrolmentHistory";
+import { formatDay } from "@/lib/os/enrolment";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
@@ -24,16 +27,18 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
-  await requireCapability("students.view");
+  const admin = await requireCapability("students.view");
+  const canManage = can(admin.role, "students.manage");
   const supabase = createServerSupabase();
 
-  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }, { data: batchLinks }] = await Promise.all([
+  const [{ data: student }, { data: timeline }, { data: comms }, { data: docs }, { data: attendance }, { data: batchLinks }, { data: enrolments }] = await Promise.all([
     supabase.from("students").select("*, parent:parents(*)").eq("id", params.id).is("deleted_at", null).maybeSingle(),
     supabase.from("activity_logs").select("id, action, summary, created_at").eq("student_id", params.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("communications").select("id, type, direction, message, status, occurred_at").eq("student_id", params.id).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, kind, size_bytes, storage_path, created_at").eq("student_id", params.id).is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("attendance").select("status, session:sessions!inner(session_date, subject_ids, batch:batches(name))").eq("student_id", params.id).order("marked_at", { ascending: false }).limit(120),
     supabase.from("batch_students").select("batch:batches(id, name, grade, status, deleted_at)").eq("student_id", params.id),
+    supabase.from("student_enrolments").select("id, joined_on, exit_type, exited_on, classes_at_exit").eq("student_id", params.id).order("joined_on", { ascending: false }),
   ]);
 
   const batches = (batchLinks ?? [])
@@ -41,6 +46,18 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     .filter((b): b is NonNullable<typeof b> => !!b && !b.deleted_at);
 
   if (!student) notFound();
+
+  // Reasons and notes stay on the server for anyone who can't record exits (RLS returns no rows anyway).
+  const stintIds = (enrolments ?? []).map((e) => e.id);
+  const { data: exitDetails } = canManage && stintIds.length
+    ? await supabase.from("student_exit_details").select("enrolment_id, reason, note").in("enrolment_id", stintIds)
+    : { data: [] as { enrolment_id: string; reason: string; note: string | null }[] };
+  const detailByStint = new Map((exitDetails ?? []).map((d) => [d.enrolment_id, d]));
+  const enrolmentEntries: EnrolmentEntry[] = (enrolments ?? []).map((e) => ({
+    ...e,
+    reason: detailByStint.get(e.id)?.reason ?? null,
+    note: detailByStint.get(e.id)?.note ?? null,
+  }));
 
   const subjectIds = Array.from(
     new Set((attendance ?? []).flatMap((a) => (a.session as unknown as { subject_ids: string[] | null } | null)?.subject_ids ?? []))
@@ -163,7 +180,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
         <InfoRow label="Parent phone" value={parent?.phone ?? "—"} />
         <InfoRow label="Parent email" value={parent?.email ?? "—"} />
         <InfoRow label="School" value={student.school_name ?? "—"} />
-        <InfoRow label="Joined" value={new Date(student.joined_on).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
+        <InfoRow label="First joined" value={formatDay(student.joined_on)} />
         <InfoRow label="Emergency contact" value={student.emergency_contact ?? "—"} />
       </section>
 
@@ -176,6 +193,8 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
           <p className="text-sm leading-relaxed" style={{ color: "rgba(245,240,232,0.8)" }}>{student.notes}</p>
         </section>
       )}
+
+      <EnrolmentHistory studentId={student.id} entries={enrolmentEntries} canManage={canManage} />
 
       <AttendanceHistory records={attendanceRecords} />
 

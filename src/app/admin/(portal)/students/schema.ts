@@ -9,6 +9,11 @@ export const studentSchema = z.object({
   status: z
     .enum(["active", "inactive", "graduated", "dropped", "transferred", "archived"])
     .default("active"),
+  // Optional so older clients (the installed Android app) keep working: blank means today.
+  joined_on: z
+    .string()
+    .refine((d) => d === "" || (/^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d))), "Enter a valid join date")
+    .optional(),
   school_name: z.string().optional(),
   emergency_contact: z.string().optional(),
   notes: z.string().optional(),

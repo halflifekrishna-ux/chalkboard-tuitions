@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { classSchema, SUBJECT_COLOURS } from "@/app/admin/(portal)/batches/schema";
 import { friendlyError, fail, type MutationResult } from "./errors";
+import { OFF_REGISTER_STATUSES } from "./enrolment";
 
 export interface ClassResult extends MutationResult {
   batchId?: string;
@@ -33,7 +34,18 @@ export async function saveClassRecord(supabase: SupabaseClient, admin: { id: str
   // Individual Attention owns the whole class, so its roster IS that student.
   const isIndividual = v.category === "individual_attention";
   const studentId = isIndividual ? (v.student_id as string) : null;
-  const roster = isIndividual ? [studentId as string] : v.student_ids;
+  const requested = isIndividual ? [studentId as string] : v.student_ids;
+
+  // Clients send back the roster they loaded, which can be out of date. Someone
+  // who has left never returns to a register this way; rejoining is the route back.
+  const { data: gone } = requested.length
+    ? await supabase.from("students").select("id, full_name").in("id", requested).in("status", [...OFF_REGISTER_STATUSES])
+    : { data: [] as { id: string; full_name: string }[] };
+  if (isIndividual && gone?.length) {
+    return fail(`${gone[0].full_name} has left, so this Individual Attention class can't be saved. Rejoin them first.`);
+  }
+  const goneIds = new Set((gone ?? []).map((s) => s.id));
+  const roster = requested.filter((sid) => !goneIds.has(sid));
 
   const fields = {
     name: v.name,
@@ -41,7 +53,7 @@ export async function saveClassRecord(supabase: SupabaseClient, admin: { id: str
     board: v.board ?? null,
     session_category: v.category,
     student_id: studentId,
-    capacity: isIndividual ? 1 : Math.max(v.capacity, v.student_ids.length || 1),
+    capacity: isIndividual ? 1 : Math.max(v.capacity, roster.length || 1),
     status: v.status,
     notes: v.notes?.trim() || null,
     days: v.days,

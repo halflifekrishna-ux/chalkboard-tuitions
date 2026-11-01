@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { StudentFormValues } from "@/app/admin/(portal)/students/schema";
+import { hasExited, todayIST } from "./enrolment";
 
 /** Find-or-create the parent by phone, then return its id. */
 export async function upsertParent(
@@ -42,6 +43,8 @@ export async function createStudentRecord(
   v: StudentFormValues,
   photoPath: string | null = null
 ): Promise<{ student: { id: string; student_code: string } } | { error: string }> {
+  if (hasExited(v.status)) return { error: "A new student can't start as exited. Add them, then mark them as exited." };
+
   const { data: branch } = await supabase.from("branches").select("id").eq("is_active", true).limit(1).single();
   if (!branch) return { error: "No active branch found. Run the database migration first." };
 
@@ -62,6 +65,7 @@ export async function createStudentRecord(
       grade: v.grade,
       board: v.board,
       status: v.status,
+      joined_on: v.joined_on || todayIST(),
       school_name: v.school_name || null,
       emergency_contact: v.emergency_contact || null,
       notes: v.notes || null,

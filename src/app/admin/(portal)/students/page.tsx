@@ -5,17 +5,20 @@ import { createServerSupabase } from "@/lib/os/supabase-server";
 import { signedUrl, PHOTO_BUCKET } from "@/lib/os/storage";
 import { Avatar } from "@/components/admin/Avatar";
 import { BOARD_LABELS, STATUS_LABELS, STATUS_COLORS, type Board, type StudentStatus } from "@/lib/os/types";
+import { EXIT_STATUSES, OFF_REGISTER_FILTER, formatDay, hasExited } from "@/lib/os/enrolment";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; view?: string };
 }) {
   await requireCapability("students.view");
   const supabase = createServerSupabase();
   const q = searchParams.q?.trim() ?? "";
+  const view = searchParams.view === "exited" || searchParams.view === "all" ? searchParams.view : "current";
+  const viewHref = (v: string) => `/admin/students?${new URLSearchParams({ ...(q ? { q } : {}), view: v })}`;
 
   // Also match on parent name/phone: find matching parent ids first, then OR them in.
   let parentIds: string[] = [];
@@ -30,10 +33,13 @@ export default async function StudentsPage({
 
   let query = supabase
     .from("students")
-    .select("id, student_code, admission_number, photo_path, full_name, grade, board, status, parent:parents(full_name, phone)")
+    .select("id, student_code, admission_number, photo_path, full_name, grade, board, status, joined_on, parent:parents(full_name, phone), enrolments:student_enrolments(exited_on, joined_on)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(200);
+
+  if (view === "current") query = query.not("status", "in", OFF_REGISTER_FILTER);
+  if (view === "exited") query = query.in("status", [...EXIT_STATUSES]);
 
   if (q) {
     const clauses = [`full_name.ilike.%${q}%`, `student_code.ilike.%${q}%`, `admission_number.ilike.%${q}%`];
@@ -63,6 +69,7 @@ export default async function StudentsPage({
 
       {/* Search */}
       <form method="GET" className="relative">
+        <input type="hidden" name="view" value={view} />
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "rgba(245,240,232,0.35)" }} />
         <input
           name="q"
@@ -75,6 +82,20 @@ export default async function StudentsPage({
         />
       </form>
 
+      <nav className="flex gap-2" aria-label="Filter students">
+        {[["current", "Current"], ["exited", "Exited"], ["all", "All"]].map(([key, label]) => (
+          <Link
+            key={key}
+            href={viewHref(key)}
+            aria-current={view === key ? "page" : undefined}
+            className="rounded-full px-4 py-2 text-xs font-semibold"
+            style={view === key ? { background: "#c9a227", color: "#162d24" } : { background: "rgba(22,45,36,0.7)", color: "rgba(245,240,232,0.6)" }}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       {/* List */}
       {!students?.length ? (
         <div
@@ -83,9 +104,9 @@ export default async function StudentsPage({
         >
           <GraduationCap size={32} className="mx-auto mb-3" style={{ color: "rgba(245,240,232,0.25)" }} />
           <p className="text-sm mb-4" style={{ color: "rgba(245,240,232,0.5)" }}>
-            {q ? `No students match “${q}”.` : "No students yet. Add your first student to get started."}
+            {q ? `No students match “${q}”.` : view === "exited" ? "No one has left yet." : "No students yet. Add your first student to get started."}
           </p>
-          {!q && (
+          {!q && view !== "exited" && (
             <Link
               href="/admin/students/new"
               className="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-bold text-sm"
@@ -99,6 +120,8 @@ export default async function StudentsPage({
         <ul className="space-y-2.5">
           {students.map((s, i) => {
             const parent = s.parent as unknown as { full_name: string; phone: string } | null;
+            const stints = (s.enrolments ?? []) as unknown as { exited_on: string | null; joined_on: string }[];
+            const lastStint = [...stints].sort((a, b) => b.joined_on.localeCompare(a.joined_on))[0];
             return (
               <li key={s.id}>
                 <Link
@@ -115,6 +138,10 @@ export default async function StudentsPage({
                       <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(245,240,232,0.45)" }}>
                         {s.admission_number ?? s.student_code} · Grade {s.grade} · {BOARD_LABELS[s.board as Board]}
                         {parent ? ` · ${parent.full_name}` : ""}
+                      </p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(245,240,232,0.35)" }}>
+                        Joined {formatDay(s.joined_on)}
+                        {hasExited(s.status) ? ` · Left ${lastStint?.exited_on ? formatDay(lastStint.exited_on) : "date not recorded"}` : ""}
                       </p>
                     </div>
                   </div>

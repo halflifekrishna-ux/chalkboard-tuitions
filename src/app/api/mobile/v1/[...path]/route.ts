@@ -8,6 +8,7 @@ import { routeNewLead, OPEN_STATUSES } from "@/lib/os/leads";
 import { saveAttendance } from "@/lib/os/attendance-save";
 import { archiveClassRecord, saveClassRecord } from "@/lib/os/class-save";
 import { createStudentRecord } from "@/lib/os/students";
+import { isOnRegister, OFF_REGISTER_FILTER } from "@/lib/os/enrolment";
 import { studentSchema } from "@/app/admin/(portal)/students/schema";
 import { TEMPLATES, type TemplateKey } from "@/lib/os/whatsapp";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -315,7 +316,7 @@ const GET: Record<string, Handler> = {
       db.from("batches")
         .select("id, name, grade, board, days, start_time, end_time, room, notes, capacity, status, session_category, student_id, academic_year_id, batch_students(student_id), batch_subjects(subject_id, deleted_at)")
         .is("deleted_at", null).order("name"),
-      db.from("students").select("id, full_name, grade").is("deleted_at", null).not("status", "in", "(archived,dropped)").order("full_name"),
+      db.from("students").select("id, full_name, grade").is("deleted_at", null).not("status", "in", OFF_REGISTER_FILTER).order("full_name"),
       db.from("subjects").select("id, name").eq("is_active", true).order("name"),
       db.from("academic_years").select("id").order("is_current", { ascending: false }).order("name", { ascending: false }).limit(1).maybeSingle(),
     ]);
@@ -348,7 +349,7 @@ const GET: Record<string, Handler> = {
     const { db } = await requireOsUnlock(req, "students.view");
     const { data, error } = await db.from("students")
       .select("id, full_name, grade, board, status, parent:parents(full_name, phone, whatsapp_number)")
-      .is("deleted_at", null).order("full_name").limit(500);
+      .is("deleted_at", null).not("status", "in", OFF_REGISTER_FILTER).order("full_name").limit(500);
     if (error) throw new ApiError(500, "server", "Couldn't load students.");
     return { students: data ?? [] };
   },
@@ -374,21 +375,21 @@ async function roster(req: NextRequest, batchId: string) {
   const date = req.nextUrl.searchParams.get("date") ?? "";
   if (!uuid.safeParse(batchId).success || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new ApiError(400, "invalid", "Choose a class and date.");
   const { data: batch } = await db.from("batches")
-    .select("id, name, start_time, end_time, session_category, student:students(id, full_name, admission_number)")
+    .select("id, name, start_time, end_time, session_category, student:students(id, full_name, admission_number, status)")
     .eq("id", batchId).is("deleted_at", null).maybeSingle();
   if (!batch) throw new ApiError(404, "not_found", "This class could not be found.");
 
   type Person = { id: string; full_name: string; admission_number: string | null };
   let students: Person[];
   if (batch.session_category === "individual_attention") {
-    const one = batch.student as unknown as Person | null;
-    students = one ? [one] : [];
+    const one = batch.student as unknown as (Person & { status: string }) | null;
+    students = one && isOnRegister(one.status) ? [one] : [];
   } else {
     const { data: enrol } = await db.from("batch_students")
       .select("student:students(id, full_name, admission_number, status)").eq("batch_id", batchId);
     students = (enrol ?? [])
       .map((e) => e.student as unknown as (Person & { status: string }) | null)
-      .filter((s): s is Person & { status: string } => !!s && s.status !== "archived" && s.status !== "dropped")
+      .filter((s): s is Person & { status: string } => !!s && isOnRegister(s.status))
       .sort((a, b) => a.full_name.localeCompare(b.full_name));
   }
 

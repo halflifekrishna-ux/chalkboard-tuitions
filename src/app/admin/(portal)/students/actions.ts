@@ -6,6 +6,8 @@ import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { uploadFile, PHOTO_BUCKET, DOCS_BUCKET } from "@/lib/os/storage";
 import { createStudentRecord, upsertParent } from "@/lib/os/students";
+import { friendlyError } from "@/lib/os/errors";
+import { hasExited } from "@/lib/os/enrolment";
 import { studentSchema, communicationSchema, documentSchema, type StudentFormValues } from "./schema";
 
 export interface ActionState {
@@ -93,6 +95,12 @@ export async function updateStudent(studentId: string, _prev: ActionState, formD
 
   const supabase = createServerSupabase();
 
+  // Leaving and coming back have their own actions, which record the date and reason.
+  const { data: current } = await supabase.from("students").select("status").eq("id", studentId).single();
+  if (!current) return { error: "Student not found" };
+  const wasExited = hasExited(current.status);
+  if (!wasExited && hasExited(v.status)) return { error: "Use Mark as exited so the date and reason are recorded." };
+
   let parentId: string;
   let photoPath: string | null;
   try {
@@ -110,14 +118,17 @@ export async function updateStudent(studentId: string, _prev: ActionState, formD
       full_name: v.full_name,
       grade: v.grade,
       board: v.board,
-      status: v.status,
+      ...(wasExited ? {} : { status: v.status }),
+      ...(v.joined_on ? { joined_on: v.joined_on } : {}),
       school_name: v.school_name || null,
       emergency_contact: v.emergency_contact || null,
       notes: v.notes || null,
     })
     .eq("id", studentId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    return { error: friendlyError(error, "Couldn't save this student. Please try again.", { "23514": "The join date can't be after the date they left." }) };
+  }
 
   await logActivity(supabase, admin.id, studentId, "updated", `${v.full_name}'s profile was updated`);
 
@@ -197,6 +208,66 @@ export async function uploadDocument(studentId: string, _prev: ActionState, form
   );
 
   revalidatePath(`/admin/students/${studentId}`);
+  return {};
+}
+
+/** Messages raised by the enrolment functions are written for staff; anything else is not. */
+function enrolmentError(error: { code?: string; message?: string }): ActionState {
+  if (error.code === "P0001" && error.message) return { error: error.message };
+  return { error: friendlyError(error, "Couldn't save this. Please try again.") };
+}
+
+function revalidateEnrolment(studentId: string) {
+  revalidatePath("/admin/students");
+  revalidatePath(`/admin/students/${studentId}`);
+  revalidatePath("/admin/batches");
+  revalidatePath("/admin/attendance");
+  revalidatePath("/admin/analytics");
+  revalidatePath("/admin");
+}
+
+const field = (formData: FormData, name: string) => {
+  const value = formData.get(name);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+};
+
+export async function markStudentExited(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireCapability("students.manage");
+  const { error } = await createServerSupabase().rpc("record_student_exit", {
+    p_student: studentId,
+    p_exited_on: field(formData, "exited_on"),
+    p_exit_type: field(formData, "exit_type"),
+    p_reason: field(formData, "reason"),
+    p_note: field(formData, "note"),
+  });
+  if (error) return enrolmentError(error);
+  revalidateEnrolment(studentId);
+  return {};
+}
+
+export async function rejoinStudent(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireCapability("students.manage");
+  const { error } = await createServerSupabase().rpc("record_student_rejoin", {
+    p_student: studentId,
+    p_joined_on: field(formData, "joined_on"),
+  });
+  if (error) return enrolmentError(error);
+  revalidateEnrolment(studentId);
+  return {};
+}
+
+export async function correctEnrolment(studentId: string, enrolmentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireCapability("students.manage");
+  const { error } = await createServerSupabase().rpc("correct_student_enrolment", {
+    p_enrolment: enrolmentId,
+    p_joined_on: field(formData, "joined_on"),
+    p_exited_on: field(formData, "exited_on"),
+    p_exit_type: field(formData, "exit_type"),
+    p_reason: field(formData, "reason"),
+    p_note: field(formData, "note"),
+  });
+  if (error) return enrolmentError(error);
+  revalidateEnrolment(studentId);
   return {};
 }
 

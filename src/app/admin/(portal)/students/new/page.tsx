@@ -3,6 +3,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { StudentForm } from "@/components/admin/StudentForm";
+import { todayIST } from "@/lib/os/enrolment";
 import { createStudent } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export default async function NewStudentPage({ searchParams }: { searchParams: {
         draftKey={lead ? undefined : "new-student"}
         batches={batches ?? []}
         leadId={lead?.id}
-        defaultValues={defaults}
+        defaultValues={{ joined_on: todayIST(), ...defaults }}
       />
     </div>
   );
