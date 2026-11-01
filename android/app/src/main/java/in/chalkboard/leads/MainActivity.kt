@@ -47,10 +47,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -59,6 +64,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -143,7 +150,9 @@ private sealed interface Screen {
     data object Settings : Screen
     data object Setup : Screen
     data object Accounts : Screen
-    data object OsHome : Screen
+    data object Attendance : Screen
+    data object Students : Screen
+    data object Subjects : Screen
     data object FullOs : Screen
     data class Roster(val classId: String, val date: String) : Screen
     data object AddStudent : Screen
@@ -168,6 +177,7 @@ private class AppState(val store: Store, val api: Api) {
     var pending by mutableStateOf<PendingSend?>(null)
     var refresh by mutableIntStateOf(0)
     var saving by mutableStateOf(false)
+    var dueCount by mutableIntStateOf(0)
     var osPage: WebView? = null
 
     fun back() {
@@ -177,8 +187,9 @@ private class AppState(val store: Store, val api: Api) {
             return
         }
         screen = when (screen) {
-            is Screen.Roster, Screen.AddStudent, Screen.Queue, Screen.FullOs -> Screen.OsHome
-            Screen.OsHome, Screen.Setup, Screen.Accounts -> Screen.Settings
+            is Screen.Roster, Screen.Queue -> Screen.Attendance
+            Screen.AddStudent -> Screen.Students
+            Screen.FullOs, Screen.Setup, Screen.Accounts -> Screen.Settings
             else -> Screen.Home
         }
     }
@@ -278,20 +289,25 @@ private fun App(promptIntent: State<Intent?>) {
             state.profile == null && state.loadFailed -> Empty(Icons.Filled.Warning, "Couldn't connect", "Check the internet and try again.", "Try again") { state.loadAttempt++ }
             state.profile == null -> Loading()
             state.needsPin -> PinSetScreen(state)
-            else -> Crossfade(state.screen, animationSpec = tween(160), label = "screen") { s ->
-                when (s) {
-                    Screen.Home -> HomeScreen(state)
-                    is Screen.NewLead -> NewLeadScreen(state, s)
-                    is Screen.Lead -> LeadScreen(state, s.lead)
-                    Screen.Settings -> SettingsScreen(state)
-                    Screen.Setup -> SetupScreen(state)
-                    Screen.Accounts -> AccountsScreen(state)
-                    Screen.OsHome -> OsHomeScreen(state)
-                    Screen.FullOs -> FullOsScreen(state)
-                    is Screen.Roster -> RosterScreen(state, s)
-                    Screen.AddStudent -> AddStudentScreen(state)
-                    Screen.Queue -> QueueScreen(state)
+            else -> Column(Modifier.fillMaxSize()) {
+                Crossfade(state.screen, Modifier.weight(1f), animationSpec = tween(160), label = "screen") { s ->
+                    when (s) {
+                        Screen.Home -> HomeScreen(state)
+                        is Screen.NewLead -> NewLeadScreen(state, s)
+                        is Screen.Lead -> LeadScreen(state, s.lead)
+                        Screen.Settings -> SettingsScreen(state)
+                        Screen.Setup -> SetupScreen(state)
+                        Screen.Accounts -> AccountsScreen(state)
+                        Screen.Attendance -> AttendanceScreen(state)
+                        Screen.Students -> StudentsScreen(state)
+                        Screen.Subjects -> SubjectsScreen(state)
+                        Screen.FullOs -> if (state.api.osUnlock == null) OsPin(state, "Full Chalkboard OS") { state.back() } else FullOsScreen(state)
+                        is Screen.Roster -> RosterScreen(state, s)
+                        Screen.AddStudent -> AddStudentScreen(state)
+                        Screen.Queue -> QueueScreen(state)
+                    }
                 }
+                if (state.profile?.optBoolean("os_access") == true && state.screen in SECTIONS) SectionBar(state)
             }
         }
         Column(Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
@@ -325,6 +341,47 @@ private fun App(promptIntent: State<Intent?>) {
 }
 
 // ── Building blocks ─────────────────────────────────────────────────────────
+
+private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, Screen.Subjects)
+
+@Composable private fun SectionBar(state: AppState) {
+    NavigationBar(containerColor = Sheet, tonalElevation = 0.dp, windowInsets = WindowInsets(0)) {
+        listOf(
+            Triple(Screen.Home, "Leads", Icons.Filled.Email),
+            Triple(Screen.Attendance, "Attendance", Icons.Filled.CheckCircle),
+            Triple(Screen.Students, "Students", Icons.Filled.Face),
+            Triple(Screen.Subjects, "Subjects", Icons.AutoMirrored.Filled.List),
+        ).forEach { (screen, label, icon) ->
+            NavigationBarItem(
+                state.screen == screen, { state.screen = screen },
+                icon = {
+                    if (screen == Screen.Home && state.dueCount > 0) BadgedBox({ Badge(containerColor = Clay, contentColor = Paper) { Text(state.dueCount.toString()) } }) { Icon(icon, null) }
+                    else Icon(icon, null)
+                },
+                label = { Text(label, fontSize = 12.sp) },
+                colors = NavigationBarItemDefaults.colors(selectedIconColor = Pine, selectedTextColor = Pine, indicatorColor = PineSoft, unselectedIconColor = Muted, unselectedTextColor = Muted),
+            )
+        }
+    }
+}
+
+@Composable private fun AddButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    ExtendedFloatingActionButton(onClick, modifier.padding(20.dp), containerColor = Pine, contentColor = Paper, shape = RoundedCornerShape(18.dp)) {
+        Icon(Icons.Filled.Add, null)
+        Spacer(Modifier.width(8.dp))
+        Text(text, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+private fun matches(q: String, vararg fields: String?): Boolean {
+    val needle = q.trim().lowercase()
+    val digits = needle.filter(Char::isDigit)
+    return fields.any { f ->
+        f != null && (f.lowercase().contains(needle) || (digits.length >= 3 && f.filter(Char::isDigit).contains(digits)))
+    }
+}
+
+private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:+" + normalise(phone)))) }
 
 @Composable private fun Notice(message: String?, bg: Color, fg: Color, icon: ImageVector, ms: Long, onClear: () -> Unit) {
     LaunchedEffect(message) {
@@ -430,7 +487,7 @@ private fun App(promptIntent: State<Intent?>) {
             val on = selected == k
             Text(
                 label, color = if (on) Ink else Muted, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, fontSize = 15.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (on) Sheet else Color.Transparent).clickable { onPick(k) }.padding(vertical = 9.dp),
             )
         }
@@ -653,6 +710,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     var loading by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     var again by remember { mutableIntStateOf(0) }
+    var q by remember { mutableStateOf("") }
     val listening = remember(state.refresh) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
 
     LaunchedEffect(view, state.refresh, owner, again) {
@@ -662,6 +720,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
             val r = state.api.get("leads?view=$view").getJSONArray("leads")
             state.store.cache("leads_$view", r.toString())
             leads = r.objects()
+            if (view == "due") state.dueCount = r.length()
         } catch (e: ApiException) {
             failed = true
             if (leads != null && again > 0) state.error = e.message
@@ -688,11 +747,13 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
             }
             Tabs(listOf("due" to "Needs action", "open" to "All open"), view) { view = it }
             Box(Modifier.fillMaxWidth().height(2.dp)) { if (loading && leads != null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Pine, trackColor = Color.Transparent) }
-            val list = leads
+            if (!leads.isNullOrEmpty()) Field("Search name or number", q) { q = it }
+            val list = leads?.filter { q.isBlank() || matches(q, it.str("full_name"), it.str("phone")) }
             PullToRefreshBox(loading, { again++ }, Modifier.fillMaxSize()) {
                 when {
                     list == null && failed -> Empty(Icons.Filled.Warning, "Couldn't load leads", "Check the internet and try again.", "Try again") { again++ }
                     list == null -> Placeholder()
+                    list.isEmpty() && q.isNotBlank() -> Empty(Icons.Filled.Person, "No one matches that")
                     list.isEmpty() -> Empty(Icons.Filled.Check, if (view == "due") "All caught up" else "No open leads yet", "New enquiries will appear here.")
                     else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
                         items(list, key = { it.getString("id") }) { LeadCard(state, it) }
@@ -700,14 +761,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 }
             }
         }
-        ExtendedFloatingActionButton(
-            { state.screen = Screen.NewLead("", "", "") }, Modifier.align(Alignment.BottomEnd).padding(20.dp),
-            containerColor = Pine, contentColor = Paper, shape = RoundedCornerShape(18.dp),
-        ) {
-            Icon(Icons.Filled.Add, null)
-            Spacer(Modifier.width(8.dp))
-            Text("Add lead", fontWeight = FontWeight.SemiBold)
-        }
+        AddButton("Add lead", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.NewLead("", "", "") }
     }
 }
 
@@ -818,6 +872,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 }
             }
             Primary(if (templates.isEmpty()) "Open chat in WhatsApp" else "Write my own message") { send("", null) }
+            Secondary("Call") { dial(ctx, lead.str("phone")) }
             Section("Remind me")
             Chips(listOf("1" to "Tomorrow", "3" to "In 3 days", "7" to "In a week"), null, enabled = !run.busy) {
                 patch(JSONObject().put("follow_up_at", plusDaysIso(it.toLong())), "Reminder set")
@@ -874,7 +929,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     var days by remember(current) { mutableStateOf(current.joinToString(", ")) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("Settings", onBack = { state.back() })
-        if (state.profile?.optBoolean("os_access") == true) Row2("Chalkboard OS", "Attendance, students, subjects and more", Icons.Filled.Lock) { state.screen = Screen.OsHome }
+        if (state.profile?.optBoolean("os_access") == true) Row2("Full Chalkboard OS", "Fees, reports and every other page", Icons.Filled.Lock) { state.screen = Screen.FullOs }
         Row2("Who's using the phone", state.profile?.str("full_name"), Icons.Filled.Person) { state.screen = Screen.Accounts }
         Row2("Phone setup", "Notifications and battery", Icons.Filled.Notifications) { state.screen = Screen.Setup }
         Section("Follow-up schedule")
@@ -934,62 +989,213 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     }
 }
 
-// ── Boon's OS section ───────────────────────────────────────────────────────
+// ── Boon's OS sections ──────────────────────────────────────────────────────
 
-@Composable private fun OsHomeScreen(state: AppState) {
+/** The PIN stands in front of every OS section. Each screen keeps its work behind it. */
+@Composable private fun OsPin(state: AppState, title: String, onBack: (() -> Unit)? = null) {
     val run = rememberRunner(state)
     var pin by remember { mutableStateOf("") }
-    var classes by remember { mutableStateOf<List<JSONObject>?>(null) }
-    val today = remember { LocalDate.now(IST) }
-    var date by remember { mutableStateOf(today) }
-    val unlocked = state.api.osUnlock != null
-
-    LaunchedEffect(unlocked, date) {
-        if (!unlocked) return@LaunchedEffect
-        classes = null
-        try { classes = state.api.get("os/classes?date=$date").getJSONArray("classes").objects() }
-        catch (e: ApiException) { if (e.code == "os_locked") state.api.osUnlock = null; state.error = e.message; classes = emptyList() }
-    }
-    if (!unlocked) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Header("Chalkboard OS", "Enter your PIN to open", { state.back() })
-            PinPad(pin, run.busy) { typed ->
-                pin = typed
-                if (typed.length == 4) run.run {
-                    try {
-                        val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
-                        if (r.optBoolean("ok")) { state.api.osUnlock = r.getString("token"); state.refresh++ } else state.error = pinError(r)
-                    } finally { pin = "" }
-                }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(title, "Enter your PIN to open", onBack)
+        PinPad(pin, run.busy) { typed ->
+            pin = typed
+            if (typed.length == 4) run.run {
+                try {
+                    val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
+                    if (r.optBoolean("ok")) state.api.osUnlock = r.getString("token") else state.error = pinError(r)
+                } finally { pin = "" }
             }
         }
-        return
+    }
+}
+
+@Composable private fun AttendanceScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Attendance")
+    var classes by remember { mutableStateOf<List<JSONObject>?>(null) }
+    var holiday by remember { mutableStateOf("") }
+    val today = remember { LocalDate.now(IST) }
+    var date by rememberSaveable { mutableStateOf(today.toString()) }
+    val day = LocalDate.parse(date)
+    var shown by remember { mutableStateOf(date) }
+
+    LaunchedEffect(date, state.refresh) {
+        if (shown != date) { classes = null; shown = date }
+        try {
+            val r = state.api.get("os/classes?date=$date")
+            holiday = r.str("holiday")
+            classes = r.getJSONArray("classes").objects()
+        } catch (e: ApiException) { state.error = e.message; if (classes == null) classes = emptyList() }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Header("Chalkboard OS", onBack = { state.back() })
-        Row2("Full Chalkboard OS", "Every page: subjects, fees, reports and more", Icons.Filled.Lock) { state.screen = Screen.FullOs }
-        Row2("Add a student", icon = Icons.Filled.Person) { state.screen = Screen.AddStudent }
-        Row2("Parent messages to send", icon = Icons.AutoMirrored.Filled.Send) { state.screen = Screen.Queue }
-        Section("Attendance")
+        Header("Attendance", "Choose a class to mark")
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton({ date = date.minusDays(1) }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous day", tint = Pine) }
+            IconButton({ date = day.minusDays(1).toString() }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous day", tint = Pine) }
             Text(
-                if (date == today) "Today, " + date.format(DateTimeFormatter.ofPattern("d MMM")) else date.format(DateTimeFormatter.ofPattern("EEE, d MMM")),
-                color = Ink, fontWeight = FontWeight.Medium, fontSize = 16.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f),
+                if (day == today) "Today, " + day.format(DateTimeFormatter.ofPattern("d MMM")) else day.format(DateTimeFormatter.ofPattern("EEE, d MMM")),
+                color = Ink, fontWeight = FontWeight.Medium, fontSize = 16.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
             )
-            IconButton({ date = date.plusDays(1) }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next day", tint = Pine) }
+            IconButton({ date = day.plusDays(1).toString() }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next day", tint = Pine) }
         }
+        if (holiday.isNotEmpty()) Sheet { Text("Public holiday: $holiday", color = Honey, fontWeight = FontWeight.Medium) }
         val list = classes
         when {
             list == null -> Placeholder(2)
             list.isEmpty() -> Text("No classes on this day.", color = Muted, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
             else -> list.forEach { c ->
-                Row2(c.str("name"), c.str("start_time").take(5) + if (c.str("session_category") == "individual_attention") " · Individual Attention" else "") {
-                    state.screen = Screen.Roster(c.getString("id"), date.toString())
+                val status = c.str("session_status")
+                val closed = status == "holiday" || status == "cancelled" || status == "rescheduled"
+                Sheet(onClick = if (closed) null else ({ state.screen = Screen.Roster(c.getString("id"), date) })) {
+                    Text(c.str("name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(c.str("start_time").take(5) + if (c.str("session_category") == "individual_attention") " · Individual Attention" else "", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    when (status) {
+                        "completed" -> Pill("Marked", PineSoft, Pine)
+                        "in_progress" -> Pill("Started, not finished", HoneySoft, Honey)
+                        "holiday" -> Pill("Holiday: change in full OS", HoneySoft, Honey)
+                        "cancelled" -> Pill("Cancelled: change in full OS", ClaySoft, Clay)
+                        "rescheduled" -> Pill("Moved: change in full OS", HoneySoft, Honey)
+                        else -> Pill("Not marked yet", HoneySoft, Honey)
+                    }
                 }
             }
         }
+        Spacer(Modifier.height(8.dp))
+        Row2("Parent messages to send", icon = Icons.AutoMirrored.Filled.Send) { state.screen = Screen.Queue }
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable private fun SubjectDialog(state: AppState, editing: JSONObject?, onClose: () -> Unit, onSaved: (JSONObject) -> Unit) {
+    val run = rememberRunner(state)
+    var name by remember { mutableStateOf(editing?.str("name").orEmpty()) }
+    var code by remember { mutableStateOf(editing?.str("short_code").orEmpty()) }
+    fun save(body: JSONObject) = run.run {
+        val path = if (editing == null) state.api.post("os/subjects", body) else state.api.patch("os/subjects/${editing.getString("id")}", body)
+        onSaved(path.getJSONObject("subject"))
+    }
+    AlertDialog(
+        onDismissRequest = { if (!run.busy) onClose() }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+        title = { Text(if (editing == null) "Add a subject" else "Edit subject") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(name, { name = it }, label = { Text("Subject name") }, shape = RoundedCornerShape(14.dp), singleLine = true)
+                OutlinedTextField(code, { code = it.take(8).uppercase() }, label = { Text("Short code (optional)") }, shape = RoundedCornerShape(14.dp), singleLine = true)
+                if (editing != null) {
+                    val active = editing.optBoolean("is_active")
+                    TextButton({ save(JSONObject().put("is_active", !active)) }, enabled = !run.busy) {
+                        Text(if (active) "Archive this subject" else "Bring this subject back", color = if (active) Clay else Pine)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton({ save(JSONObject().put("name", name.trim()).put("short_code", code.trim())) }, enabled = !run.busy && name.trim().length >= 2) {
+                if (run.busy) CircularProgressIndicator(Modifier.size(18.dp), color = Pine, strokeWidth = 2.dp) else Text("Save")
+            }
+        },
+        dismissButton = { TextButton(onClose, enabled = !run.busy) { Text("Cancel", color = Muted) } },
+    )
+}
+
+@Composable private fun SubjectsScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Subjects")
+    var subjects by remember { mutableStateOf(state.store.cached("subjects")?.let { JSONArray(it).objects() }) }
+    var again by remember { mutableIntStateOf(0) }
+    var adding by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<JSONObject?>(null) }
+    LaunchedEffect(state.refresh, again) {
+        try {
+            val r = state.api.get("os/subjects").getJSONArray("subjects")
+            state.store.cache("subjects", r.toString())
+            subjects = r.objects()
+        } catch (e: ApiException) { state.error = e.message; if (subjects == null) subjects = emptyList() }
+    }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Header("Subjects", "Used in classes and attendance")
+            val list = subjects
+            if (list == null) Placeholder(4) else {
+                list.filter { it.optBoolean("is_active") }.forEach { SubjectRow(it) { editing = it } }
+                val archived = list.filter { !it.optBoolean("is_active") }
+                if (archived.isNotEmpty()) {
+                    Section("Archived")
+                    archived.forEach { SubjectRow(it) { editing = it } }
+                }
+            }
+            Spacer(Modifier.height(96.dp))
+        }
+        AddButton("Add subject", Modifier.align(Alignment.BottomEnd)) { adding = true }
+    }
+    if (adding) SubjectDialog(state, null, { adding = false }) {
+        adding = false
+        state.toast = "Subject added"
+        again++
+    }
+    editing?.let { e ->
+        SubjectDialog(state, e, { editing = null }) {
+            editing = null
+            state.toast = "Subject saved"
+            again++
+        }
+    }
+}
+
+@Composable private fun SubjectRow(s: JSONObject, onClick: () -> Unit) {
+    val uses = s.optInt("in_use")
+    Row2(s.str("name"), listOf(s.str("short_code"), if (uses == 1) "In 1 class" else "In $uses classes").filter { it.isNotEmpty() }.joinToString(" · "), onClick = onClick)
+}
+
+@Composable private fun StudentsScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Students")
+    val ctx = LocalContext.current
+    var students by remember { mutableStateOf(state.store.cached("students")?.let { JSONArray(it).objects() }) }
+    var q by remember { mutableStateOf("") }
+    var open by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(state.refresh) {
+        try {
+            val r = state.api.get("os/students").getJSONArray("students")
+            state.store.cache("students", r.toString())
+            students = r.objects()
+        } catch (e: ApiException) { state.error = e.message; if (students == null) students = emptyList() }
+    }
+    Box(Modifier.fillMaxSize()) {
+        val list = students?.filter { q.isBlank() || matches(q, it.str("full_name"), it.optJSONObject("parent")?.str("full_name"), it.optJSONObject("parent")?.str("phone")) }
+        Column(Modifier.fillMaxSize()) {
+            Header("Students", students?.let { if (it.size == 1) "1 student" else "${it.size} students" })
+            if (!students.isNullOrEmpty()) Field("Search student, parent or number", q) { q = it }
+            when {
+                list == null -> Placeholder(4)
+                list.isEmpty() -> Empty(Icons.Filled.Person, if (q.isBlank()) "No students yet" else "No one matches that")
+                else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
+                    items(list, key = { it.getString("id") }) { st ->
+                        val id = st.getString("id")
+                        val parent = st.optJSONObject("parent")
+                        val phone = parent?.str("whatsapp_number").orEmpty().ifEmpty { parent?.str("phone").orEmpty() }
+                        Sheet(onClick = { open = if (open == id) null else id }) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Avatar(st.str("full_name"))
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(st.str("full_name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                                    Text("Grade ${st.str("grade")} · ${st.str("board").replace("_", " ").uppercase()}", color = Muted, fontSize = 14.sp)
+                                }
+                            }
+                            AnimatedVisibility(open == id) {
+                                Column(Modifier.padding(top = 12.dp)) {
+                                    Text("Parent: " + parent?.str("full_name").orEmpty().ifEmpty { "not added" }, color = Ink, fontSize = 14.sp)
+                                    if (phone.isNotEmpty()) Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        TextButton({ dial(ctx, phone); Unit }) { Icon(Icons.Filled.Phone, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Call") }
+                                        TextButton({ if (!openWhatsApp(ctx, phone, "")) state.error = "WhatsApp Business isn't installed." }) {
+                                            Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("WhatsApp")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        AddButton("Add student", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.AddStudent }
     }
 }
 
@@ -1011,7 +1217,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
         }
     }
     Column(Modifier.fillMaxSize()) {
-        Header("Chalkboard OS", onBack = { state.screen = Screen.OsHome })
+        Header("Chalkboard OS", onBack = { state.screen = Screen.Settings })
         Box(Modifier.fillMaxWidth().height(2.dp)) { if (progress in 1..99) LinearProgressIndicator({ progress / 100f }, Modifier.fillMaxWidth(), color = Pine, trackColor = Color.Transparent) }
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { ctx ->
             // A login left here must not carry over to whoever signs in next.
@@ -1051,6 +1257,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable private fun RosterScreen(state: AppState, s: Screen.Roster) {
     val run = rememberRunner(state)
     var data by remember { mutableStateOf<JSONObject?>(null) }
@@ -1058,14 +1265,23 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     var topic by remember { mutableStateOf("") }
     var homework by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
-    LaunchedEffect(s) {
+    val picked = remember { mutableStateListOf<String>() }
+    var subjects by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
+    var addingSubject by remember { mutableStateOf(false) }
+    val unlocked = state.api.osUnlock != null
+    LaunchedEffect(s, unlocked) {
+        if (!unlocked || data != null) return@LaunchedEffect
         try {
             val d = state.api.get("os/classes/${s.classId}/roster?date=${s.date}")
             data = d
+            subjects = d.getJSONArray("subjects").objects()
+            d.getJSONArray("selected_subjects").let { a -> repeat(a.length()) { picked.add(a.getString(it)) } }
             d.getJSONArray("students").objects().forEach { marks[it.getString("id")] = it.str("status") }
             d.optJSONObject("session")?.let { topic = it.str("topic_covered"); homework = it.str("homework_assigned"); notes = it.str("teacher_notes") }
         } catch (e: ApiException) { state.error = e.message; state.back() }
     }
+    // An expired PIN mid-way asks again here, so the marks already tapped are kept.
+    if (!unlocked) return OsPin(state, "Attendance") { state.back() }
     val d = data ?: return Column(Modifier.fillMaxSize()) {
         Header("Attendance", s.date, { state.back() })
         Placeholder(3)
@@ -1074,6 +1290,27 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header(batch.str("name"), s.date, { state.back() })
         if (batch.str("start_time").isEmpty()) Text("This class has no time set. Add one in the full OS first.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+        Section("Subjects taught")
+        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            subjects.forEach { sub ->
+                val id = sub.getString("id")
+                val on = id in picked
+                Text(
+                    sub.str("name"), color = if (on) Paper else Ink, fontSize = 15.sp,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Pine else Sheet).border(1.dp, if (on) Pine else Line, RoundedCornerShape(50))
+                        .clickable(enabled = !run.busy) { if (on) picked.remove(id) else picked.add(id) }.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
+            }
+            Text(
+                "+ New subject", color = Pine, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PineSoft).clickable(enabled = !run.busy) { addingSubject = true }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        val counts = marks.values.groupingBy { it }.eachCount()
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(listOf("present", "absent", "late", "excused").filter { (counts[it] ?: 0) > 0 }.joinToString(" · ") { "${counts[it]} $it" }, color = Muted, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            TextButton({ marks.keys.toList().forEach { marks[it] = "present" } }, enabled = !run.busy) { Text("Mark all present") }
+        }
         d.getJSONArray("students").objects().forEach { st ->
             val id = st.getString("id")
             Sheet {
@@ -1084,7 +1321,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                         val on = marks[id] == k
                         Text(
                             label, color = if (on) Paper else Muted, fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                             modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) (if (k == "absent") Clay else Pine) else Color.Transparent)
                                 .clickable(enabled = !run.busy) { marks[id] = k }.padding(vertical = 9.dp),
                         )
@@ -1097,31 +1334,40 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
         Field("Homework", homework) { homework = it }
         Field("Teacher notes", notes) { notes = it }
         Spacer(Modifier.height(8.dp))
-        Primary("Save attendance", enabled = marks.isNotEmpty() && batch.str("start_time").isNotEmpty(), busy = run.busy) {
+        if (picked.isEmpty()) Text("Choose at least one subject to save.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
+        Primary("Save attendance", enabled = marks.isNotEmpty() && picked.isNotEmpty() && batch.str("start_time").isNotEmpty(), busy = run.busy) {
             run.run {
                 val arr = JSONArray()
                 marks.forEach { (k, v) -> arr.put(JSONObject().put("studentId", k).put("status", v)) }
                 val r = state.api.post("os/attendance", JSONObject().put("batchId", s.classId).put("sessionDate", s.date)
                     .put("startTime", batch.str("start_time")).put("endTime", batch.str("end_time").ifEmpty { JSONObject.NULL })
-                    .put("subjectIds", JSONArray()).put("marks", arr).put("topic", topic).put("homework", homework).put("teacherNotes", notes))
+                    .put("subjectIds", JSONArray(picked.toList())).put("marks", arr).put("topic", topic).put("homework", homework).put("teacherNotes", notes))
                 if (r.optBoolean("ok")) {
                     state.toast = "Attendance saved"
-                    state.screen = Screen.Queue
+                    state.screen = if (r.optInt("queued") > 0) Screen.Queue else Screen.Attendance
                 } else state.error = r.optString("error", "Couldn't save.")
             }
         }
         Spacer(Modifier.height(16.dp))
     }
+    if (addingSubject) SubjectDialog(state, null, { addingSubject = false }) { made ->
+        addingSubject = false
+        subjects = (subjects + made).sortedBy { it.str("name") }
+        picked.add(made.getString("id"))
+        state.toast = "Subject added"
+    }
 }
 
 @Composable private fun AddStudentScreen(state: AppState) {
     val run = rememberRunner(state)
+    val unlocked = state.api.osUnlock != null
     var name by remember { mutableStateOf("") }
     var grade by remember { mutableStateOf("") }
     var board by remember { mutableStateOf<String?>(null) }
     var parent by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var school by remember { mutableStateOf("") }
+    if (!unlocked) return OsPin(state, "Add a student") { state.back() }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("Add a student", onBack = { state.back() })
         Section("Student")
@@ -1140,7 +1386,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 state.api.post("os/students", JSONObject().put("full_name", name.trim()).put("grade", grade.toInt()).put("board", board)
                     .put("school_name", school.trim()).put("parent_name", parent.trim()).put("parent_phone", "+" + normalise(phone)))
                 state.toast = "Student added"
-                state.screen = Screen.OsHome
+                state.screen = Screen.Students
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -1150,6 +1396,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
 @Composable private fun QueueScreen(state: AppState) {
     val ctx = LocalContext.current
     var messages by remember { mutableStateOf<List<JSONObject>?>(null) }
+    if (state.api.osUnlock == null) return OsPin(state, "Parent messages") { state.back() }
     LaunchedEffect(state.refresh) {
         try { messages = state.api.get("os/queue").getJSONArray("messages").objects() }
         catch (e: ApiException) { state.error = e.message; if (messages == null) messages = emptyList() }

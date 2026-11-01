@@ -19,6 +19,11 @@ const LEAD_FIELDS =
   "id, full_name, phone, status, contact_reason, notes, assigned_to, follow_up_at, follow_up_step, last_contacted_at, last_reply_at, created_at";
 const PHONE = /^\+?[0-9]{10,15}$/;
 const uuid = z.string().uuid();
+const SUBJECT_FIELDS = "id, name, short_code, is_active";
+const subjectBody = z.object({
+  name: z.string().trim().min(2, "Subject name is required"),
+  short_code: z.string().trim().max(8, "Keep the code to 8 letters").optional(),
+});
 
 async function body<T extends z.ZodTypeAny>(req: NextRequest, schema: T): Promise<z.infer<T>> {
   const json = await req.json().catch(() => null);
@@ -154,6 +159,18 @@ const POST: Record<string, Handler> = {
     return { lead, duplicate: false };
   },
 
+  "os/subjects": async (req) => {
+    const { db } = await requireOsUnlock(req, "subjects.manage");
+    const v = await body(req, subjectBody);
+    const { data, error } = await db.from("subjects")
+      .insert({ name: v.name, short_code: v.short_code?.toUpperCase() || null, colour: "#c9a227" })
+      .select(SUBJECT_FIELDS).single();
+    if (error?.code === "23505") throw new ApiError(400, "invalid", "A subject with that name or code already exists.");
+    if (error || !data) throw new ApiError(500, "server", "Couldn't save the subject. Please try again.");
+    revalidatePath("/admin/subjects");
+    return { subject: data };
+  },
+
   "os/attendance": async (req) => {
     const { db, staff } = await requireOsUnlock(req, "attendance.mark");
     return saveAttendance(db, staff, await req.json().catch(() => null));
@@ -255,7 +272,33 @@ const GET: Record<string, Handler> = {
     const { data } = await db.from("batches")
       .select("id, name, grade, start_time, end_time, days, session_category")
       .eq("status", "active").is("deleted_at", null).contains("days", [day]).order("start_time");
-    return { classes: data ?? [] };
+    const [{ data: sessions }, { data: holiday }] = await Promise.all([
+      db.from("sessions").select("batch_id, status").eq("session_date", date).in("batch_id", (data ?? []).map((c) => c.id)),
+      db.from("holidays").select("name").eq("holiday_date", date).maybeSingle(),
+    ]);
+    const stateOf = new Map((sessions ?? []).map((s) => [s.batch_id, s.status]));
+    return { holiday: holiday?.name ?? null, classes: (data ?? []).map((c) => ({ ...c, session_status: stateOf.get(c.id) ?? null })) };
+  },
+
+  "os/subjects": async (req) => {
+    const { db } = await requireOsUnlock(req, "subjects.manage");
+    const [{ data, error }, { data: usage }] = await Promise.all([
+      db.from("subjects").select(SUBJECT_FIELDS).order("name"),
+      db.from("batch_subjects").select("subject_id").is("deleted_at", null),
+    ]);
+    if (error) throw new ApiError(500, "server", "Couldn't load subjects.");
+    const uses = new Map<string, number>();
+    for (const u of usage ?? []) uses.set(u.subject_id, (uses.get(u.subject_id) ?? 0) + 1);
+    return { subjects: (data ?? []).map((s) => ({ ...s, in_use: uses.get(s.id) ?? 0 })) };
+  },
+
+  "os/students": async (req) => {
+    const { db } = await requireOsUnlock(req, "students.view");
+    const { data, error } = await db.from("students")
+      .select("id, full_name, grade, board, status, parent:parents(full_name, phone, whatsapp_number)")
+      .is("deleted_at", null).order("full_name").limit(500);
+    if (error) throw new ApiError(500, "server", "Couldn't load students.");
+    return { students: data ?? [] };
   },
 
   "os/queue": async (req) => {
@@ -297,13 +340,20 @@ async function roster(req: NextRequest, batchId: string) {
       .sort((a, b) => a.full_name.localeCompare(b.full_name));
   }
 
-  const { data: session } = await db.from("sessions").select("id, status, topic_covered, homework_assigned, teacher_notes")
+  const { data: session } = await db.from("sessions").select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
     .eq("batch_id", batchId).eq("session_date", date).order("start_time").limit(1).maybeSingle();
+  const [{ data: subjects }, { data: linked }] = await Promise.all([
+    db.from("subjects").select("id, name").eq("is_active", true).order("name"),
+    db.from("batch_subjects").select("subject_id").eq("batch_id", batchId).is("deleted_at", null),
+  ]);
   const marks = session ? (await db.from("attendance").select("student_id, status").eq("session_id", session.id)).data ?? [] : [];
   const byStudent = new Map(marks.map((m) => [m.student_id, m.status]));
   return {
     batch: { id: batch.id, name: batch.name, start_time: batch.start_time?.slice(0, 5) ?? null, end_time: batch.end_time?.slice(0, 5) ?? null },
     session,
+    subjects: subjects ?? [],
+    // Same default as the website: what was saved, otherwise the class's own subjects.
+    selected_subjects: session?.subject_ids?.length ? session.subject_ids : (linked ?? []).map((l) => l.subject_id),
     students: students.map((s) => ({ id: s.id, full_name: s.full_name, admission_number: s.admission_number, status: byStudent.get(s.id) ?? "present" })),
   };
 }
@@ -329,6 +379,21 @@ async function markQueueSent(req: NextRequest, id: string) {
   ]);
   revalidatePath("/admin/whatsapp");
   return { ok: true };
+}
+
+async function patchSubject(req: NextRequest, id: string) {
+  const { db } = await requireOsUnlock(req, "subjects.manage");
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Subject not found.");
+  const v = await body(req, subjectBody.partial().extend({ is_active: z.boolean().optional() }));
+  const { data, error } = await db.from("subjects").update({
+    ...(v.name ? { name: v.name } : {}),
+    ...(v.short_code !== undefined ? { short_code: v.short_code.toUpperCase() || null } : {}),
+    ...(v.is_active !== undefined ? { is_active: v.is_active } : {}),
+  }).eq("id", id).select(SUBJECT_FIELDS).maybeSingle();
+  if (error?.code === "23505") throw new ApiError(400, "invalid", "A subject with that name or code already exists.");
+  if (error || !data) throw new ApiError(500, "server", "Couldn't update the subject. Please try again.");
+  revalidatePath("/admin/subjects");
+  return { subject: data };
 }
 
 async function patchLead(req: NextRequest, id: string) {
@@ -376,6 +441,7 @@ async function dispatch(req: NextRequest, method: "GET" | "POST" | "PUT" | "PATC
     if (path[0] === "os" && path[1] === "queue" && path.length === 4 && path[3] === "sent") return markQueueSent(req, path[2]);
   }
   if (method === "PATCH" && path[0] === "leads" && path.length === 2) return patchLead(req, path[1]);
+  if (method === "PATCH" && path[0] === "os" && path[1] === "subjects" && path.length === 3) return patchSubject(req, path[2]);
   if (method === "PUT" && key === "settings/follow-ups") {
     const { db, staff } = await requireStaff(req, "leads.manage");
     const { days } = await body(req, z.object({ days: z.array(z.number().int().min(1).max(365)).min(1).max(10) }));

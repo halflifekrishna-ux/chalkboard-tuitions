@@ -1,5 +1,8 @@
 package `in`.chalkboard.leads
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -11,7 +14,7 @@ class ApiException(message: String, val code: String, val status: Int) : Excepti
 /** The only network code in the app. It knows the OS API and nothing about Supabase. */
 class Api(private val store: Store) {
     /** Live token from entering the PIN. Kept in memory only, and it expires on the server. */
-    var osUnlock: String? = null
+    var osUnlock by mutableStateOf<String?>(null)
 
     suspend fun get(path: String) = call("GET", path, null)
     suspend fun post(path: String, body: JSONObject = JSONObject()) = call("POST", path, body)
@@ -58,6 +61,7 @@ class Api(private val store: Store) {
                 val text = (if (status < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
                 val json = runCatching { JSONObject(text) }.getOrDefault(JSONObject())
                 if (status >= 400) {
+                    if (json.optString("code") == "os_locked") osUnlock = null
                     throw ApiException(json.optString("error", "Something went wrong. Please try again."), json.optString("code", "server"), status)
                 }
                 json
