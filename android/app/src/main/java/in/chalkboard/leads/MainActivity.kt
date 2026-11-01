@@ -86,10 +86,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -179,6 +181,7 @@ private class AppState(val store: Store, val api: Api) {
     var refresh by mutableIntStateOf(0)
     var saving by mutableStateOf(false)
     var dueCount by mutableIntStateOf(0)
+    var leadsView by mutableStateOf("due")
     var osPage: WebView? = null
 
     fun back() {
@@ -542,21 +545,28 @@ private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(
     }
 }
 
-/** Four dots and a calm keypad. It answers as soon as the fourth digit lands. */
+/** Four dots and a full-width keypad. It answers as soon as the fourth digit lands. */
 @Composable private fun PinPad(pin: String, busy: Boolean, onChange: (String) -> Unit) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(Modifier.padding(vertical = 24.dp).heightIn(min = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (busy) CircularProgressIndicator(Modifier.size(24.dp), color = Pine, strokeWidth = 2.5.dp)
-            else repeat(4) { i -> Box(Modifier.size(14.dp).clip(CircleShape).background(if (i < pin.length) Pine else Line)) }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
+            if (busy) CircularProgressIndicator(Modifier.size(26.dp), color = Pine, strokeWidth = 2.5.dp)
+            else Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                repeat(4) { i -> Box(Modifier.size(16.dp).clip(CircleShape).background(if (i < pin.length) Pine else Line)) }
+            }
         }
-        listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(vertical = 7.dp)) {
+        listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "del")).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { key ->
-                    if (key.isEmpty()) Spacer(Modifier.size(70.dp)) else Box(
-                        Modifier.size(70.dp).clip(CircleShape).background(if (key == "⌫") Color.Transparent else Sheet)
-                            .clickable(enabled = !busy) { if (key == "⌫") onChange(pin.dropLast(1)) else if (pin.length < 4) onChange(pin + key) },
+                    val keyBox = Modifier.weight(1f).height(62.dp)
+                    if (key.isEmpty()) Spacer(keyBox) else Box(
+                        keyBox.clip(RoundedCornerShape(18.dp)).background(if (key == "del") Color.Transparent else Sheet)
+                            .border(1.dp, if (key == "del") Color.Transparent else Line, RoundedCornerShape(18.dp))
+                            .clickable(enabled = !busy) { if (key == "del") onChange(pin.dropLast(1)) else if (pin.length < 4) onChange(pin + key) },
                         contentAlignment = Alignment.Center,
-                    ) { Text(key, color = Ink, fontSize = 24.sp) }
+                    ) {
+                        if (key == "del") Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Delete", tint = Muted, modifier = Modifier.size(30.dp))
+                        else Text(key, color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    }
                 }
             }
         }
@@ -713,7 +723,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
 @Composable private fun HomeScreen(state: AppState) {
     val ctx = LocalContext.current
     val owner = state.store.activeId
-    var view by remember { mutableStateOf("due") }
+    val view = state.leadsView
     var leads by remember(view, owner) { mutableStateOf(state.store.cached("leads_$view")?.let { JSONArray(it).objects() }) }
     var loading by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -722,6 +732,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     val listening = remember(state.refresh) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
 
     LaunchedEffect(view, state.refresh, owner, again) {
+        if (view == "calls") return@LaunchedEffect
         loading = true
         failed = false
         try {
@@ -737,12 +748,13 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
 
     val firstName = state.profile?.str("full_name").orEmpty().split(" ").first()
     val dueCount = if (view == "due") leads?.size else null
+    val calls = view == "calls"
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Header(
                 if (firstName.isEmpty()) "Leads" else "Hello, $firstName",
                 when (dueCount) {
-                    null -> "All your open enquiries"
+                    null -> if (calls) "New numbers that called, last 7 days" else "All your open enquiries"
                     0 -> "Nothing needs you right now"
                     1 -> "1 lead needs you"
                     else -> "$dueCount leads need you"
@@ -753,12 +765,13 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 Text("New WhatsApp messages won't reach you", color = Clay, fontWeight = FontWeight.Medium)
                 Text("Tap to finish phone setup", color = Muted, fontSize = 14.sp)
             }
-            Tabs(listOf("due" to "Needs action", "open" to "All open"), view) { view = it }
+            Tabs(listOf("due" to "Needs action", "open" to "All open", "calls" to "Missed calls"), view) { state.leadsView = it }
             Box(Modifier.fillMaxWidth().height(2.dp)) { if (loading && leads != null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Pine, trackColor = Color.Transparent) }
-            if (!leads.isNullOrEmpty()) Field("Search name or number", q) { q = it }
+            if (calls || !leads.isNullOrEmpty()) Field("Search name or number", q) { q = it }
             val list = leads?.filter { q.isBlank() || matches(q, it.str("full_name"), it.str("phone")) }
             PullToRefreshBox(loading, { again++ }, Modifier.fillMaxSize()) {
                 when {
+                    calls -> MissedCallsList(state, q, again)
                     list == null && failed -> Empty(Icons.Filled.Warning, "Couldn't load leads", "Check the internet and try again.", "Try again") { again++ }
                     list == null -> Placeholder()
                     list.isEmpty() && q.isNotBlank() -> Empty(Icons.Filled.Person, "No one matches that")
@@ -770,6 +783,59 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
             }
         }
         AddButton("Add lead", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.NewLead("", "", "") }
+    }
+}
+
+@Composable private fun MissedCallsList(state: AppState, q: String, again: Int) {
+    val ctx = LocalContext.current
+    var calls by remember { mutableStateOf<List<MissedCall>?>(null) }
+    var hidden by remember { mutableIntStateOf(0) }
+    val allowed = ctx.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
+    LaunchedEffect(state.refresh, again, hidden, allowed) {
+        if (!allowed) return@LaunchedEffect
+        val all = withContext(Dispatchers.IO) { runCatching { missedCalls(ctx, state.store) }.getOrDefault(emptyList()) }
+        if (calls == null) calls = all // Show them now; the server check below only trims the list.
+        calls = runCatching {
+            val phones = JSONArray(all.take(50).map { it.phone })
+            val known = state.api.post("leads/known", JSONObject().put("phones", phones)).getJSONArray("known")
+            val tens = List(known.length()) { known.getString(it) }.toSet()
+            all.filter { it.phone.takeLast(10) !in tens }
+        }.getOrDefault(all)
+    }
+    val list = calls?.filter { q.isBlank() || matches(q, it.phone) }
+    when {
+        !allowed -> Empty(Icons.Filled.Phone, "Calls aren't allowed yet", "Allow call access in Phone setup.", "Open Phone setup") { state.screen = Screen.Setup }
+        list == null -> Placeholder()
+        list.isEmpty() -> Empty(Icons.Filled.Check, "No new missed calls", "Saved contacts, parents and existing leads don't appear here.")
+        else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
+            items(list, key = { it.phone }) { m ->
+                val time = whenText(Instant.ofEpochMilli(m.at).toString())
+                Sheet {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(44.dp).clip(CircleShape).background(ClaySoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Phone, null, tint = Clay, modifier = Modifier.size(20.dp)) }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("+" + m.phone, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Text(time + if (m.count > 1) " · ${m.count} calls" else "", color = Muted, fontSize = 14.sp)
+                        }
+                    }
+                    if (m.kind == CallKind.QUIET) Text("Landline or foreign number", color = Honey, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton({
+                            state.screen = Screen.NewLead("", m.phone, "Missed call on $time", m.phone.hashCode(), m.phone, SOURCE_CALL)
+                        }) { Text("Add as lead", fontWeight = FontWeight.SemiBold) }
+                        TextButton({ dial(ctx, m.phone) }) { Text("Call back") }
+                        Spacer(Modifier.weight(1f))
+                        TextButton({
+                            state.store.decline(m.phone)
+                            ctx.getSystemService(NotificationManager::class.java).cancel(m.phone.hashCode())
+                            state.toast = "OK. We won't ask about this number again."
+                            hidden++
+                        }) { Text("Not a lead", color = Clay) }
+                    }
+                }
+            }
+        }
     }
 }
 

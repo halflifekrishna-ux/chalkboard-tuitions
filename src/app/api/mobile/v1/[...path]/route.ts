@@ -160,6 +160,25 @@ const POST: Record<string, Handler> = {
     return { lead, duplicate: false };
   },
 
+  // Which of these numbers are already with us, so the missed calls list only shows new ones.
+  "leads/known": async (req) => {
+    const { db } = await requireStaff(req, "leads.view");
+    const { phones } = await body(req, z.object({ phones: z.array(z.string().regex(PHONE)).max(50) }));
+    const tens = Array.from(new Set(phones.map(lastTen)));
+    if (!tens.length) return { known: [] };
+    const [{ data: leads }, { data: parents }] = await Promise.all([
+      db.from("crm_leads").select("phone, status").is("deleted_at", null).or(tens.map((t) => `phone.like.%${t}`).join(",")),
+      db.from("parents").select("phone, whatsapp_number").or(tens.flatMap((t) => [`phone.like.%${t}`, `whatsapp_number.like.%${t}`]).join(",")),
+    ]);
+    const found = new Set<string>();
+    for (const l of leads ?? []) if (l.status !== "lost") found.add(lastTen(l.phone));
+    for (const p of parents ?? []) {
+      if (p.phone) found.add(lastTen(p.phone));
+      if (p.whatsapp_number) found.add(lastTen(p.whatsapp_number));
+    }
+    return { known: tens.filter((t) => found.has(t)) };
+  },
+
   "os/subjects": async (req) => {
     const { db } = await requireOsUnlock(req, "subjects.manage");
     const v = await body(req, subjectBody);

@@ -42,60 +42,94 @@ fun callKind(raw: String): CallKind {
     }
 }
 
-/** After a call ends, asks about numbers that could be a new enquiry. */
+class MissedCall(val phone: String, val at: Long, val count: Int, val kind: CallKind)
+
+/** Unanswered calls from the last week worth a look, newest first, one row per number. */
+fun missedCalls(ctx: Context, store: Store): List<MissedCall> {
+    val since = System.currentTimeMillis() - 7 * 86_400_000L
+    val seen = linkedMapOf<String, MissedCall>()
+    val raw = mutableMapOf<String, String>()
+    ctx.contentResolver.query(
+        CallLog.Calls.CONTENT_URI, arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.DATE),
+        "${CallLog.Calls.TYPE} IN (${CallLog.Calls.MISSED_TYPE}, ${CallLog.Calls.REJECTED_TYPE}) AND ${CallLog.Calls.DATE} > ?",
+        arrayOf(since.toString()), "${CallLog.Calls.DATE} DESC",
+    )?.use { c ->
+        while (c.moveToNext()) {
+            val number = c.getString(0).orEmpty()
+            val kind = callKind(number)
+            if (kind == CallKind.IGNORE) continue
+            val phone = normalise(number)
+            raw.putIfAbsent(phone, number)
+            val had = seen[phone]
+            seen[phone] = MissedCall(phone, had?.at ?: c.getLong(1), (had?.count ?: 0) + 1, kind)
+        }
+    }
+    return seen.values.filter { m ->
+        val number = raw.getValue(m.phone)
+        !store.isDeclined(m.phone) && !isSavedContact(ctx, number) && !markedSpam(ctx, number)
+    }
+}
+
+private fun granted(ctx: Context, permission: String) = ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+
+private fun isSavedContact(ctx: Context, number: String) = granted(ctx, Manifest.permission.READ_CONTACTS) && runCatching {
+    ctx.contentResolver.query(
+        Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number)),
+        arrayOf(ContactsContract.PhoneLookup._ID), null, null, null,
+    )?.use { it.moveToFirst() } == true
+}.getOrDefault(false)
+
+/** Xiaomi's own spam columns. Other phones lack them, so a failed read means unmarked. */
+private fun markedSpam(ctx: Context, number: String) = granted(ctx, Manifest.permission.READ_CALL_LOG) && runCatching {
+    ctx.contentResolver.query(
+        CallLog.Calls.CONTENT_URI, arrayOf("cloud_antispam_type", "firewalltype"),
+        "${CallLog.Calls.NUMBER}=?", arrayOf(number), "${CallLog.Calls.DATE} DESC",
+    )?.use { c -> c.moveToFirst() && (c.getInt(0) != 0 || c.getInt(1) != 0) } == true
+}.getOrDefault(false)
+
+/** Asks about numbers that could be a new enquiry: as soon as they're answered, or when a missed call ends. */
 class CallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
         val store = Store(context)
         val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+        val app = context.applicationContext
         when (intent.getStringExtra(TelephonyManager.EXTRA_STATE)) {
             TelephonyManager.EXTRA_STATE_RINGING -> if (!number.isNullOrEmpty()) store.startRing(number)
-            TelephonyManager.EXTRA_STATE_OFFHOOK -> store.markAnswered()
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                val ring = store.markAnswered() ?: return
+                launch { ask(app, store, ring, Long.MAX_VALUE, "On the call now. Add them as a lead?") }
+            }
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 val ring = store.takeRing() ?: return
                 val rangFor = System.currentTimeMillis() - ring.at
-                val done = goAsync()
-                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                    try { afterCall(context.applicationContext, store, ring, rangFor) } finally { done.finish() }
+                launch {
+                    delay(1_500) // The call log entry is written just after the call ends.
+                    ask(app, store, ring, rangFor, if (ring.answered) "You spoke to them. Add them as a lead?" else "Missed call. Is this a new lead?")
                 }
             }
         }
     }
 
-    private suspend fun afterCall(ctx: Context, store: Store, ring: Ring, rangFor: Long) {
+    private fun launch(block: suspend () -> Unit) {
+        val done = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try { block() } finally { done.finish() }
+        }
+    }
+
+    /** The answered and the ended call both land here. The throttle lets only the first one ask. */
+    private suspend fun ask(ctx: Context, store: Store, ring: Ring, rangFor: Long, text: String) {
         val kind = callKind(ring.number)
         if (kind == CallKind.IGNORE || store.active() == null) return
         val phone = normalise(ring.number)
-        if (store.isDeclined(phone) || isSavedContact(ctx, ring.number)) return
-        delay(1_500) // The call log entry is written just after the call ends.
-        if (markedSpam(ctx, ring.number)) return
+        if (store.isDeclined(phone) || isSavedContact(ctx, ring.number) || markedSpam(ctx, ring.number)) return
         val found = withTimeoutOrNull(6_000) { runCatching { Api(store).get("leads/lookup?phone=${Uri.encode(phone)}") }.getOrNull() }
         if (found?.optBoolean("known_customer") == true) return
         val lead = found?.optJSONObject("lead")
         if (lead != null && lead.optString("status") != "lost") return
         if (!store.throttle("c_$phone", SIX_HOURS)) return
         val flash = !ring.answered && rangFor < FLASH_CALL_MS
-        showLeadPrompt(
-            ctx, "", phone,
-            if (ring.answered) "You spoke to them. Add them as a lead?" else "Missed call. Is this a new lead?",
-            phone, phone.hashCode(), SOURCE_CALL, autoOpen = kind == CallKind.OPEN && !flash,
-        )
+        showLeadPrompt(ctx, "", phone, text, phone, phone.hashCode(), SOURCE_CALL, autoOpen = kind == CallKind.OPEN && !flash)
     }
-
-    private fun isSavedContact(ctx: Context, number: String) = granted(ctx, Manifest.permission.READ_CONTACTS) && runCatching {
-        ctx.contentResolver.query(
-            Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number)),
-            arrayOf(ContactsContract.PhoneLookup._ID), null, null, null,
-        )?.use { it.moveToFirst() } == true
-    }.getOrDefault(false)
-
-    /** Xiaomi's own spam columns. Other phones lack them, so a failed read means unmarked. */
-    private fun markedSpam(ctx: Context, number: String) = granted(ctx, Manifest.permission.READ_CALL_LOG) && runCatching {
-        ctx.contentResolver.query(
-            CallLog.Calls.CONTENT_URI, arrayOf("cloud_antispam_type", "firewalltype"),
-            "${CallLog.Calls.NUMBER}=?", arrayOf(number), "${CallLog.Calls.DATE} DESC",
-        )?.use { c -> c.moveToFirst() && (c.getInt(0) != 0 || c.getInt(1) != 0) } == true
-    }.getOrDefault(false)
-
-    private fun granted(ctx: Context, permission: String) = ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 }

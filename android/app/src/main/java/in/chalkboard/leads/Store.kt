@@ -74,8 +74,12 @@ class Store(context: Context) {
         local.edit().putString("ring_number", number).putLong("ring_at", System.currentTimeMillis()).putBoolean("ring_answered", false).apply()
     }
 
-    fun markAnswered() {
-        if (local.contains("ring_number")) local.edit().putBoolean("ring_answered", true).apply()
+    /** The ringing call, the first time it's answered. Outgoing calls never rang, so give nothing. */
+    fun markAnswered(): Ring? {
+        val number = local.getString("ring_number", null) ?: return null
+        if (local.getBoolean("ring_answered", false)) return null
+        local.edit().putBoolean("ring_answered", true).apply()
+        return Ring(number, local.getLong("ring_at", 0), true)
     }
 
     /** The call that just ended, once only: Android announces each change more than once. */
