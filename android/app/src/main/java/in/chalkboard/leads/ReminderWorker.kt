@@ -28,7 +28,7 @@ class ReminderWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
                 Intent(applicationContext, MainActivity::class.java).putExtra(EXTRA_OPEN_DUE, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            m.notify(1, Notification.Builder(applicationContext, CHANNEL_REMINDER).setSmallIcon(R.drawable.ic_note)
+            m.notify(1, Notification.Builder(applicationContext, CHANNEL_REMINDER).setSmallIcon(R.drawable.ic_note).setColor(BRAND)
                 .setContentTitle(if (due == 1) "1 lead needs a follow-up" else "$due leads need a follow-up")
                 .setContentText("Tap to open them").setContentIntent(pi).setAutoCancel(true).setOnlyAlertOnce(true).build())
         } else {

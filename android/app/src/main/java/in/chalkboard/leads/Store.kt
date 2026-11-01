@@ -46,7 +46,12 @@ class Store(context: Context) {
         all.remove(id)
         secure.edit().putString("accounts", all.toString()).apply()
         if (activeId == id) activeId = all.keys().asSequence().firstOrNull()
+        secure.edit().apply { secure.all.keys.filter { it.startsWith("c_${id}_") }.forEach(::remove) }.apply()
     }
+
+    /** Last answer from the server, shown straight away while a fresh one loads. */
+    fun cached(key: String): String? = secure.getString("c_${activeId}_$key", null)
+    fun cache(key: String, value: String) = secure.edit().putString("c_${activeId}_$key", value).apply()
 
     fun isDeclined(phone: String) = local.getStringSet("declined", emptySet())!!.contains(phone.takeLast(10))
     fun decline(phone: String) {
@@ -62,6 +67,10 @@ class Store(context: Context) {
         local.edit().putLong("t_$key", now).apply()
         return true
     }
+
+    var osWebOwner: String?
+        get() = local.getString("os_web_owner", null)
+        set(v) = local.edit().putString("os_web_owner", v).apply()
 
     var lastHeard: Long
         get() = local.getLong("last_heard", 0)

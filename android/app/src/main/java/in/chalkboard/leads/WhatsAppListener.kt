@@ -8,6 +8,7 @@ import android.app.Person
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.provider.ContactsContract
 import android.service.notification.NotificationListenerService
@@ -53,7 +54,7 @@ class WhatsAppListener : NotificationListenerService() {
         val chat = n.shortcutId ?: title
 
         scope.launch {
-            if (phone.isNotEmpty() && store.isDeclined(phone)) return@launch
+            if (store.isDeclined(phone.ifEmpty { chat })) return@launch
             val api = Api(store)
             var known: JSONObject? = null
             if (phone.isNotEmpty()) {
@@ -69,7 +70,7 @@ class WhatsAppListener : NotificationListenerService() {
                 if (status != "lost") return@launch
             }
             if (store.throttle("p_$chat", SIX_HOURS)) {
-                prompt(if (titleIsPhone) "" else title, phone, text, chat.hashCode())
+                prompt(if (titleIsPhone) "" else title, phone, text, chat, chat.hashCode())
             }
         }
     }
@@ -93,7 +94,8 @@ class WhatsAppListener : NotificationListenerService() {
         }.getOrDefault("")
     }
 
-    private fun prompt(name: String, phone: String, text: String, id: Int) {
+    /** Stays in the tray until someone answers it, so a customer can't be swiped away. */
+    private fun prompt(name: String, phone: String, text: String, chat: String, id: Int) {
         val ctx = applicationContext
         channels(ctx)
         val open = Intent(ctx, MainActivity::class.java).apply {
@@ -106,18 +108,27 @@ class WhatsAppListener : NotificationListenerService() {
         val yes = PendingIntent.getActivity(ctx, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val no = PendingIntent.getBroadcast(
             ctx, id,
-            Intent(ctx, NotLeadReceiver::class.java).putExtra("phone", phone).putExtra("id", id),
+            Intent(ctx, NotLeadReceiver::class.java).putExtra("key", phone.ifEmpty { chat }).putExtra("id", id),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val who = name.ifEmpty { phone.ifEmpty { "New chat" } }
+        val who = name.ifEmpty { if (phone.isNotEmpty()) "+$phone" else "Someone new" }
+        val hidden = Notification.Builder(ctx, CHANNEL_PROMPT).setSmallIcon(R.drawable.ic_note).setColor(BRAND)
+            .setContentTitle("New WhatsApp enquiry").setContentText("Is this a new lead?").build()
         val b = Notification.Builder(ctx, CHANNEL_PROMPT)
             .setSmallIcon(R.drawable.ic_note)
-            .setContentTitle("Is $who a lead?")
-            .setContentText(text)
+            .setColor(BRAND)
+            .setLargeIcon(Icon.createWithResource(ctx, R.drawable.ic_app))
+            .setCategory(Notification.CATEGORY_MESSAGE)
+            .setContentTitle("New enquiry from $who")
+            .setContentText(text.ifEmpty { "Is this a new lead?" })
+            .setStyle(Notification.BigTextStyle().bigText(if (text.isEmpty()) "Is this a new lead?" else "“$text”\n\nIs this a new lead?"))
+            .setSubText("WhatsApp Business")
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(hidden)
+            .setOngoing(true)
             .setContentIntent(yes)
-            .setAutoCancel(true)
-            .addAction(Notification.Action.Builder(null, "Yes, a lead", yes).build())
-        if (phone.isNotEmpty()) b.addAction(Notification.Action.Builder(null, "No", no).build())
+            .addAction(Notification.Action.Builder(null, "Add as lead", yes).build())
+            .addAction(Notification.Action.Builder(null, "Not a lead", no).build())
         ctx.getSystemService(NotificationManager::class.java).notify(id, b.build())
     }
 
@@ -131,7 +142,7 @@ class WhatsAppListener : NotificationListenerService() {
         )
         ctx.getSystemService(NotificationManager::class.java).notify(
             leadId.hashCode(),
-            Notification.Builder(ctx, CHANNEL_PROMPT).setSmallIcon(R.drawable.ic_note)
+            Notification.Builder(ctx, CHANNEL_PROMPT).setSmallIcon(R.drawable.ic_note).setColor(BRAND)
                 .setContentTitle("$name replied").setContentText("Follow-ups paused. Reply when you can.")
                 .setContentIntent(pi).setAutoCancel(true).build(),
         )
@@ -140,11 +151,12 @@ class WhatsAppListener : NotificationListenerService() {
 
 class NotLeadReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        intent.getStringExtra("phone")?.takeIf { it.isNotEmpty() }?.let { Store(context).decline(it) }
+        intent.getStringExtra("key")?.takeIf { it.isNotEmpty() }?.let { Store(context).decline(it) }
         context.getSystemService(NotificationManager::class.java).cancel(intent.getIntExtra("id", 0))
     }
 }
 
+const val BRAND = 0xFF1F4D3A.toInt()
 const val CHANNEL_PROMPT = "lead_prompts"
 const val CHANNEL_REMINDER = "follow_ups"
 

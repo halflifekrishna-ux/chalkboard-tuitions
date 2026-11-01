@@ -42,6 +42,7 @@ class Api(private val store: Store) {
         withContext(Dispatchers.IO) {
             val c = URL("$BASE/$path").openConnection() as HttpURLConnection
             try {
+                // Not disconnecting afterwards lets the next request reuse this connection.
                 c.requestMethod = method
                 c.connectTimeout = 15_000
                 c.readTimeout = 30_000
@@ -62,8 +63,6 @@ class Api(private val store: Store) {
                 json
             } catch (e: java.io.IOException) {
                 throw ApiException("No connection. Check the internet and try again.", "offline", 0)
-            } finally {
-                c.disconnect()
             }
         }
 
