@@ -7,6 +7,8 @@ import org.json.JSONObject
 
 class Account(val id: String, val name: String, val access: String, val refresh: String)
 
+class Ring(val number: String, val at: Long, val answered: Boolean)
+
 /** Sessions live encrypted by the Android Keystore. Declined numbers stay on this phone only. */
 class Store(context: Context) {
     private val secure = EncryptedSharedPreferences.create(
@@ -66,6 +68,22 @@ class Store(context: Context) {
         if (now - local.getLong("t_$key", 0) < windowMs) return false
         local.edit().putLong("t_$key", now).apply()
         return true
+    }
+
+    fun startRing(number: String) {
+        local.edit().putString("ring_number", number).putLong("ring_at", System.currentTimeMillis()).putBoolean("ring_answered", false).apply()
+    }
+
+    fun markAnswered() {
+        if (local.contains("ring_number")) local.edit().putBoolean("ring_answered", true).apply()
+    }
+
+    /** The call that just ended, once only: Android announces each change more than once. */
+    fun takeRing(): Ring? {
+        val number = local.getString("ring_number", null) ?: return null
+        val ring = Ring(number, local.getLong("ring_at", 0), local.getBoolean("ring_answered", false))
+        local.edit().remove("ring_number").apply()
+        return ring
     }
 
     var osWebOwner: String?

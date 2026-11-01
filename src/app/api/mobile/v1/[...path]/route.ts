@@ -125,6 +125,7 @@ const POST: Record<string, Handler> = {
       phone: z.string().regex(PHONE, "Enter a valid phone number"),
       reason: z.string().min(1, "Choose a reason"),
       notes: z.string().max(2000).optional(),
+      source: z.enum(["whatsapp", "phone_call"]).default("whatsapp"),
     }));
     const { data: dupes } = await db.from("crm_leads").select(LEAD_FIELDS)
       .like("phone", `%${lastTen(v.phone)}`).is("deleted_at", null).in("status", OPEN_STATUSES).limit(1);
@@ -141,7 +142,7 @@ const POST: Record<string, Handler> = {
       assigned_to: routing.assigned_to,
       full_name: v.full_name,
       phone: v.phone,
-      source: "whatsapp",
+      source: v.source,
       notes: v.notes || null,
       contact_reason: v.reason,
       follow_up_at: now,
@@ -153,7 +154,7 @@ const POST: Record<string, Handler> = {
     await logEvent(db, lead.id, staff.id, "created", { to: routing.status, note: "From the Lead app" });
     await db.from("activity_logs").insert({
       actor_id: staff.id, entity_type: "lead", entity_id: lead.id, action: "lead_created",
-      summary: `${v.full_name} added as a Tuitions lead from WhatsApp`,
+      summary: `${v.full_name} added as a Tuitions lead from ${v.source === "phone_call" ? "a phone call" : "WhatsApp"}`,
     });
     revalidateLeads();
     return { lead, duplicate: false };
@@ -261,7 +262,10 @@ const GET: Record<string, Handler> = {
     if (!PHONE.test(phone)) throw new ApiError(400, "invalid", "Enter a valid phone number.");
     const { data } = await db.from("crm_leads").select(LEAD_FIELDS).like("phone", `%${lastTen(phone)}`)
       .is("deleted_at", null).order("created_at", { ascending: false }).limit(1);
-    return { lead: data?.[0] ?? null };
+    // Parents already with us shouldn't be asked about as if they were new enquiries.
+    const ten = lastTen(phone);
+    const { data: parents } = await db.from("parents").select("id").or(`phone.like.%${ten},whatsapp_number.like.%${ten}`).limit(1);
+    return { lead: data?.[0] ?? null, known_customer: !!parents?.length };
   },
 
   "os/classes": async (req) => {

@@ -26,7 +26,12 @@ const val EXTRA_PROMPT_NAME = "prompt_name"
 const val EXTRA_PROMPT_PHONE = "prompt_phone"
 const val EXTRA_PROMPT_TEXT = "prompt_text"
 const val EXTRA_PROMPT_NOTIF = "prompt_notif"
+const val EXTRA_PROMPT_KEY = "prompt_key"
+const val EXTRA_PROMPT_SOURCE = "prompt_source"
+const val EXTRA_PROMPT_AUTO = "prompt_auto"
 const val EXTRA_OPEN_DUE = "open_due"
+const val SOURCE_WHATSAPP = "whatsapp"
+const val SOURCE_CALL = "phone_call"
 
 /**
  * Turns WhatsApp Business notifications into "Is this a lead?". The notification's
@@ -59,7 +64,9 @@ class WhatsAppListener : NotificationListenerService() {
             var known: JSONObject? = null
             if (phone.isNotEmpty()) {
                 // Offline or failed lookup: prompt anyway. The server drops duplicates.
-                known = runCatching { api.get("leads/lookup?phone=${Uri.encode(phone)}").optJSONObject("lead") }.getOrNull()
+                val found = runCatching { api.get("leads/lookup?phone=${Uri.encode(phone)}") }.getOrNull()
+                if (found?.optBoolean("known_customer") == true) return@launch
+                known = found?.optJSONObject("lead")
             }
             if (known != null) {
                 val status = known.getString("status")
@@ -70,7 +77,7 @@ class WhatsAppListener : NotificationListenerService() {
                 if (status != "lost") return@launch
             }
             if (store.throttle("p_$chat", SIX_HOURS)) {
-                prompt(if (titleIsPhone) "" else title, phone, text, chat, chat.hashCode())
+                showLeadPrompt(applicationContext, if (titleIsPhone) "" else title, phone, text, phone.ifEmpty { chat }, chat.hashCode(), SOURCE_WHATSAPP)
             }
         }
     }
@@ -94,44 +101,6 @@ class WhatsAppListener : NotificationListenerService() {
         }.getOrDefault("")
     }
 
-    /** Stays in the tray until someone answers it, so a customer can't be swiped away. */
-    private fun prompt(name: String, phone: String, text: String, chat: String, id: Int) {
-        val ctx = applicationContext
-        channels(ctx)
-        val open = Intent(ctx, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_PROMPT_NAME, name)
-            putExtra(EXTRA_PROMPT_PHONE, phone)
-            putExtra(EXTRA_PROMPT_TEXT, text)
-            putExtra(EXTRA_PROMPT_NOTIF, id)
-        }
-        val yes = PendingIntent.getActivity(ctx, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val no = PendingIntent.getBroadcast(
-            ctx, id,
-            Intent(ctx, NotLeadReceiver::class.java).putExtra("key", phone.ifEmpty { chat }).putExtra("id", id),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        val who = name.ifEmpty { if (phone.isNotEmpty()) "+$phone" else "Someone new" }
-        val hidden = Notification.Builder(ctx, CHANNEL_PROMPT).setSmallIcon(R.drawable.ic_note).setColor(BRAND)
-            .setContentTitle("New WhatsApp enquiry").setContentText("Is this a new lead?").build()
-        val b = Notification.Builder(ctx, CHANNEL_PROMPT)
-            .setSmallIcon(R.drawable.ic_note)
-            .setColor(BRAND)
-            .setLargeIcon(Icon.createWithResource(ctx, R.drawable.ic_app))
-            .setCategory(Notification.CATEGORY_MESSAGE)
-            .setContentTitle("New enquiry from $who")
-            .setContentText(text.ifEmpty { "Is this a new lead?" })
-            .setStyle(Notification.BigTextStyle().bigText(if (text.isEmpty()) "Is this a new lead?" else "“$text”\n\nIs this a new lead?"))
-            .setSubText("WhatsApp Business")
-            .setVisibility(Notification.VISIBILITY_PRIVATE)
-            .setPublicVersion(hidden)
-            .setOngoing(true)
-            .setContentIntent(yes)
-            .addAction(Notification.Action.Builder(null, "Add as lead", yes).build())
-            .addAction(Notification.Action.Builder(null, "Not a lead", no).build())
-        ctx.getSystemService(NotificationManager::class.java).notify(id, b.build())
-    }
-
     private fun notifyReply(name: String, leadId: String) {
         val ctx = applicationContext
         channels(ctx)
@@ -147,6 +116,48 @@ class WhatsAppListener : NotificationListenerService() {
                 .setContentIntent(pi).setAutoCancel(true).build(),
         )
     }
+}
+
+/** Stays in the tray until someone answers it, so a customer can't be swiped away. */
+fun showLeadPrompt(ctx: Context, name: String, phone: String, text: String, key: String, id: Int, source: String, autoOpen: Boolean = false) {
+    channels(ctx)
+    val open = Intent(ctx, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        putExtra(EXTRA_PROMPT_NAME, name)
+        putExtra(EXTRA_PROMPT_PHONE, phone)
+        putExtra(EXTRA_PROMPT_TEXT, text)
+        putExtra(EXTRA_PROMPT_NOTIF, id)
+        putExtra(EXTRA_PROMPT_KEY, key)
+        putExtra(EXTRA_PROMPT_SOURCE, source)
+    }
+    val yes = PendingIntent.getActivity(ctx, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    val no = PendingIntent.getBroadcast(
+        ctx, id,
+        Intent(ctx, NotLeadReceiver::class.java).putExtra("key", key).putExtra("id", id),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+    val who = name.ifEmpty { if (phone.isNotEmpty()) "+$phone" else "Someone new" }
+    val call = source == SOURCE_CALL
+    val hidden = Notification.Builder(ctx, CHANNEL_PROMPT).setSmallIcon(R.drawable.ic_note).setColor(BRAND)
+        .setContentTitle(if (call) "New phone enquiry" else "New WhatsApp enquiry").setContentText("Is this a new lead?").build()
+    val b = Notification.Builder(ctx, CHANNEL_PROMPT)
+        .setSmallIcon(R.drawable.ic_note)
+        .setColor(BRAND)
+        .setLargeIcon(Icon.createWithResource(ctx, R.drawable.ic_app))
+        .setCategory(Notification.CATEGORY_MESSAGE)
+        .setContentTitle(if (call) "Call from $who" else "New enquiry from $who")
+        .setContentText(text.ifEmpty { "Is this a new lead?" })
+        .setStyle(Notification.BigTextStyle().bigText(if (call) text else if (text.isEmpty()) "Is this a new lead?" else "“$text”\n\nIs this a new lead?"))
+        .setSubText(if (call) "Phone" else "WhatsApp Business")
+        .setVisibility(Notification.VISIBILITY_PRIVATE)
+        .setPublicVersion(hidden)
+        .setOngoing(true)
+        .setContentIntent(yes)
+        .addAction(Notification.Action.Builder(null, "Add as lead", yes).build())
+        .addAction(Notification.Action.Builder(null, "Not a lead", no).build())
+    ctx.getSystemService(NotificationManager::class.java).notify(id, b.build())
+    // Over a locked phone this waits behind the lock, so nothing shows until it's unlocked.
+    if (autoOpen) runCatching { ctx.startActivity(Intent(open).putExtra(EXTRA_PROMPT_AUTO, true)) }
 }
 
 class NotLeadReceiver : BroadcastReceiver() {

@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -124,7 +125,7 @@ class MainActivity : ComponentActivity() {
         channels(this)
         ReminderWorker.schedule(this)
         promptIntent.value = intent
-        val perms = mutableListOf(Manifest.permission.READ_CONTACTS)
+        val perms = mutableListOf(Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
         if (Build.VERSION.SDK_INT >= 33) perms.add(Manifest.permission.POST_NOTIFICATIONS)
         askContacts.launch(perms.toTypedArray())
         setContent {
@@ -145,7 +146,7 @@ class MainActivity : ComponentActivity() {
 
 private sealed interface Screen {
     data object Home : Screen
-    data class NewLead(val name: String, val phone: String, val text: String, val notif: Int? = null) : Screen
+    data class NewLead(val name: String, val phone: String, val text: String, val notif: Int? = null, val key: String = "", val source: String = SOURCE_WHATSAPP) : Screen
     data class Lead(val lead: JSONObject) : Screen
     data object Settings : Screen
     data object Setup : Screen
@@ -267,8 +268,15 @@ private fun App(promptIntent: State<Intent?>) {
         val i = promptIntent.value ?: return@LaunchedEffect
         if (!state.signedIn) return@LaunchedEffect
         if (i.hasExtra(EXTRA_PROMPT_NOTIF)) {
-            state.screen = Screen.NewLead(i.getStringExtra(EXTRA_PROMPT_NAME).orEmpty(), i.getStringExtra(EXTRA_PROMPT_PHONE).orEmpty(),
-                i.getStringExtra(EXTRA_PROMPT_TEXT).orEmpty(), i.getIntExtra(EXTRA_PROMPT_NOTIF, 0))
+            // Opening by itself must not throw away work in progress. The prompt stays in the tray.
+            val midWork = state.screen is Screen.NewLead || state.screen is Screen.Roster || state.screen == Screen.AddStudent || state.saving
+            if (i.getBooleanExtra(EXTRA_PROMPT_AUTO, false) && midWork) {
+                state.toast = "New call to check. It's in your notifications."
+            } else {
+                state.screen = Screen.NewLead(i.getStringExtra(EXTRA_PROMPT_NAME).orEmpty(), i.getStringExtra(EXTRA_PROMPT_PHONE).orEmpty(),
+                    i.getStringExtra(EXTRA_PROMPT_TEXT).orEmpty(), i.getIntExtra(EXTRA_PROMPT_NOTIF, 0),
+                    i.getStringExtra(EXTRA_PROMPT_KEY).orEmpty(), i.getStringExtra(EXTRA_PROMPT_SOURCE) ?: SOURCE_WHATSAPP)
+            }
             i.removeExtra(EXTRA_PROMPT_NOTIF)
         } else if (i.getBooleanExtra(EXTRA_OPEN_DUE, false)) {
             state.screen = Screen.Home
@@ -796,9 +804,10 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     val reasons = state.boot?.optJSONArray("reasons")?.objects().orEmpty().map { it.str("key") to it.str("label") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("New lead", onBack = { state.back() })
+        val fromCall = s.source == SOURCE_CALL
         if (s.text.isNotEmpty()) Sheet {
-            Text("Their message", color = Muted, fontSize = 13.sp)
-            Text("“${s.text}”", color = Ink, modifier = Modifier.padding(top = 4.dp))
+            Text(if (fromCall) "Phone call" else "Their message", color = Muted, fontSize = 13.sp)
+            Text(if (fromCall) s.text else "“${s.text}”", color = Ink, modifier = Modifier.padding(top = 4.dp))
         }
         Field("Name", name) { name = it }
         Field("Phone with country code", phone, KeyboardType.Phone) { phone = it }
@@ -810,13 +819,22 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
         Spacer(Modifier.height(16.dp))
         Primary("Save lead", enabled = name.isNotBlank() && normalise(phone).length >= 10 && reason != null, busy = run.busy) {
             run.run {
-                val r = state.api.post("leads", JSONObject().put("full_name", name.trim()).put("phone", normalise(phone)).put("reason", reason)
-                    .apply { if (s.text.isNotEmpty()) put("notes", "First message: ${s.text}") })
+                val r = state.api.post("leads", JSONObject().put("full_name", name.trim()).put("phone", normalise(phone)).put("reason", reason).put("source", s.source)
+                    .apply { if (fromCall) put("notes", "From a phone call") else if (s.text.isNotEmpty()) put("notes", "First message: ${s.text}") })
                 s.notif?.let { ctx.getSystemService(NotificationManager::class.java).cancel(it) }
                 if (r.optBoolean("duplicate")) state.toast = "This number already has a lead. Opening it." else state.toast = "Lead saved"
                 state.screen = Screen.Lead(r.getJSONObject("lead"))
             }
         }
+        s.notif?.let { id ->
+            Secondary("Not a lead", Clay, enabled = !run.busy) {
+                s.key.ifEmpty { normalise(phone) }.takeIf { it.isNotEmpty() }?.let(state.store::decline)
+                ctx.getSystemService(NotificationManager::class.java).cancel(id)
+                state.toast = "OK. We won't ask about this number again."
+                state.screen = Screen.Home
+            }
+        }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -965,16 +983,22 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose {} }
     val listening = remember(tick) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
     val unrestricted = remember(tick) { ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName) }
+    val seesCalls = remember(tick) { listOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG).all { ctx.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED } }
+    val opensItself = remember(tick) { Settings.canDrawOverlays(ctx) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("Phone setup", onBack = { state.back() })
         Sheet {
             SetupRow(listening, "Reads WhatsApp notifications")
             SetupRow(unrestricted, "Battery unrestricted")
+            SetupRow(seesCalls, "Sees incoming calls")
+            SetupRow(opensItself, "Opens by itself after a call")
             val heard = state.store.lastHeard
             Text("Last WhatsApp notification seen: " + if (heard == 0L) "never" else whenText(Instant.ofEpochMilli(heard).toString()), color = Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         }
         Spacer(Modifier.height(6.dp))
         Secondary("Allow reading notifications") { ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+        if (!seesCalls) Secondary("Allow seeing calls") { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))) }
+        if (!opensItself) Secondary("Allow opening by itself") { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))) }
         Secondary("Show lead prompts on screen") {
             ctx.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
         }
