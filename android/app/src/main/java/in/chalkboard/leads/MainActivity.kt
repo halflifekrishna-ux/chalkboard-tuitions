@@ -185,6 +185,7 @@ private class AppState(val store: Store, val api: Api) {
     var saving by mutableStateOf(false)
     var dueCount by mutableIntStateOf(0)
     var leadsView by mutableStateOf("due")
+    var missed by mutableStateOf<List<MissedCall>?>(null)
     var osPage: WebView? = null
 
     fun back() {
@@ -228,6 +229,21 @@ private class Runner(private val state: AppState, private val scope: CoroutineSc
 @Composable private fun rememberRunner(state: AppState): Runner {
     val scope = rememberCoroutineScope()
     return remember { Runner(state, scope) }
+}
+
+/** New numbers that called. Everywhere reads this one list, so the counts always agree. */
+private suspend fun loadMissed(ctx: Context, state: AppState) {
+    if (ctx.checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+        state.missed = emptyList()
+        return
+    }
+    val all = withContext(Dispatchers.IO) { runCatching { missedCalls(ctx, state.store) }.getOrDefault(emptyList()) }
+    if (state.missed == null) state.missed = all // Show them now; the server check only trims the list.
+    state.missed = runCatching {
+        val known = state.api.post("leads/known", JSONObject().put("phones", JSONArray(all.take(50).map { it.phone }))).getJSONArray("known")
+        val tens = List(known.length()) { known.getString(it) }.toSet()
+        all.filter { it.phone.takeLast(10) !in tens }
+    }.getOrDefault(all)
 }
 
 @Composable
@@ -290,6 +306,8 @@ private fun App(promptIntent: State<Intent?>) {
             i.removeExtra(EXTRA_OPEN_DUE)
         }
     }
+
+    LaunchedEffect(state.refresh, state.signedIn, state.store.activeId) { if (state.signedIn) loadMissed(ctx, state) }
 
     LifecycleResumeEffect(Unit) {
         if (state.pending != null) askSent = true
@@ -372,7 +390,8 @@ private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, S
             NavigationBarItem(
                 state.screen == screen, { state.screen = screen },
                 icon = {
-                    if (screen == Screen.Home && state.dueCount > 0) BadgedBox({ Badge(containerColor = Clay, contentColor = Paper) { Text(state.dueCount.toString()) } }) { Icon(icon, null) }
+                    val waiting = state.dueCount + state.missed.orEmpty().size
+                    if (screen == Screen.Home && waiting > 0) BadgedBox({ Badge(containerColor = Clay, contentColor = Paper) { Text(waiting.toString()) } }) { Icon(icon, null) }
                     else Icon(icon, null)
                 },
                 label = { Text(label, fontSize = 12.sp) },
@@ -513,15 +532,21 @@ private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(
     }
 }
 
-@Composable private fun Tabs(options: List<Pair<String, String>>, selected: String, onPick: (String) -> Unit) {
+@Composable private fun Tabs(options: List<Pair<String, String>>, selected: String, counts: Map<String, Int> = emptyMap(), onPick: (String) -> Unit) {
     Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(50)).background(Line.copy(alpha = .6f)).padding(4.dp)) {
         options.forEach { (k, label) ->
             val on = selected == k
-            Text(
-                label, color = if (on) Ink else Muted, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (on) Sheet else Color.Transparent).clickable { onPick(k) }.padding(vertical = 9.dp),
-            )
+            val count = counts[k] ?: 0
+            Row(
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (on) Sheet else Color.Transparent).clickable { onPick(k) }.padding(vertical = 9.dp),
+                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(label, color = if (on) Ink else Muted, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, fontSize = 14.sp, maxLines = 1)
+                if (count > 0) {
+                    Spacer(Modifier.width(5.dp))
+                    Text(count.toString(), color = Paper, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(50)).background(Clay).padding(horizontal = 6.dp, vertical = 1.dp))
+                }
+            }
         }
     }
 }
@@ -566,31 +591,40 @@ private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(
     }
 }
 
-/** Four dots and a full-width keypad. It answers as soon as the fourth digit lands. */
-@Composable private fun PinPad(pin: String, busy: Boolean, onChange: (String) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
-            if (busy) CircularProgressIndicator(Modifier.size(26.dp), color = Pine, strokeWidth = 2.5.dp)
-            else Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                repeat(4) { i -> Box(Modifier.size(16.dp).clip(CircleShape).background(if (i < pin.length) Pine else Line)) }
+/** Lock and title centred in the open space, keypad at the bottom in thumb reach. */
+@Composable private fun PinScreen(title: String, subtitle: String, onBack: (() -> Unit)?, pin: String, busy: Boolean, onChange: (String) -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)) {
+            onBack?.let { IconButton(it, Modifier.offset(x = (-12).dp)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Ink) } }
+        }
+        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(60.dp).clip(CircleShape).background(PineSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Lock, null, tint = Pine, modifier = Modifier.size(26.dp)) }
+            Text(title, color = Ink, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold, fontSize = 25.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
+            Text(subtitle, color = Muted, fontSize = 15.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
+            Box(Modifier.height(52.dp).padding(top = 20.dp), contentAlignment = Alignment.Center) {
+                if (busy) CircularProgressIndicator(Modifier.size(24.dp), color = Pine, strokeWidth = 2.5.dp)
+                else Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    repeat(4) { i -> Box(Modifier.size(14.dp).clip(CircleShape).background(if (i < pin.length) Pine else Line)) }
+                }
             }
         }
         listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "del")).forEach { row ->
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { key ->
-                    val keyBox = Modifier.weight(1f).height(62.dp)
+                    val keyBox = Modifier.weight(1f).height(66.dp)
                     if (key.isEmpty()) Spacer(keyBox) else Box(
                         keyBox.clip(RoundedCornerShape(18.dp)).background(if (key == "del") Color.Transparent else Sheet)
                             .border(1.dp, if (key == "del") Color.Transparent else Line, RoundedCornerShape(18.dp))
                             .clickable(enabled = !busy) { if (key == "del") onChange(pin.dropLast(1)) else if (pin.length < 4) onChange(pin + key) },
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (key == "del") Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Delete", tint = Muted, modifier = Modifier.size(30.dp))
+                        if (key == "del") Icon(Icons.Filled.Clear, "Delete", tint = Muted, modifier = Modifier.size(24.dp))
                         else Text(key, color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
         }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -648,23 +682,20 @@ private fun statusLabel(status: String) = when (status) {
     var first by remember { mutableStateOf<String?>(null) }
     var pin by remember { mutableStateOf("") }
     val run = rememberRunner(state)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Header(if (first == null) "Choose your PIN" else "Enter it once more", "4 digits, private to you. You'll use it to switch to your account on this phone.")
-        PinPad(pin, run.busy) { typed ->
-            pin = typed
-            if (typed.length < 4) return@PinPad
-            val chosen = first
-            when {
-                chosen == null -> { first = typed; pin = "" }
-                chosen != typed -> { first = null; pin = ""; state.error = "Those didn't match. Please choose your PIN again." }
-                else -> run.run {
-                    val r = state.api.post("pin/set", JSONObject().put("new_pin", typed))
-                    if (r.optBoolean("ok")) {
-                        state.profile?.put("has_pin", true)?.let { state.store.cache("me", it.toString()) }
-                        state.needsPin = false
-                        state.toast = "PIN saved"
-                    } else { first = null; pin = ""; state.error = "Couldn't save your PIN. Please try again." }
-                }
+    PinScreen(if (first == null) "Choose your PIN" else "Enter it once more", "4 digits, private to you", null, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length < 4) return@PinScreen
+        val chosen = first
+        when {
+            chosen == null -> { first = typed; pin = "" }
+            chosen != typed -> { first = null; pin = ""; state.error = "Those didn't match. Please choose your PIN again." }
+            else -> run.run {
+                val r = state.api.post("pin/set", JSONObject().put("new_pin", typed))
+                if (r.optBoolean("ok")) {
+                    state.profile?.put("has_pin", true)?.let { state.store.cache("me", it.toString()) }
+                    state.needsPin = false
+                    state.toast = "PIN saved"
+                } else { first = null; pin = ""; state.error = "Couldn't save your PIN. Please try again." }
             }
         }
     }
@@ -682,30 +713,27 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     val previous = remember { state.store.activeId }
     var pin by remember { mutableStateOf("") }
     val run = rememberRunner(state)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Header("Switch to ${target.name}", "Enter ${target.name}'s PIN", { state.switchTo = null })
-        PinPad(pin, run.busy) { typed ->
-            pin = typed
-            if (typed.length == 4) run.run {
-                state.store.activeId = target.id
-                try {
-                    val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
-                    if (r.optBoolean("ok")) {
-                        state.api.osUnlock = null
-                        state.profile = null
-                        state.boot = null
-                        state.switchTo = null
-                        state.screen = Screen.Home
-                    } else {
-                        state.store.activeId = previous
-                        pin = ""
-                        state.error = pinError(r)
-                    }
-                } catch (e: ApiException) {
+    PinScreen("Switch to ${target.name}", "Enter ${target.name}'s PIN", { state.switchTo = null }, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length == 4) run.run {
+            state.store.activeId = target.id
+            try {
+                val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
+                if (r.optBoolean("ok")) {
+                    state.api.osUnlock = null
+                    state.profile = null
+                    state.boot = null
+                    state.switchTo = null
+                    state.screen = Screen.Home
+                } else {
                     state.store.activeId = previous
                     pin = ""
-                    throw e
+                    state.error = pinError(r)
                 }
+            } catch (e: ApiException) {
+                state.store.activeId = previous
+                pin = ""
+                throw e
             }
         }
     }
@@ -750,6 +778,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     var failed by remember { mutableStateOf(false) }
     var again by remember { mutableIntStateOf(0) }
     var q by remember { mutableStateOf("") }
+    val opensItself = remember(state.refresh) { Settings.canDrawOverlays(ctx) }
     val listening = remember(state.refresh) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
 
     LaunchedEffect(view, state.refresh, owner, again) {
@@ -786,13 +815,17 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 Text("New WhatsApp messages won't reach you", color = Clay, fontWeight = FontWeight.Medium)
                 Text("Tap to finish phone setup", color = Muted, fontSize = 14.sp)
             }
-            Tabs(listOf("due" to "Needs action", "open" to "All open", "calls" to "Missed calls"), view) { state.leadsView = it }
+            else if (!opensItself) Sheet(onClick = { state.screen = Screen.Setup }) {
+                Text("The lead form can't open by itself after calls", color = Honey, fontWeight = FontWeight.Medium)
+                Text("Tap to allow it in phone setup", color = Muted, fontSize = 14.sp)
+            }
+            Tabs(listOf("due" to "Needs action", "open" to "All open", "calls" to "Missed"), view, mapOf("calls" to state.missed.orEmpty().size)) { state.leadsView = it }
             Box(Modifier.fillMaxWidth().height(2.dp)) { if (loading && leads != null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Pine, trackColor = Color.Transparent) }
             if (calls || !leads.isNullOrEmpty()) Field("Search name or number", q) { q = it }
             val list = leads?.filter { q.isBlank() || matches(q, it.str("full_name"), it.str("phone")) }
-            PullToRefreshBox(loading, { again++ }, Modifier.fillMaxSize()) {
+            PullToRefreshBox(loading, { again++; if (calls) state.refresh++ }, Modifier.fillMaxSize()) {
                 when {
-                    calls -> MissedCallsList(state, q, again)
+                    calls -> MissedCallsList(state, q)
                     list == null && failed -> Empty(Icons.Filled.Warning, "Couldn't load leads", "Check the internet and try again.", "Try again") { again++ }
                     list == null -> Placeholder()
                     list.isEmpty() && q.isNotBlank() -> Empty(Icons.Filled.Person, "No one matches that")
@@ -807,23 +840,10 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     }
 }
 
-@Composable private fun MissedCallsList(state: AppState, q: String, again: Int) {
+@Composable private fun MissedCallsList(state: AppState, q: String) {
     val ctx = LocalContext.current
-    var calls by remember { mutableStateOf<List<MissedCall>?>(null) }
-    var hidden by remember { mutableIntStateOf(0) }
     val allowed = ctx.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
-    LaunchedEffect(state.refresh, again, hidden, allowed) {
-        if (!allowed) return@LaunchedEffect
-        val all = withContext(Dispatchers.IO) { runCatching { missedCalls(ctx, state.store) }.getOrDefault(emptyList()) }
-        if (calls == null) calls = all // Show them now; the server check below only trims the list.
-        calls = runCatching {
-            val phones = JSONArray(all.take(50).map { it.phone })
-            val known = state.api.post("leads/known", JSONObject().put("phones", phones)).getJSONArray("known")
-            val tens = List(known.length()) { known.getString(it) }.toSet()
-            all.filter { it.phone.takeLast(10) !in tens }
-        }.getOrDefault(all)
-    }
-    val list = calls?.filter { q.isBlank() || matches(q, it.phone) }
+    val list = state.missed?.filter { q.isBlank() || matches(q, it.phone) }
     when {
         !allowed -> Empty(Icons.Filled.Phone, "Calls aren't allowed yet", "Allow call access in Phone setup.", "Open Phone setup") { state.screen = Screen.Setup }
         list == null -> Placeholder()
@@ -851,7 +871,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                             state.store.decline(m.phone)
                             ctx.getSystemService(NotificationManager::class.java).cancel(m.phone.hashCode())
                             state.toast = "OK. We won't ask about this number again."
-                            hidden++
+                            state.missed = state.missed?.filter { it.phone != m.phone }
                         }) { Text("Not a lead", color = Clay) }
                     }
                 }
@@ -909,6 +929,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
                 val r = state.api.post("leads", JSONObject().put("full_name", name.trim()).put("phone", normalise(phone)).put("reason", reason).put("source", s.source)
                     .apply { if (fromCall) put("notes", "From a phone call") else if (s.text.isNotEmpty()) put("notes", "First message: ${s.text}") })
                 s.notif?.let { ctx.getSystemService(NotificationManager::class.java).cancel(it) }
+                state.missed = state.missed?.filter { it.phone != normalise(phone) }
                 if (r.optBoolean("duplicate")) state.toast = "This number already has a lead. Opening it." else state.toast = "Lead saved"
                 state.screen = Screen.Lead(r.getJSONObject("lead"))
             }
@@ -916,6 +937,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
         s.notif?.let { id ->
             Secondary("Not a lead", Clay, enabled = !run.busy) {
                 s.key.ifEmpty { normalise(phone) }.takeIf { it.isNotEmpty() }?.let(state.store::decline)
+                state.missed = state.missed?.filter { it.phone != normalise(phone) }
                 ctx.getSystemService(NotificationManager::class.java).cancel(id)
                 state.toast = "OK. We won't ask about this number again."
                 state.screen = Screen.Home
@@ -1106,16 +1128,13 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
 @Composable private fun OsPin(state: AppState, title: String, onBack: (() -> Unit)? = null) {
     val run = rememberRunner(state)
     var pin by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Header(title, "Enter your PIN to open", onBack)
-        PinPad(pin, run.busy) { typed ->
-            pin = typed
-            if (typed.length == 4) run.run {
-                try {
-                    val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
-                    if (r.optBoolean("ok")) state.api.osUnlock = r.getString("token") else state.error = pinError(r)
-                } finally { pin = "" }
-            }
+    PinScreen(title, "Enter your PIN to open", onBack, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length == 4) run.run {
+            try {
+                val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
+                if (r.optBoolean("ok")) state.api.osUnlock = r.getString("token") else state.error = pinError(r)
+            } finally { pin = "" }
         }
     }
 }

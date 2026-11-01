@@ -118,7 +118,7 @@ class CallReceiver : BroadcastReceiver() {
         }
     }
 
-    /** The answered and the ended call both land here. The throttle lets only the first one ask. */
+    /** The answered and the ended call both land here. The key lets one call ask only once. */
     private suspend fun ask(ctx: Context, store: Store, ring: Ring, rangFor: Long, text: String) {
         val kind = callKind(ring.number)
         if (kind == CallKind.IGNORE || store.active() == null) return
@@ -128,7 +128,7 @@ class CallReceiver : BroadcastReceiver() {
         if (found?.optBoolean("known_customer") == true) return
         val lead = found?.optJSONObject("lead")
         if (lead != null && lead.optString("status") != "lost") return
-        if (!store.throttle("c_$phone", SIX_HOURS)) return
+        if (!store.throttle("c_${phone}_${ring.at}", SIX_HOURS)) return
         val flash = !ring.answered && rangFor < FLASH_CALL_MS
         showLeadPrompt(ctx, "", phone, text, phone, phone.hashCode(), SOURCE_CALL, autoOpen = kind == CallKind.OPEN && !flash)
     }
