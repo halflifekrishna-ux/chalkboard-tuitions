@@ -6,6 +6,7 @@ import { followUpDays, isExhausted, lastTen, nextActionFields, nextAfterSend } f
 import { capabilitiesFor } from "@/lib/os/permissions";
 import { routeNewLead, OPEN_STATUSES } from "@/lib/os/leads";
 import { saveAttendance } from "@/lib/os/attendance-save";
+import { archiveClassRecord, saveClassRecord } from "@/lib/os/class-save";
 import { createStudentRecord } from "@/lib/os/students";
 import { studentSchema } from "@/app/admin/(portal)/students/schema";
 import { TEMPLATES, type TemplateKey } from "@/lib/os/whatsapp";
@@ -191,6 +192,11 @@ const POST: Record<string, Handler> = {
     return { subject: data };
   },
 
+  "os/manage-classes": async (req) => {
+    const { db, staff } = await requireOsUnlock(req, "batches.manage");
+    return classResult(await saveClassRecord(db, staff, null, await req.json().catch(() => null)));
+  },
+
   "os/attendance": async (req) => {
     const { db, staff } = await requireOsUnlock(req, "attendance.mark");
     return saveAttendance(db, staff, await req.json().catch(() => null));
@@ -303,6 +309,29 @@ const GET: Record<string, Handler> = {
     return { holiday: holiday?.name ?? null, classes: (data ?? []).map((c) => ({ ...c, session_status: stateOf.get(c.id) ?? null })) };
   },
 
+  "os/manage-classes": async (req) => {
+    const { db } = await requireOsUnlock(req, "batches.manage");
+    const [{ data, error }, { data: students }, { data: subjects }, { data: year }] = await Promise.all([
+      db.from("batches")
+        .select("id, name, grade, board, days, start_time, end_time, room, notes, capacity, status, session_category, student_id, academic_year_id, batch_students(student_id), batch_subjects(subject_id, deleted_at)")
+        .is("deleted_at", null).order("name"),
+      db.from("students").select("id, full_name, grade").is("deleted_at", null).not("status", "in", "(archived,dropped)").order("full_name"),
+      db.from("subjects").select("id, name").eq("is_active", true).order("name"),
+      db.from("academic_years").select("id").order("is_current", { ascending: false }).order("name", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (error) throw new ApiError(500, "server", "Couldn't load classes.");
+    return {
+      academic_year_id: year?.id ?? null,
+      students: students ?? [],
+      subjects: subjects ?? [],
+      classes: (data ?? []).map(({ batch_students, batch_subjects, ...c }) => ({
+        ...c,
+        student_ids: (batch_students ?? []).map((s) => s.student_id),
+        subject_ids: (batch_subjects ?? []).filter((s) => !s.deleted_at).map((s) => s.subject_id),
+      })),
+    };
+  },
+
   "os/subjects": async (req) => {
     const { db } = await requireOsUnlock(req, "subjects.manage");
     const [{ data, error }, { data: usage }] = await Promise.all([
@@ -404,6 +433,19 @@ async function markQueueSent(req: NextRequest, id: string) {
   return { ok: true };
 }
 
+function classResult(r: { ok: boolean; error?: string; batchId?: string }) {
+  if (!r.ok) throw new ApiError(400, "invalid", r.error ?? "Couldn't save this class.");
+  return { id: r.batchId };
+}
+
+async function archiveClass(req: NextRequest, id: string) {
+  const { db, staff } = await requireOsUnlock(req, "batches.manage");
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Class not found.");
+  const { error } = await archiveClassRecord(db, staff, id);
+  if (error) throw new ApiError(500, "server", "Couldn't remove this class. Please try again.");
+  return { ok: true };
+}
+
 async function patchSubject(req: NextRequest, id: string) {
   const { db } = await requireOsUnlock(req, "subjects.manage");
   if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Subject not found.");
@@ -462,9 +504,15 @@ async function dispatch(req: NextRequest, method: "GET" | "POST" | "PUT" | "PATC
     if (POST[key]) return POST[key](req, []);
     if (path[0] === "leads" && path.length === 3 && LEAD_ACTIONS[path[2]]) return LEAD_ACTIONS[path[2]](req, [path[1]]);
     if (path[0] === "os" && path[1] === "queue" && path.length === 4 && path[3] === "sent") return markQueueSent(req, path[2]);
+    if (path[0] === "os" && path[1] === "manage-classes" && path.length === 4 && path[3] === "archive") return archiveClass(req, path[2]);
   }
   if (method === "PATCH" && path[0] === "leads" && path.length === 2) return patchLead(req, path[1]);
   if (method === "PATCH" && path[0] === "os" && path[1] === "subjects" && path.length === 3) return patchSubject(req, path[2]);
+  if (method === "PATCH" && path[0] === "os" && path[1] === "manage-classes" && path.length === 3) {
+    const { db, staff } = await requireOsUnlock(req, "batches.manage");
+    if (!uuid.safeParse(path[2]).success) throw new ApiError(404, "not_found", "Class not found.");
+    return classResult(await saveClassRecord(db, staff, path[2], await req.json().catch(() => null)));
+  }
   if (method === "PUT" && key === "settings/follow-ups") {
     const { db, staff } = await requireStaff(req, "leads.manage");
     const { days } = await body(req, z.object({ days: z.array(z.number().int().min(1).max(365)).min(1).max(10) }));

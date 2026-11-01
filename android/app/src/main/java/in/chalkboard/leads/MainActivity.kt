@@ -2,6 +2,7 @@ package `in`.chalkboard.leads
 
 import android.Manifest
 import android.app.NotificationManager
+import android.app.TimePickerDialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -156,6 +157,8 @@ private sealed interface Screen {
     data object Attendance : Screen
     data object Students : Screen
     data object Subjects : Screen
+    data object Classes : Screen
+    data class ClassForm(val cls: JSONObject?, val options: JSONObject) : Screen
     data object FullOs : Screen
     data class Roster(val classId: String, val date: String) : Screen
     data object AddStudent : Screen
@@ -193,6 +196,7 @@ private class AppState(val store: Store, val api: Api) {
         screen = when (screen) {
             is Screen.Roster, Screen.Queue -> Screen.Attendance
             Screen.AddStudent -> Screen.Students
+            Screen.Subjects, is Screen.ClassForm -> Screen.Classes
             Screen.FullOs, Screen.Setup, Screen.Accounts -> Screen.Settings
             else -> Screen.Home
         }
@@ -312,6 +316,8 @@ private fun App(promptIntent: State<Intent?>) {
                         Screen.Attendance -> AttendanceScreen(state)
                         Screen.Students -> StudentsScreen(state)
                         Screen.Subjects -> SubjectsScreen(state)
+                        Screen.Classes -> ClassesScreen(state)
+                        is Screen.ClassForm -> ClassFormScreen(state, s)
                         Screen.FullOs -> if (state.api.osUnlock == null) OsPin(state, "Full Chalkboard OS") { state.back() } else FullOsScreen(state)
                         is Screen.Roster -> RosterScreen(state, s)
                         Screen.AddStudent -> AddStudentScreen(state)
@@ -353,7 +359,7 @@ private fun App(promptIntent: State<Intent?>) {
 
 // ── Building blocks ─────────────────────────────────────────────────────────
 
-private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, Screen.Subjects)
+private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, Screen.Classes)
 
 @Composable private fun SectionBar(state: AppState) {
     NavigationBar(containerColor = Sheet, tonalElevation = 0.dp, windowInsets = WindowInsets(0)) {
@@ -361,7 +367,7 @@ private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, S
             Triple(Screen.Home, "Leads", Icons.Filled.Email),
             Triple(Screen.Attendance, "Attendance", Icons.Filled.CheckCircle),
             Triple(Screen.Students, "Students", Icons.Filled.Face),
-            Triple(Screen.Subjects, "Subjects", Icons.AutoMirrored.Filled.List),
+            Triple(Screen.Classes, "Classes", Icons.AutoMirrored.Filled.List),
         ).forEach { (screen, label, icon) ->
             NavigationBarItem(
                 state.screen == screen, { state.screen = screen },
@@ -489,6 +495,21 @@ private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(
                     .clickable(enabled = enabled) { onPick(k) }.padding(horizontal = 16.dp, vertical = 10.dp),
             )
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun MultiChips(options: List<Pair<String, String>>, picked: List<String>, enabled: Boolean, onToggle: (String) -> Unit, extra: (@Composable () -> Unit)? = null) {
+    FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.forEach { (k, label) ->
+            val on = k in picked
+            Text(
+                label, color = if (on) Paper else Ink, fontSize = 15.sp,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Pine else Sheet).border(1.dp, if (on) Pine else Line, RoundedCornerShape(50))
+                    .clickable(enabled = enabled) { onToggle(k) }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        extra?.invoke()
     }
 }
 
@@ -1187,7 +1208,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
 }
 
 @Composable private fun SubjectsScreen(state: AppState) {
-    if (state.api.osUnlock == null) return OsPin(state, "Subjects")
+    if (state.api.osUnlock == null) return OsPin(state, "Subjects") { state.back() }
     var subjects by remember { mutableStateOf(state.store.cached("subjects")?.let { JSONArray(it).objects() }) }
     var again by remember { mutableIntStateOf(0) }
     var adding by remember { mutableStateOf(false) }
@@ -1201,7 +1222,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Header("Subjects", "Used in classes and attendance")
+            Header("Subjects", "Used in classes and attendance", { state.back() })
             val list = subjects
             if (list == null) Placeholder(4) else {
                 list.filter { it.optBoolean("is_active") }.forEach { SubjectRow(it) { editing = it } }
@@ -1227,6 +1248,163 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
             again++
         }
     }
+}
+
+private val DAYS = listOf("mon" to "Mon", "tue" to "Tue", "wed" to "Wed", "thu" to "Thu", "fri" to "Fri", "sat" to "Sat", "sun" to "Sun")
+private fun JSONArray?.strings() = if (this == null) emptyList() else List(length()) { getString(it) }
+
+@Composable private fun ClassesScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Classes")
+    var data by remember { mutableStateOf(state.store.cached("classes")?.let(::JSONObject)) }
+    LaunchedEffect(state.refresh) {
+        try {
+            val r = state.api.get("os/manage-classes")
+            state.store.cache("classes", r.toString())
+            data = r
+        } catch (e: ApiException) { state.error = e.message }
+    }
+    val d = data
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Header("Classes", "Add, change or remove classes")
+            Row2("Subjects", "Add or edit the subjects classes can use", Icons.AutoMirrored.Filled.List) { state.screen = Screen.Subjects }
+            Spacer(Modifier.height(6.dp))
+            if (d == null) Placeholder(3) else d.getJSONArray("classes").objects().forEach { c ->
+                val days = c.optJSONArray("days").strings()
+                val dayText = if (days.toSet() == setOf("mon", "tue", "wed", "thu", "fri")) "Mon to Fri" else DAYS.filter { it.first in days }.joinToString(", ") { it.second }
+                val individual = c.str("session_category") == "individual_attention"
+                val count = c.optJSONArray("student_ids")?.length() ?: 0
+                Sheet(onClick = { state.screen = Screen.ClassForm(c, d) }) {
+                    Text(c.str("name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(listOf(dayText, c.str("start_time").take(5) + "–" + c.str("end_time").take(5)).joinToString(" · "), color = Muted, fontSize = 14.sp)
+                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Pill(if (individual) "Individual Attention" else if (count == 1) "1 student" else "$count students", PineSoft, Pine)
+                        if (c.str("status") != "active") Pill("Paused", HoneySoft, Honey)
+                    }
+                }
+            }
+            Spacer(Modifier.height(96.dp))
+        }
+        if (d != null) AddButton("Add class", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.ClassForm(null, d) }
+    }
+}
+
+@Composable private fun TimeButton(label: String, value: String, modifier: Modifier, onPick: (String) -> Unit) {
+    val ctx = LocalContext.current
+    OutlinedButton({
+        val parts = value.split(":").mapNotNull { it.toIntOrNull() }
+        TimePickerDialog(ctx, { _, h, m -> onPick("%02d:%02d".format(h, m)) }, parts.getOrElse(0) { 17 }, parts.getOrElse(1) { 0 }, false).show()
+    }, modifier.heightIn(min = 54.dp), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Line)) {
+        Text(if (value.isEmpty()) label else "$label  $value", color = if (value.isEmpty()) Muted else Ink)
+    }
+}
+
+@Composable private fun ClassFormScreen(state: AppState, s: Screen.ClassForm) {
+    val c = s.cls
+    val run = rememberRunner(state)
+    var name by remember { mutableStateOf(c?.str("name").orEmpty()) }
+    var grade by remember { mutableStateOf(c?.str("grade").orEmpty()) }
+    var board by remember { mutableStateOf(c?.str("board")?.takeIf { it.isNotEmpty() }) }
+    var category by remember { mutableStateOf(c?.str("session_category")?.takeIf { it.isNotEmpty() } ?: "combined_class") }
+    var start by remember { mutableStateOf(c?.str("start_time").orEmpty().take(5)) }
+    var end by remember { mutableStateOf(c?.str("end_time").orEmpty().take(5)) }
+    var room by remember { mutableStateOf(c?.str("room").orEmpty()) }
+    var active by remember { mutableStateOf(c == null || c.str("status") == "active") }
+    var individual by remember { mutableStateOf(c?.str("student_id")?.takeIf { it.isNotEmpty() }) }
+    val days = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("days").strings()) } }
+    val roster = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("student_ids").strings()) } }
+    val taught = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("subject_ids").strings()) } }
+    var subjects by remember { mutableStateOf(s.options.getJSONArray("subjects").objects()) }
+    var addingSubject by remember { mutableStateOf(false) }
+    var removing by remember { mutableStateOf(false) }
+    if (state.api.osUnlock == null) return OsPin(state, "Classes") { state.back() }
+    val students = s.options.getJSONArray("students").objects()
+    val isIndividual = category == "individual_attention"
+    val problem = when {
+        name.trim().length < 2 -> "Give this class a name"
+        grade.toIntOrNull() !in 1..12 -> "Enter a grade from 1 to 12"
+        days.isEmpty() -> "Pick at least one day"
+        start.isEmpty() || end.isEmpty() -> "Pick the start and end time"
+        end <= start -> "The end time must be after the start time"
+        isIndividual && individual == null -> "Choose the student this class is for"
+        else -> null
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(if (c == null) "Add a class" else "Edit class", onBack = { state.back() })
+        Field("Class name", name) { name = it }
+        Field("Grade (1-12)", grade, KeyboardType.Number) { grade = it.filter(Char::isDigit).take(2) }
+        Section("Board")
+        Chips(listOf("cbse" to "CBSE", "icse" to "ICSE", "state_board" to "State board"), board, enabled = !run.busy) { board = if (board == it) null else it }
+        Section("Type")
+        Tabs(listOf("combined_class" to "Combined class", "individual_attention" to "Individual"), category) { category = it }
+        Section("Days")
+        MultiChips(DAYS, days, !run.busy, { if (it in days) days.remove(it) else days.add(it) })
+        Section("Time")
+        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TimeButton("Start", start, Modifier.weight(1f)) { start = it }
+            TimeButton("End", end, Modifier.weight(1f)) { end = it }
+        }
+        if (isIndividual) {
+            Section("Student")
+            Chips(students.map { it.getString("id") to it.str("full_name") }, individual, enabled = !run.busy) { individual = it }
+        } else {
+            Section("Students")
+            if (students.isEmpty()) Text("No students yet.", color = Muted, modifier = Modifier.padding(horizontal = 20.dp))
+            MultiChips(students.map { it.getString("id") to it.str("full_name") }, roster, !run.busy, { if (it in roster) roster.remove(it) else roster.add(it) })
+        }
+        Section("Subjects")
+        MultiChips(subjects.map { it.getString("id") to it.str("name") }, taught, !run.busy, { if (it in taught) taught.remove(it) else taught.add(it) }) {
+            Text(
+                "+ New subject", color = Pine, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PineSoft).clickable(enabled = !run.busy) { addingSubject = true }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        Section("More")
+        Field("Room (optional)", room) { room = it }
+        if (c != null) {
+            Spacer(Modifier.height(6.dp))
+            Chips(listOf("active" to "Running", "inactive" to "Paused"), if (active) "active" else "inactive", enabled = !run.busy) { active = it == "active" }
+        }
+        Spacer(Modifier.height(12.dp))
+        problem?.let { Text(it, color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
+        Primary(if (c == null) "Save class" else "Save changes", enabled = problem == null, busy = run.busy) {
+            run.run {
+                // Everything this form doesn't show goes back as it was, so saving can't wipe it.
+                val body = JSONObject().put("name", name.trim()).put("grade", grade.toInt()).put("board", board ?: JSONObject.NULL)
+                    .put("category", category).put("student_id", if (isIndividual) individual else JSONObject.NULL)
+                    .put("days", JSONArray(days.toList())).put("start_time", start).put("end_time", end).put("room", room.trim())
+                    .put("student_ids", JSONArray(roster.toList())).put("subject_ids", JSONArray(taught.toList()))
+                    .put("status", if (active) "active" else "inactive")
+                    .put("capacity", c?.optInt("capacity", 8) ?: 8).put("notes", c?.str("notes").orEmpty())
+                    .put("academic_year_id", c?.str("academic_year_id")?.takeIf { it.isNotEmpty() } ?: s.options.opt("academic_year_id") ?: JSONObject.NULL)
+                if (c == null) state.api.post("os/manage-classes", body) else state.api.patch("os/manage-classes/${c.getString("id")}", body)
+                state.toast = if (c == null) "Class added" else "Class saved"
+                state.screen = Screen.Classes
+            }
+        }
+        if (c != null) Secondary("Remove class", Clay, enabled = !run.busy) { removing = true }
+        Spacer(Modifier.height(16.dp))
+    }
+    if (addingSubject) SubjectDialog(state, null, { addingSubject = false }) { made ->
+        addingSubject = false
+        subjects = (subjects + made).sortedBy { it.str("name") }
+        taught.add(made.getString("id"))
+        state.toast = "Subject added"
+    }
+    if (removing && c != null) AlertDialog(
+        onDismissRequest = { removing = false }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+        title = { Text("Remove ${c.str("name")}?") },
+        text = { Text("It leaves the timetable and attendance. Attendance already marked is kept.", color = Muted) },
+        confirmButton = { TextButton({
+            removing = false
+            run.run {
+                state.api.post("os/manage-classes/${c.getString("id")}/archive")
+                state.toast = "Class removed"
+                state.screen = Screen.Classes
+            }
+        }) { Text("Remove", color = Clay) } },
+        dismissButton = { TextButton({ removing = false }) { Text("Cancel", color = Muted) } },
+    )
 }
 
 @Composable private fun SubjectRow(s: JSONObject, onClick: () -> Unit) {
@@ -1347,7 +1525,6 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable private fun RosterScreen(state: AppState, s: Screen.Roster) {
     val run = rememberRunner(state)
     var data by remember { mutableStateOf<JSONObject?>(null) }
@@ -1381,16 +1558,7 @@ private fun pinError(r: JSONObject) = when (r.optString("error")) {
         Header(batch.str("name"), s.date, { state.back() })
         if (batch.str("start_time").isEmpty()) Text("This class has no time set. Add one in the full OS first.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
         Section("Subjects taught")
-        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            subjects.forEach { sub ->
-                val id = sub.getString("id")
-                val on = id in picked
-                Text(
-                    sub.str("name"), color = if (on) Paper else Ink, fontSize = 15.sp,
-                    modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Pine else Sheet).border(1.dp, if (on) Pine else Line, RoundedCornerShape(50))
-                        .clickable(enabled = !run.busy) { if (on) picked.remove(id) else picked.add(id) }.padding(horizontal = 16.dp, vertical = 10.dp),
-                )
-            }
+        MultiChips(subjects.map { it.getString("id") to it.str("name") }, picked, !run.busy, { if (it in picked) picked.remove(it) else picked.add(it) }) {
             Text(
                 "+ New subject", color = Pine, fontSize = 15.sp, fontWeight = FontWeight.Medium,
                 modifier = Modifier.clip(RoundedCornerShape(50)).background(PineSoft).clickable(enabled = !run.busy) { addingSubject = true }.padding(horizontal = 16.dp, vertical = 10.dp),
