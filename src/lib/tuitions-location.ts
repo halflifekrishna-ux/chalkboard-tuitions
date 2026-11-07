@@ -22,8 +22,12 @@ export const CENTRE = {
   hours: { days: "Monday to Friday", opens: "16:00", closes: "20:00", display: "4–8 PM, Monday to Friday" },
   facebook: "https://www.facebook.com/p/ChalkBoard-Tutions-61556611419426/",
   instagram: "https://www.instagram.com/chalkboard.tuitions/",
-  /** Neighbourhoods families come from — areas served, not locations. */
-  areasServed: ["Kammanahalli", "Kalyan Nagar", "HRBR Layout", "Banaswadi", "St Thomas Town", "Lingarajapuram", "Bengaluru"],
+  /**
+   * Neighbourhoods families come from — areas served, not locations. Read only
+   * by the LocalBusiness JSON-LD. Hennur and Horamavu are in the confirmed
+   * service area (HQ facts registry, tuitions.areas).
+   */
+  areasServed: ["Kammanahalli", "Kalyan Nagar", "HRBR Layout", "Hennur", "Horamavu", "Banaswadi", "St Thomas Town", "Lingarajapuram", "Bengaluru"],
 } as const;
 
 /** "2nd Floor, Pooja Arcade, …, Bengaluru 560084" — the one-line form shown on the site. */
