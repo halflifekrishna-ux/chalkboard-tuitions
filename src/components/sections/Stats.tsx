@@ -10,10 +10,16 @@ const stats = [
 ];
 
 function AnimatedNumber({ value, suffix, inView }: { value: number; suffix: string; inView: boolean }) {
-  const [display, setDisplay] = useState(0);
+  // Start at the real value so the server HTML (what crawlers, link previews
+  // and no-JS visitors read) says "8", not "0". The section sits below the
+  // fold, so resetting to 0 before it scrolls into view isn't seen.
+  const [display, setDisplay] = useState(value);
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView) {
+      setDisplay(0);
+      return;
+    }
     const start = Date.now();
     const duration = 1800;
     const raf = requestAnimationFrame(function tick() {
