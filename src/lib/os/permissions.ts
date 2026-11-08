@@ -59,6 +59,7 @@ export type Capability =
   | "batches.viewAssigned"
   | "attendance.mark"
   | "homework.manage"
+  | "worksheets.upload"
   // Reception
   | "fees.manage"
   | "documents.manage";
@@ -68,7 +69,7 @@ const ALL: Capability[] = [
   "subjects.manage", "batches.manage", "reports.view", "communications.manage",
   "leads.create", "leads.view", "leads.manage", "leads.approve",
   "students.manage", "students.view", "parents.manage",
-  "batches.viewAssigned", "attendance.mark", "homework.manage",
+  "batches.viewAssigned", "attendance.mark", "homework.manage", "worksheets.upload",
   "fees.manage", "documents.manage",
 ];
 
@@ -79,13 +80,13 @@ export const ROLE_CAPABILITIES: Record<Role, Set<Capability>> = {
     "subjects.manage", "batches.manage", "reports.view", "communications.manage",
     "leads.create", "leads.view", "leads.manage",
     "students.manage", "students.view", "parents.manage",
-    "attendance.mark", "homework.manage", "documents.manage",
+    "attendance.mark", "homework.manage", "worksheets.upload", "documents.manage",
   ]),
   // Learning Studio business development — studio leads once approved, nothing
   // from the tuitions side.
   bd: new Set<Capability>(["leads.create", "leads.view", "leads.manage"]),
   teacher: new Set<Capability>([
-    "batches.viewAssigned", "attendance.mark", "homework.manage", "students.view",
+    "batches.viewAssigned", "attendance.mark", "homework.manage", "worksheets.upload", "students.view",
   ]),
   reception: new Set<Capability>([
     "students.manage", "students.view", "parents.manage", "fees.manage", "documents.manage",
