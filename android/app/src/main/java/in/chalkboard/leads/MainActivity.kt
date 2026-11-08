@@ -1,0 +1,1702 @@
+package `in`.chalkboard.leads
+
+import android.Manifest
+import android.app.NotificationManager
+import android.app.TimePickerDialog
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
+import android.service.notification.NotificationListenerService
+import android.webkit.CookieManager
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private const val OS_HOST = "www.chalkboardlearning.in"
+private val IST = ZoneId.of("Asia/Kolkata")
+
+private val Paper = Color(0xFFF7F4EE)
+private val Sheet = Color(0xFFFFFFFF)
+private val Ink = Color(0xFF1F2A26)
+private val Muted = Color(0xFF68736D)
+private val Line = Color(0xFFE7E2D8)
+private val Pine = Color(0xFF1F4D3A)
+private val PineSoft = Color(0xFFE3EEE8)
+private val Honey = Color(0xFF8A6414)
+private val HoneySoft = Color(0xFFF6ECD3)
+private val Clay = Color(0xFFA6472F)
+private val ClaySoft = Color(0xFFF8E6E0)
+
+private fun JSONArray.objects() = List(length()) { getJSONObject(it) }
+private fun JSONObject.str(k: String) = if (isNull(k)) "" else optString(k)
+
+class MainActivity : ComponentActivity() {
+    private val promptIntent = mutableStateOf<Intent?>(null)
+    private val askContacts = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        channels(this)
+        ReminderWorker.schedule(this)
+        promptIntent.value = intent
+        val perms = mutableListOf(Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
+        if (Build.VERSION.SDK_INT >= 33) perms.add(Manifest.permission.POST_NOTIFICATIONS)
+        askContacts.launch(perms.toTypedArray())
+        setContent {
+            MaterialTheme(colorScheme = lightColorScheme(
+                primary = Pine, onPrimary = Paper, secondary = Pine, background = Paper, surface = Sheet, surfaceContainerHigh = Sheet,
+                onSurface = Ink, onBackground = Ink, onSurfaceVariant = Muted, outline = Line, primaryContainer = PineSoft, onPrimaryContainer = Pine,
+            )) {
+                Surface(Modifier.fillMaxSize(), color = Paper) { App(promptIntent) }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        promptIntent.value = intent
+    }
+}
+
+private sealed interface Screen {
+    data object Home : Screen
+    data class NewLead(val name: String, val phone: String, val text: String, val notif: Int? = null, val key: String = "", val source: String = SOURCE_WHATSAPP) : Screen
+    data class Lead(val lead: JSONObject) : Screen
+    data object Settings : Screen
+    data object Setup : Screen
+    data object Accounts : Screen
+    data object Attendance : Screen
+    data object Students : Screen
+    data object Subjects : Screen
+    data object Classes : Screen
+    data class ClassForm(val cls: JSONObject?, val options: JSONObject) : Screen
+    data object FullOs : Screen
+    data class Roster(val classId: String, val date: String) : Screen
+    data object AddStudent : Screen
+    data object Queue : Screen
+}
+
+/** What gets recorded once staff come back from WhatsApp and confirm they sent it. */
+private class PendingSend(val label: String, val onSent: suspend () -> Unit)
+
+private class AppState(val store: Store, val api: Api) {
+    var screen by mutableStateOf<Screen>(Screen.Home)
+    var profile by mutableStateOf<JSONObject?>(null)
+    var boot by mutableStateOf<JSONObject?>(null)
+    var error by mutableStateOf<String?>(null)
+    var toast by mutableStateOf<String?>(null)
+    var signedIn by mutableStateOf(store.active() != null)
+    var needsPin by mutableStateOf(false)
+    var loadFailed by mutableStateOf(false)
+    var loadAttempt by mutableIntStateOf(0)
+    var switchTo by mutableStateOf<Account?>(null)
+    var addingAccount by mutableStateOf(false)
+    var pending by mutableStateOf<PendingSend?>(null)
+    var refresh by mutableIntStateOf(0)
+    var saving by mutableStateOf(false)
+    var dueCount by mutableIntStateOf(0)
+    var leadsView by mutableStateOf("due")
+    var missed by mutableStateOf<List<MissedCall>?>(null)
+    var osPage: WebView? = null
+
+    fun back() {
+        if (saving) return
+        if (screen == Screen.FullOs && osPage?.canGoBack() == true) {
+            osPage?.goBack()
+            return
+        }
+        screen = when (screen) {
+            is Screen.Roster, Screen.Queue -> Screen.Attendance
+            Screen.AddStudent -> Screen.Students
+            Screen.Subjects, is Screen.ClassForm -> Screen.Classes
+            Screen.FullOs, Screen.Setup, Screen.Accounts -> Screen.Settings
+            else -> Screen.Home
+        }
+    }
+}
+
+/**
+ * Runs one server action at a time. Taps while it's running do nothing and Back
+ * waits for it, so a slow connection can't turn into a second lead.
+ */
+@Stable
+private class Runner(private val state: AppState, private val scope: CoroutineScope) {
+    var busy by mutableStateOf(false)
+        private set
+
+    fun run(block: suspend () -> Unit) {
+        if (busy) return
+        busy = true
+        state.saving = true
+        scope.launch {
+            try { block() } catch (e: ApiException) { state.error = e.message } finally {
+                busy = false
+                state.saving = false
+            }
+        }
+    }
+}
+
+@Composable private fun rememberRunner(state: AppState): Runner {
+    val scope = rememberCoroutineScope()
+    return remember { Runner(state, scope) }
+}
+
+/** New numbers that called. Everywhere reads this one list, so the counts always agree. */
+private suspend fun loadMissed(ctx: Context, state: AppState) {
+    if (ctx.checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+        state.missed = emptyList()
+        return
+    }
+    val all = withContext(Dispatchers.IO) { runCatching { missedCalls(ctx, state.store) }.getOrDefault(emptyList()) }
+    if (state.missed == null) state.missed = all // Show them now; the server check only trims the list.
+    state.missed = runCatching {
+        val known = state.api.post("leads/known", JSONObject().put("phones", JSONArray(all.take(50).map { it.phone }))).getJSONArray("known")
+        val tens = List(known.length()) { known.getString(it) }.toSet()
+        all.filter { it.phone.takeLast(10) !in tens }
+    }.getOrDefault(all)
+}
+
+@Composable
+private fun App(promptIntent: State<Intent?>) {
+    val ctx = LocalContext.current
+    val state = remember { Store(ctx).let { AppState(it, Api(it)) } }
+    val scope = rememberCoroutineScope()
+    var askSent by remember { mutableStateOf(false) }
+
+    suspend fun loadProfile() {
+        state.loadFailed = false
+        state.store.cached("me")?.let { me ->
+            val p = JSONObject(me)
+            state.profile = p
+            state.needsPin = !p.getBoolean("has_pin")
+        }
+        state.store.cached("boot")?.let { state.boot = JSONObject(it) }
+        try {
+            coroutineScope {
+                val me = async { state.api.get("me").getJSONObject("profile") }
+                val boot = async { state.api.get("bootstrap") }
+                val p = me.await()
+                state.store.cache("me", p.toString())
+                state.profile = p
+                state.needsPin = !p.getBoolean("has_pin")
+                val b = boot.await()
+                state.store.cache("boot", b.toString())
+                state.boot = b
+            }
+        } catch (e: ApiException) {
+            if (e.status == 401 || e.status == 403) {
+                state.store.activeId?.let(state.store::removeAccount)
+                state.profile = null
+                state.signedIn = state.store.active() != null
+                state.error = e.message
+            } else if (state.profile == null) {
+                state.loadFailed = true
+            }
+        }
+    }
+
+    LaunchedEffect(state.signedIn, state.store.activeId, state.loadAttempt) { if (state.signedIn) loadProfile() }
+
+    LaunchedEffect(promptIntent.value, state.signedIn) {
+        val i = promptIntent.value ?: return@LaunchedEffect
+        if (!state.signedIn) return@LaunchedEffect
+        if (i.hasExtra(EXTRA_PROMPT_NOTIF)) {
+            // Opening by itself must not throw away work in progress. The prompt stays in the tray.
+            val midWork = state.screen is Screen.NewLead || state.screen is Screen.Roster || state.screen == Screen.AddStudent || state.saving
+            if (i.getBooleanExtra(EXTRA_PROMPT_AUTO, false) && midWork) {
+                state.toast = "New call to check. It's in your notifications."
+            } else {
+                state.screen = Screen.NewLead(i.getStringExtra(EXTRA_PROMPT_NAME).orEmpty(), i.getStringExtra(EXTRA_PROMPT_PHONE).orEmpty(),
+                    i.getStringExtra(EXTRA_PROMPT_TEXT).orEmpty(), i.getIntExtra(EXTRA_PROMPT_NOTIF, 0),
+                    i.getStringExtra(EXTRA_PROMPT_KEY).orEmpty(), i.getStringExtra(EXTRA_PROMPT_SOURCE) ?: SOURCE_WHATSAPP)
+            }
+            i.removeExtra(EXTRA_PROMPT_NOTIF)
+        } else if (i.getBooleanExtra(EXTRA_OPEN_DUE, false)) {
+            state.screen = Screen.Home
+            i.removeExtra(EXTRA_OPEN_DUE)
+        }
+    }
+
+    LaunchedEffect(state.refresh, state.signedIn, state.store.activeId) { if (state.signedIn) loadMissed(ctx, state) }
+
+    LifecycleResumeEffect(Unit) {
+        if (state.pending != null) askSent = true
+        state.refresh++
+        onPauseOrDispose {}
+    }
+
+    Box(Modifier.fillMaxSize().background(Paper).systemBarsPadding().imePadding()) {
+        when {
+            !state.signedIn || state.addingAccount -> LoginScreen(state)
+            state.switchTo != null -> SwitchScreen(state)
+            state.profile == null && state.loadFailed -> Empty(Icons.Filled.Warning, "Couldn't connect", "Check the internet and try again.", "Try again") { state.loadAttempt++ }
+            state.profile == null -> Loading()
+            state.needsPin -> PinSetScreen(state)
+            else -> Column(Modifier.fillMaxSize()) {
+                Crossfade(state.screen, Modifier.weight(1f), animationSpec = tween(160), label = "screen") { s ->
+                    when (s) {
+                        Screen.Home -> HomeScreen(state)
+                        is Screen.NewLead -> NewLeadScreen(state, s)
+                        is Screen.Lead -> LeadScreen(state, s.lead)
+                        Screen.Settings -> SettingsScreen(state)
+                        Screen.Setup -> SetupScreen(state)
+                        Screen.Accounts -> AccountsScreen(state)
+                        Screen.Attendance -> AttendanceScreen(state)
+                        Screen.Students -> StudentsScreen(state)
+                        Screen.Subjects -> SubjectsScreen(state)
+                        Screen.Classes -> ClassesScreen(state)
+                        is Screen.ClassForm -> ClassFormScreen(state, s)
+                        Screen.FullOs -> if (state.api.osUnlock == null) OsPin(state, "Full Chalkboard OS") { state.back() } else FullOsScreen(state)
+                        is Screen.Roster -> RosterScreen(state, s)
+                        Screen.AddStudent -> AddStudentScreen(state)
+                        Screen.Queue -> QueueScreen(state)
+                    }
+                }
+                if (state.profile?.optBoolean("os_access") == true && state.screen in SECTIONS) SectionBar(state)
+            }
+        }
+        Column(Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
+            Notice(state.error, ClaySoft, Clay, Icons.Filled.Warning, 7000) { state.error = null }
+            Notice(state.toast, Pine, Paper, Icons.Filled.Check, 2500) { state.toast = null }
+        }
+    }
+
+    if (state.screen != Screen.Home && state.signedIn) BackHandler { state.back() }
+
+    val pending = state.pending
+    if (askSent && pending != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            containerColor = Sheet,
+            shape = RoundedCornerShape(24.dp),
+            title = { Text("Did you send it?") },
+            text = { Text(pending.label, color = Muted) },
+            confirmButton = {
+                TextButton(onClick = {
+                    askSent = false
+                    state.pending = null
+                    scope.launch {
+                        try { pending.onSent(); state.refresh++; state.toast = "Noted" } catch (e: ApiException) { state.error = e.message }
+                    }
+                }) { Text("Yes, sent") }
+            },
+            dismissButton = { TextButton(onClick = { askSent = false; state.pending = null }) { Text("Not sent", color = Muted) } },
+        )
+    }
+}
+
+// ── Building blocks ─────────────────────────────────────────────────────────
+
+private val SECTIONS = listOf(Screen.Home, Screen.Attendance, Screen.Students, Screen.Classes)
+
+@Composable private fun SectionBar(state: AppState) {
+    NavigationBar(containerColor = Sheet, tonalElevation = 0.dp, windowInsets = WindowInsets(0)) {
+        listOf(
+            Triple(Screen.Home, "Leads", Icons.Filled.Email),
+            Triple(Screen.Attendance, "Attendance", Icons.Filled.CheckCircle),
+            Triple(Screen.Students, "Students", Icons.Filled.Face),
+            Triple(Screen.Classes, "Classes", Icons.AutoMirrored.Filled.List),
+        ).forEach { (screen, label, icon) ->
+            NavigationBarItem(
+                state.screen == screen, { state.screen = screen },
+                icon = {
+                    val waiting = state.dueCount + state.missed.orEmpty().size
+                    if (screen == Screen.Home && waiting > 0) BadgedBox({ Badge(containerColor = Clay, contentColor = Paper) { Text(waiting.toString()) } }) { Icon(icon, null) }
+                    else Icon(icon, null)
+                },
+                label = { Text(label, fontSize = 12.sp) },
+                colors = NavigationBarItemDefaults.colors(selectedIconColor = Pine, selectedTextColor = Pine, indicatorColor = PineSoft, unselectedIconColor = Muted, unselectedTextColor = Muted),
+            )
+        }
+    }
+}
+
+@Composable private fun AddButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    ExtendedFloatingActionButton(onClick, modifier.padding(20.dp), containerColor = Pine, contentColor = Paper, shape = RoundedCornerShape(18.dp)) {
+        Icon(Icons.Filled.Add, null)
+        Spacer(Modifier.width(8.dp))
+        Text(text, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+private fun matches(q: String, vararg fields: String?): Boolean {
+    val needle = q.trim().lowercase()
+    val digits = needle.filter(Char::isDigit)
+    return fields.any { f ->
+        f != null && (f.lowercase().contains(needle) || (digits.length >= 3 && f.filter(Char::isDigit).contains(digits)))
+    }
+}
+
+private fun dial(ctx: Context, phone: String) = runCatching { ctx.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:+" + normalise(phone)))) }
+
+@Composable private fun Notice(message: String?, bg: Color, fg: Color, icon: ImageVector, ms: Long, onClear: () -> Unit) {
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(ms)
+            onClear()
+        }
+    }
+    AnimatedVisibility(message != null) {
+        Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).background(bg).clickable(onClick = onClear).padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(icon, null, tint = fg, modifier = Modifier.size(20.dp))
+            Text(message.orEmpty(), color = fg, fontSize = 15.sp)
+        }
+    }
+}
+
+@Composable private fun Header(title: String, subtitle: String? = null, onBack: (() -> Unit)? = null, trailing: (@Composable () -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth().padding(start = if (onBack != null) 8.dp else 20.dp, end = 12.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        onBack?.let { IconButton(it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Ink) } }
+        Column(Modifier.weight(1f).padding(start = if (onBack != null) 4.dp else 0.dp)) {
+            Text(title, color = Ink, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold, fontSize = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            subtitle?.let { Text(it, color = Muted, fontSize = 14.sp) }
+        }
+        trailing?.invoke()
+    }
+}
+
+@Composable private fun Section(text: String) {
+    Text(text, color = Muted, fontWeight = FontWeight.Medium, fontSize = 13.sp, letterSpacing = .4.sp, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp))
+}
+
+@Composable private fun Sheet(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+    Surface(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), color = Sheet, shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, Line)) {
+        Column((if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(16.dp), content = content)
+    }
+}
+
+@Composable private fun Primary(text: String, enabled: Boolean = true, busy: Boolean = false, busyText: String = "Saving…", onClick: () -> Unit) {
+    Button(
+        onClick, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).heightIn(min = 54.dp), enabled = enabled && !busy,
+        shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(disabledContainerColor = if (busy) Pine else Line, disabledContentColor = if (busy) Paper else Muted),
+    ) {
+        if (busy) {
+            CircularProgressIndicator(Modifier.size(18.dp), color = Paper, strokeWidth = 2.dp)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(if (busy) busyText else text, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+    }
+}
+
+@Composable private fun Secondary(text: String, color: Color = Pine, enabled: Boolean = true, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).heightIn(min = 50.dp), enabled = enabled,
+        shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Line),
+    ) { Text(text, color = color, fontWeight = FontWeight.Medium, fontSize = 15.sp) }
+}
+
+@Composable private fun Row2(title: String, subtitle: String? = null, icon: ImageVector? = null, onClick: () -> Unit) {
+    Sheet(onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            icon?.let {
+                Box(Modifier.size(38.dp).clip(CircleShape).background(PineSoft), contentAlignment = Alignment.Center) { Icon(it, null, tint = Pine, modifier = Modifier.size(20.dp)) }
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, color = Ink, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                subtitle?.let { Text(it, color = Muted, fontSize = 14.sp) }
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Muted)
+        }
+    }
+}
+
+@Composable private fun Field(label: String, value: String, keyboard: KeyboardType = KeyboardType.Text, secret: Boolean = false, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value, onChange, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), label = { Text(label) },
+        shape = RoundedCornerShape(16.dp), keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Sheet, unfocusedContainerColor = Sheet, unfocusedBorderColor = Line),
+        visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun Chips(options: List<Pair<String, String>>, selected: String?, enabled: Boolean = true, onPick: (String) -> Unit) {
+    FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.forEach { (k, label) ->
+            val on = selected == k
+            Text(
+                label, color = if (on) Paper else Ink, fontSize = 15.sp,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Pine else Sheet).border(1.dp, if (on) Pine else Line, RoundedCornerShape(50))
+                    .clickable(enabled = enabled) { onPick(k) }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun MultiChips(options: List<Pair<String, String>>, picked: List<String>, enabled: Boolean, onToggle: (String) -> Unit, extra: (@Composable () -> Unit)? = null) {
+    FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.forEach { (k, label) ->
+            val on = k in picked
+            Text(
+                label, color = if (on) Paper else Ink, fontSize = 15.sp,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Pine else Sheet).border(1.dp, if (on) Pine else Line, RoundedCornerShape(50))
+                    .clickable(enabled = enabled) { onToggle(k) }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        extra?.invoke()
+    }
+}
+
+@Composable private fun Tabs(options: List<Pair<String, String>>, selected: String, counts: Map<String, Int> = emptyMap(), onPick: (String) -> Unit) {
+    Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(50)).background(Line.copy(alpha = .6f)).padding(4.dp)) {
+        options.forEach { (k, label) ->
+            val on = selected == k
+            val count = counts[k] ?: 0
+            Row(
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (on) Sheet else Color.Transparent).clickable { onPick(k) }.padding(vertical = 9.dp),
+                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(label, color = if (on) Ink else Muted, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, fontSize = 14.sp, maxLines = 1)
+                if (count > 0) {
+                    Spacer(Modifier.width(5.dp))
+                    Text(count.toString(), color = Paper, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(50)).background(Clay).padding(horizontal = 6.dp, vertical = 1.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun Pill(text: String, bg: Color, fg: Color) {
+    Text(text, color = fg, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp))
+}
+
+@Composable private fun Avatar(name: String) {
+    Box(Modifier.size(44.dp).clip(CircleShape).background(PineSoft), contentAlignment = Alignment.Center) {
+        Text(name.trim().take(1).uppercase().ifEmpty { "?" }, color = Pine, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold, fontSize = 19.sp)
+    }
+}
+
+@Composable private fun Loading(text: String? = null) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        CircularProgressIndicator(color = Pine, strokeWidth = 2.5.dp, modifier = Modifier.size(32.dp))
+        text?.let { Text(it, color = Muted, modifier = Modifier.padding(top = 12.dp)) }
+    }
+}
+
+/** Grey shapes in place of a list, so the screen never looks stuck or empty while loading. */
+@Composable private fun Placeholder(rows: Int = 4) {
+    val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(.45f, 1f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "alpha")
+    Column(Modifier.alpha(pulse)) {
+        repeat(rows) {
+            Sheet {
+                Box(Modifier.fillMaxWidth(.5f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(Line))
+                Spacer(Modifier.height(10.dp))
+                Box(Modifier.fillMaxWidth(.8f).height(12.dp).clip(RoundedCornerShape(6.dp)).background(Line))
+            }
+        }
+    }
+}
+
+@Composable private fun Empty(icon: ImageVector, title: String, subtitle: String? = null, action: String? = null, onAction: (() -> Unit)? = null) {
+    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(64.dp).clip(CircleShape).background(PineSoft), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Pine, modifier = Modifier.size(30.dp)) }
+        Text(title, color = Ink, fontFamily = FontFamily.Serif, fontSize = 20.sp, modifier = Modifier.padding(top = 16.dp))
+        subtitle?.let { Text(it, color = Muted, modifier = Modifier.padding(top = 4.dp)) }
+        if (action != null && onAction != null) TextButton(onAction, Modifier.padding(top = 8.dp)) { Text(action) }
+    }
+}
+
+/** Lock and title centred in the open space, keypad at the bottom in thumb reach. */
+@Composable private fun PinScreen(title: String, subtitle: String, onBack: (() -> Unit)?, pin: String, busy: Boolean, onChange: (String) -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)) {
+            onBack?.let { IconButton(it, Modifier.offset(x = (-12).dp)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Ink) } }
+        }
+        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(60.dp).clip(CircleShape).background(PineSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Lock, null, tint = Pine, modifier = Modifier.size(26.dp)) }
+            Text(title, color = Ink, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold, fontSize = 25.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
+            Text(subtitle, color = Muted, fontSize = 15.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
+            Box(Modifier.height(52.dp).padding(top = 20.dp), contentAlignment = Alignment.Center) {
+                if (busy) CircularProgressIndicator(Modifier.size(24.dp), color = Pine, strokeWidth = 2.5.dp)
+                else Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    repeat(4) { i -> Box(Modifier.size(14.dp).clip(CircleShape).background(if (i < pin.length) Pine else Line)) }
+                }
+            }
+        }
+        listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "del")).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { key ->
+                    val keyBox = Modifier.weight(1f).height(66.dp)
+                    if (key.isEmpty()) Spacer(keyBox) else Box(
+                        keyBox.clip(RoundedCornerShape(18.dp)).background(if (key == "del") Color.Transparent else Sheet)
+                            .border(1.dp, if (key == "del") Color.Transparent else Line, RoundedCornerShape(18.dp))
+                            .clickable(enabled = !busy) { if (key == "del") onChange(pin.dropLast(1)) else if (pin.length < 4) onChange(pin + key) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (key == "del") Icon(Icons.Filled.Clear, "Delete", tint = Muted, modifier = Modifier.size(24.dp))
+                        else Text(key, color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+private fun openWhatsApp(ctx: Context, phone: String, text: String): Boolean {
+    val uri = Uri.parse("https://api.whatsapp.com/send?phone=${normalise(phone)}" + if (text.isNotEmpty()) "&text=${Uri.encode(text)}" else "")
+    return runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage("com.whatsapp.w4b")); true }.getOrDefault(false)
+}
+
+private fun whenText(iso: String): String {
+    if (iso.isEmpty()) return ""
+    return runCatching { DateTimeFormatter.ofPattern("d MMM, h:mm a").withZone(IST).format(Instant.parse(iso.replace("+00:00", "Z"))) }.getOrDefault(iso)
+}
+
+private fun plusDaysIso(days: Long) = Instant.now().plusSeconds(days * 86_400).toString()
+
+private fun statusLabel(status: String) = when (status) {
+    "new", "assigned" -> "New"
+    "pending_approval" -> "Awaiting approval"
+    "contacted" -> "Contacted"
+    "follow_up" -> "Following up"
+    "converted" -> "Joined"
+    "lost" -> "Closed"
+    "rejected" -> "Rejected"
+    else -> status.replace("_", " ")
+}
+
+// ── Sign in, PIN, switching ─────────────────────────────────────────────────
+
+@Composable private fun LoginScreen(state: AppState) {
+    var email by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    val run = rememberRunner(state)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (state.addingAccount) Row(Modifier.fillMaxWidth().padding(8.dp)) { IconButton({ state.addingAccount = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } }
+        Spacer(Modifier.height(48.dp))
+        Image(painterResource(R.drawable.ic_app), null, Modifier.size(72.dp).clip(RoundedCornerShape(20.dp)))
+        Text("Chalkboard Leads", color = Ink, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold, fontSize = 27.sp, modifier = Modifier.padding(top = 20.dp))
+        Text("Sign in with your Chalkboard OS account", color = Muted, modifier = Modifier.padding(top = 4.dp, bottom = 24.dp))
+        Field("Email", email, KeyboardType.Email) { email = it.trim() }
+        Field("Password", pass, KeyboardType.Password, secret = true) { pass = it }
+        Spacer(Modifier.height(8.dp))
+        Primary("Sign in", enabled = email.isNotEmpty() && pass.isNotEmpty(), busy = run.busy, busyText = "Signing in…") {
+            run.run {
+                state.profile = null
+                state.api.login(email, pass)
+                state.signedIn = true
+                state.addingAccount = false
+                state.screen = Screen.Home
+            }
+        }
+    }
+}
+
+@Composable private fun PinSetScreen(state: AppState) {
+    var first by remember { mutableStateOf<String?>(null) }
+    var pin by remember { mutableStateOf("") }
+    val run = rememberRunner(state)
+    PinScreen(if (first == null) "Choose your PIN" else "Enter it once more", "4 digits, private to you", null, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length < 4) return@PinScreen
+        val chosen = first
+        when {
+            chosen == null -> { first = typed; pin = "" }
+            chosen != typed -> { first = null; pin = ""; state.error = "Those didn't match. Please choose your PIN again." }
+            else -> run.run {
+                val r = state.api.post("pin/set", JSONObject().put("new_pin", typed))
+                if (r.optBoolean("ok")) {
+                    state.profile?.put("has_pin", true)?.let { state.store.cache("me", it.toString()) }
+                    state.needsPin = false
+                    state.toast = "PIN saved"
+                } else { first = null; pin = ""; state.error = "Couldn't save your PIN. Please try again." }
+            }
+        }
+    }
+}
+
+private fun pinError(r: JSONObject) = when (r.optString("error")) {
+    "wrong_pin" -> "Wrong PIN."
+    "locked" -> "Too many wrong tries. Try again in 15 minutes."
+    "no_pin" -> "Set a PIN first."
+    else -> "Couldn't check your PIN."
+}
+
+@Composable private fun SwitchScreen(state: AppState) {
+    val target = state.switchTo!!
+    val previous = remember { state.store.activeId }
+    var pin by remember { mutableStateOf("") }
+    val run = rememberRunner(state)
+    PinScreen("Switch to ${target.name}", "Enter ${target.name}'s PIN", { state.switchTo = null }, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length == 4) run.run {
+            state.store.activeId = target.id
+            try {
+                val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
+                if (r.optBoolean("ok")) {
+                    state.api.osUnlock = null
+                    state.profile = null
+                    state.boot = null
+                    state.switchTo = null
+                    state.screen = Screen.Home
+                } else {
+                    state.store.activeId = previous
+                    pin = ""
+                    state.error = pinError(r)
+                }
+            } catch (e: ApiException) {
+                state.store.activeId = previous
+                pin = ""
+                throw e
+            }
+        }
+    }
+}
+
+@Composable private fun AccountsScreen(state: AppState) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Who's using the phone", onBack = { state.back() })
+        state.store.accounts().forEach { a ->
+            val mine = a.id == state.store.activeId
+            Sheet(onClick = if (mine) null else ({ state.switchTo = a })) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(a.name)
+                    Spacer(Modifier.width(12.dp))
+                    Text(a.name, color = Ink, fontWeight = FontWeight.Medium, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    if (mine) Pill("Using now", PineSoft, Pine) else Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Muted)
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Secondary("Add a person") { state.addingAccount = true }
+        Secondary("Sign ${state.profile?.str("full_name")} out of this phone", Clay) {
+            state.store.activeId?.let(state.store::removeAccount)
+            state.profile = null
+            state.boot = null
+            state.api.osUnlock = null
+            state.signedIn = state.store.active() != null
+            state.screen = Screen.Home
+        }
+    }
+}
+
+// ── Leads ───────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun HomeScreen(state: AppState) {
+    val ctx = LocalContext.current
+    val owner = state.store.activeId
+    val view = state.leadsView
+    var leads by remember(view, owner) { mutableStateOf(state.store.cached("leads_$view")?.let { JSONArray(it).objects() }) }
+    var loading by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    var again by remember { mutableIntStateOf(0) }
+    var q by remember { mutableStateOf("") }
+    val opensItself = remember(state.refresh) { Settings.canDrawOverlays(ctx) }
+    val listening = remember(state.refresh) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
+
+    LaunchedEffect(view, state.refresh, owner, again) {
+        if (view == "calls") return@LaunchedEffect
+        loading = true
+        failed = false
+        try {
+            val r = state.api.get("leads?view=$view").getJSONArray("leads")
+            state.store.cache("leads_$view", r.toString())
+            leads = r.objects()
+            if (view == "due") state.dueCount = r.length()
+        } catch (e: ApiException) {
+            failed = true
+            if (leads != null && again > 0) state.error = e.message
+        } finally { loading = false }
+    }
+
+    val firstName = state.profile?.str("full_name").orEmpty().split(" ").first()
+    val dueCount = if (view == "due") leads?.size else null
+    val calls = view == "calls"
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            Header(
+                if (firstName.isEmpty()) "Leads" else "Hello, $firstName",
+                when (dueCount) {
+                    null -> if (calls) "New numbers that called, last 7 days" else "All your open enquiries"
+                    0 -> "Nothing needs you right now"
+                    1 -> "1 lead needs you"
+                    else -> "$dueCount leads need you"
+                },
+                trailing = { IconButton({ state.screen = Screen.Settings }) { Icon(Icons.Filled.Settings, "Settings", tint = Muted) } },
+            )
+            if (!listening) Sheet(onClick = { state.screen = Screen.Setup }) {
+                Text("New WhatsApp messages won't reach you", color = Clay, fontWeight = FontWeight.Medium)
+                Text("Tap to finish phone setup", color = Muted, fontSize = 14.sp)
+            }
+            else if (!opensItself) Sheet(onClick = { state.screen = Screen.Setup }) {
+                Text("The lead form can't open by itself after calls", color = Honey, fontWeight = FontWeight.Medium)
+                Text("Tap to allow it in phone setup", color = Muted, fontSize = 14.sp)
+            }
+            Tabs(listOf("due" to "Needs action", "open" to "All open", "calls" to "Missed"), view, mapOf("calls" to state.missed.orEmpty().size)) { state.leadsView = it }
+            Box(Modifier.fillMaxWidth().height(2.dp)) { if (loading && leads != null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Pine, trackColor = Color.Transparent) }
+            if (calls || !leads.isNullOrEmpty()) Field("Search name or number", q) { q = it }
+            val list = leads?.filter { q.isBlank() || matches(q, it.str("full_name"), it.str("phone")) }
+            PullToRefreshBox(loading, { again++; if (calls) state.refresh++ }, Modifier.fillMaxSize()) {
+                when {
+                    calls -> MissedCallsList(state, q)
+                    list == null && failed -> Empty(Icons.Filled.Warning, "Couldn't load leads", "Check the internet and try again.", "Try again") { again++ }
+                    list == null -> Placeholder()
+                    list.isEmpty() && q.isNotBlank() -> Empty(Icons.Filled.Person, "No one matches that")
+                    list.isEmpty() -> Empty(Icons.Filled.Check, if (view == "due") "All caught up" else "No open leads yet", "New enquiries will appear here.")
+                    else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
+                        items(list, key = { it.getString("id") }) { LeadCard(state, it) }
+                    }
+                }
+            }
+        }
+        AddButton("Add lead", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.NewLead("", "", "") }
+    }
+}
+
+@Composable private fun MissedCallsList(state: AppState, q: String) {
+    val ctx = LocalContext.current
+    val allowed = ctx.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
+    val list = state.missed?.filter { q.isBlank() || matches(q, it.phone) }
+    when {
+        !allowed -> Empty(Icons.Filled.Phone, "Calls aren't allowed yet", "Allow call access in Phone setup.", "Open Phone setup") { state.screen = Screen.Setup }
+        list == null -> Placeholder()
+        list.isEmpty() -> Empty(Icons.Filled.Check, "No new missed calls", "Saved contacts, parents and existing leads don't appear here.")
+        else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
+            items(list, key = { it.phone }) { m ->
+                val time = whenText(Instant.ofEpochMilli(m.at).toString())
+                Sheet {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(44.dp).clip(CircleShape).background(ClaySoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Phone, null, tint = Clay, modifier = Modifier.size(20.dp)) }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("+" + m.phone, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Text(time + if (m.count > 1) " · ${m.count} calls" else "", color = Muted, fontSize = 14.sp)
+                        }
+                    }
+                    if (m.kind == CallKind.QUIET) Text("Landline or foreign number", color = Honey, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton({
+                            state.screen = Screen.NewLead("", m.phone, "Missed call on $time", m.phone.hashCode(), m.phone, SOURCE_CALL)
+                        }) { Text("Add as lead", fontWeight = FontWeight.SemiBold) }
+                        TextButton({ dial(ctx, m.phone) }) { Text("Call back") }
+                        Spacer(Modifier.weight(1f))
+                        TextButton({
+                            state.store.decline(m.phone)
+                            ctx.getSystemService(NotificationManager::class.java).cancel(m.phone.hashCode())
+                            state.toast = "OK. We won't ask about this number again."
+                            state.missed = state.missed?.filter { it.phone != m.phone }
+                        }) { Text("Not a lead", color = Clay) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun LeadCard(state: AppState, l: JSONObject) {
+    val reason = state.boot?.optJSONArray("reasons")?.objects()?.firstOrNull { it.str("key") == l.str("contact_reason") }?.str("label")
+    val (note, bg, fg) = when {
+        l.optBoolean("exhausted") -> Triple("Follow-ups finished: close or keep", HoneySoft, Honey)
+        l.str("last_reply_at").isNotEmpty() && l.optInt("follow_up_step") == 0 -> Triple("They replied. Answer them.", ClaySoft, Clay)
+        l.optInt("follow_up_step") == 0 -> Triple("First reply not sent", HoneySoft, Honey)
+        else -> Triple("Next: " + whenText(l.str("follow_up_at")), PineSoft, Pine)
+    }
+    Sheet(onClick = { state.screen = Screen.Lead(l) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Avatar(l.str("full_name"))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(l.str("full_name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(listOfNotNull(reason, statusLabel(l.str("status"))).joinToString(" · "), color = Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Pill(note, bg, fg)
+    }
+}
+
+@Composable private fun NewLeadScreen(state: AppState, s: Screen.NewLead) {
+    val ctx = LocalContext.current
+    var name by remember { mutableStateOf(s.name) }
+    var phone by remember { mutableStateOf(s.phone) }
+    var reason by remember { mutableStateOf<String?>(null) }
+    val run = rememberRunner(state)
+    val reasons = state.boot?.optJSONArray("reasons")?.objects().orEmpty().map { it.str("key") to it.str("label") }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("New lead", onBack = { state.back() })
+        val fromCall = s.source == SOURCE_CALL
+        if (s.text.isNotEmpty()) Sheet {
+            Text(if (fromCall) "Phone call" else "Their message", color = Muted, fontSize = 13.sp)
+            Text(if (fromCall) s.text else "“${s.text}”", color = Ink, modifier = Modifier.padding(top = 4.dp))
+        }
+        Field("Name", name) { name = it }
+        Field("Phone with country code", phone, KeyboardType.Phone) { phone = it }
+        if (s.phone.isEmpty() && s.text.isNotEmpty()) {
+            Text("We couldn't read this number. Check the chat and type it in.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
+        }
+        Section("Why are they contacting us?")
+        if (reasons.isEmpty()) Placeholder(1) else Chips(reasons, reason, enabled = !run.busy) { reason = it }
+        Spacer(Modifier.height(16.dp))
+        Primary("Save lead", enabled = name.isNotBlank() && normalise(phone).length >= 10 && reason != null, busy = run.busy) {
+            run.run {
+                val r = state.api.post("leads", JSONObject().put("full_name", name.trim()).put("phone", normalise(phone)).put("reason", reason).put("source", s.source)
+                    .apply { if (fromCall) put("notes", "From a phone call") else if (s.text.isNotEmpty()) put("notes", "First message: ${s.text}") })
+                s.notif?.let { ctx.getSystemService(NotificationManager::class.java).cancel(it) }
+                state.missed = state.missed?.filter { it.phone != normalise(phone) }
+                if (r.optBoolean("duplicate")) state.toast = "This number already has a lead. Opening it." else state.toast = "Lead saved"
+                state.screen = Screen.Lead(r.getJSONObject("lead"))
+            }
+        }
+        s.notif?.let { id ->
+            Secondary("Not a lead", Clay, enabled = !run.busy) {
+                s.key.ifEmpty { normalise(phone) }.takeIf { it.isNotEmpty() }?.let(state.store::decline)
+                state.missed = state.missed?.filter { it.phone != normalise(phone) }
+                ctx.getSystemService(NotificationManager::class.java).cancel(id)
+                state.toast = "OK. We won't ask about this number again."
+                state.screen = Screen.Home
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable private fun LeadScreen(state: AppState, initial: JSONObject) {
+    val ctx = LocalContext.current
+    val run = rememberRunner(state)
+    var lead by remember(initial) { mutableStateOf(initial) }
+    var note by remember { mutableStateOf("") }
+    var closing by remember { mutableStateOf(false) }
+    var joining by remember { mutableStateOf(false) }
+    var reason by remember { mutableStateOf("") }
+    val id = lead.getString("id")
+    val canManage = state.profile?.optJSONArray("capabilities")?.toString()?.contains("leads.manage") == true
+    val isOpen = lead.str("status") !in listOf("converted", "lost", "rejected")
+    val templates = state.boot?.optJSONArray("templates")?.objects().orEmpty().filter { it.str("reason_key") == lead.str("contact_reason") }
+    val staff = state.boot?.optJSONArray("staff")?.objects().orEmpty()
+
+    fun patch(body: JSONObject, done: String) = run.run {
+        lead = state.api.patch("leads/$id", body).getJSONObject("lead")
+        state.toast = done
+    }
+    fun send(text: String, templateId: String?) {
+        if (!openWhatsApp(ctx, lead.str("phone"), text)) { state.error = "WhatsApp Business isn't installed."; return }
+        state.pending = PendingSend("To ${lead.str("full_name")}. This moves their follow-up schedule on.") {
+            val b = JSONObject().put("template_id", templateId ?: JSONObject.NULL)
+            lead = state.api.post("leads/$id/sent", b).getJSONObject("lead")
+        }
+    }
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(lead.str("full_name"), onBack = { state.back() })
+        Box(Modifier.fillMaxWidth().height(2.dp)) { if (run.busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Pine, trackColor = Color.Transparent) }
+        Sheet {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Avatar(lead.str("full_name"))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("+" + normalise(lead.str("phone")), color = Ink, fontSize = 16.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Pill(statusLabel(lead.str("status")), PineSoft, Pine)
+                }
+            }
+            if (lead.str("follow_up_at").isNotEmpty()) Text("Next follow-up: " + whenText(lead.str("follow_up_at")), color = Pine, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
+            if (lead.str("notes").isNotEmpty()) Text(lead.str("notes"), color = Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        if (isOpen && canManage) {
+            Spacer(Modifier.height(6.dp))
+            if (templates.isNotEmpty()) Section("Reply with")
+            templates.forEach { t ->
+                Sheet(onClick = { send(t.str("body"), t.str("id")) }) {
+                    Text(t.str("title"), color = Pine, fontWeight = FontWeight.SemiBold)
+                    Text(t.str("body").replace("{name}", lead.str("full_name")), color = Muted, fontSize = 14.sp)
+                }
+            }
+            Primary(if (templates.isEmpty()) "Open chat in WhatsApp" else "Write my own message") { send("", null) }
+            Secondary("Call") { dial(ctx, lead.str("phone")) }
+            Section("Remind me")
+            Chips(listOf("1" to "Tomorrow", "3" to "In 3 days", "7" to "In a week"), null, enabled = !run.busy) {
+                patch(JSONObject().put("follow_up_at", plusDaysIso(it.toLong())), "Reminder set")
+            }
+            if (staff.isNotEmpty()) {
+                Section("Owner")
+                Chips(staff.map { it.str("id") to it.str("full_name") }, lead.str("assigned_to"), enabled = !run.busy) {
+                    patch(JSONObject().put("assigned_to", it), "Owner changed")
+                }
+            }
+            Section("Notes")
+            Field("Add a note", note) { note = it }
+            if (note.isNotBlank()) Secondary("Save note", enabled = !run.busy) {
+                patch(JSONObject().put("note", note.trim()), "Note saved")
+                note = ""
+            }
+            Section("Finish")
+            Secondary("They joined", enabled = !run.busy) { joining = true }
+            Secondary("Close as lost", Clay, enabled = !run.busy) { closing = true }
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+    if (joining) {
+        AlertDialog(
+            onDismissRequest = { joining = false }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+            title = { Text("Mark as joined?") },
+            text = { Text("${lead.str("full_name")} will leave your follow-up list.", color = Muted) },
+            confirmButton = { TextButton(onClick = {
+                joining = false
+                patch(JSONObject().put("status", "converted"), "Marked as joined")
+            }) { Text("Yes, joined") } },
+            dismissButton = { TextButton(onClick = { joining = false }) { Text("Cancel", color = Muted) } },
+        )
+    }
+    if (closing) {
+        AlertDialog(
+            onDismissRequest = { closing = false }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+            title = { Text("Close as lost?") },
+            text = { OutlinedTextField(reason, { reason = it }, label = { Text("Reason (optional)") }, shape = RoundedCornerShape(14.dp)) },
+            confirmButton = { TextButton(onClick = {
+                closing = false
+                patch(JSONObject().put("status", "lost").put("lost_reason", reason.trim()), "Lead closed")
+            }) { Text("Close lead", color = Clay) } },
+            dismissButton = { TextButton(onClick = { closing = false }) { Text("Cancel", color = Muted) } },
+        )
+    }
+}
+
+// ── Settings ────────────────────────────────────────────────────────────────
+
+@Composable private fun SettingsScreen(state: AppState) {
+    val run = rememberRunner(state)
+    val current = state.boot?.optJSONArray("follow_up_days")?.let { a -> List(a.length()) { a.getInt(it) } }.orEmpty()
+    var days by remember(current) { mutableStateOf(current.joinToString(", ")) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Settings", onBack = { state.back() })
+        if (state.profile?.optBoolean("os_access") == true) Row2("Full Chalkboard OS", "Fees, reports and every other page", Icons.Filled.Lock) { state.screen = Screen.FullOs }
+        Row2("Who's using the phone", state.profile?.str("full_name"), Icons.Filled.Person) { state.screen = Screen.Accounts }
+        Row2("Phone setup", "Notifications and battery", Icons.Filled.Notifications) { state.screen = Screen.Setup }
+        Section("Follow-up schedule")
+        Text("Days after the first reply, for everyone.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp))
+        Spacer(Modifier.height(6.dp))
+        Field("Days, for example 1, 3, 7", days) { days = it }
+        Secondary("Save schedule", enabled = !run.busy) {
+            val parsed = days.split(",", " ").mapNotNull { it.trim().toIntOrNull() }
+            run.run {
+                state.api.put("settings/follow-ups", JSONObject().put("days", JSONArray(parsed)))
+                val b = state.api.get("bootstrap")
+                state.store.cache("boot", b.toString())
+                state.boot = b
+                state.toast = "Schedule saved"
+            }
+        }
+    }
+}
+
+@Composable private fun SetupRow(ok: Boolean, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 5.dp)) {
+        Box(Modifier.size(26.dp).clip(CircleShape).background(if (ok) PineSoft else ClaySoft), contentAlignment = Alignment.Center) {
+            Icon(if (ok) Icons.Filled.Check else Icons.Filled.Clear, null, tint = if (ok) Pine else Clay, modifier = Modifier.size(16.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(text, color = Ink)
+    }
+}
+
+@Composable private fun SetupScreen(state: AppState) {
+    val ctx = LocalContext.current
+    var tick by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose {} }
+    val listening = remember(tick) { ctx.getSystemService(NotificationManager::class.java).isNotificationListenerAccessGranted(ComponentName(ctx, WhatsAppListener::class.java)) }
+    val unrestricted = remember(tick) { ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName) }
+    val seesCalls = remember(tick) { listOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG).all { ctx.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED } }
+    val opensItself = remember(tick) { Settings.canDrawOverlays(ctx) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Phone setup", onBack = { state.back() })
+        Sheet {
+            SetupRow(listening, "Reads WhatsApp notifications")
+            SetupRow(unrestricted, "Battery unrestricted")
+            SetupRow(seesCalls, "Sees incoming calls")
+            SetupRow(opensItself, "Opens by itself after a call")
+            val heard = state.store.lastHeard
+            Text("Last WhatsApp notification seen: " + if (heard == 0L) "never" else whenText(Instant.ofEpochMilli(heard).toString()), color = Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        Spacer(Modifier.height(6.dp))
+        Secondary("Allow reading notifications") { ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+        if (!seesCalls) Secondary("Allow seeing calls") { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))) }
+        if (!opensItself) Secondary("Allow opening by itself") { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))) }
+        Secondary("Show lead prompts on screen") {
+            ctx.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
+        }
+        Secondary("Battery settings for this app") {
+            ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}")))
+        }
+        Primary("Reconnect to notifications") {
+            NotificationListenerService.requestRebind(ComponentName(ctx, WhatsAppListener::class.java))
+            state.toast = "Reconnecting"
+        }
+        Text("WhatsApp notifications must stay on. Muted chats, or chats open on screen, can't be seen by this app.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(20.dp))
+    }
+}
+
+// ── Boon's OS sections ──────────────────────────────────────────────────────
+
+/** The PIN stands in front of every OS section. Each screen keeps its work behind it. */
+@Composable private fun OsPin(state: AppState, title: String, onBack: (() -> Unit)? = null) {
+    val run = rememberRunner(state)
+    var pin by remember { mutableStateOf("") }
+    PinScreen(title, "Enter your PIN to open", onBack, pin, run.busy) { typed ->
+        pin = typed
+        if (typed.length == 4) run.run {
+            try {
+                val r = state.api.post("pin/verify", JSONObject().put("pin", typed))
+                if (r.optBoolean("ok")) state.api.osUnlock = r.getString("token") else state.error = pinError(r)
+            } finally { pin = "" }
+        }
+    }
+}
+
+@Composable private fun AttendanceScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Attendance")
+    var classes by remember { mutableStateOf<List<JSONObject>?>(null) }
+    var holiday by remember { mutableStateOf("") }
+    val today = remember { LocalDate.now(IST) }
+    var date by rememberSaveable { mutableStateOf(today.toString()) }
+    val day = LocalDate.parse(date)
+    var shown by remember { mutableStateOf(date) }
+
+    LaunchedEffect(date, state.refresh) {
+        if (shown != date) { classes = null; shown = date }
+        try {
+            val r = state.api.get("os/classes?date=$date")
+            holiday = r.str("holiday")
+            classes = r.getJSONArray("classes").objects()
+        } catch (e: ApiException) { state.error = e.message; if (classes == null) classes = emptyList() }
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Attendance", "Choose a class to mark")
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton({ date = day.minusDays(1).toString() }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous day", tint = Pine) }
+            Text(
+                if (day == today) "Today, " + day.format(DateTimeFormatter.ofPattern("d MMM")) else day.format(DateTimeFormatter.ofPattern("EEE, d MMM")),
+                color = Ink, fontWeight = FontWeight.Medium, fontSize = 16.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
+            )
+            IconButton({ date = day.plusDays(1).toString() }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next day", tint = Pine) }
+        }
+        if (holiday.isNotEmpty()) Sheet { Text("Public holiday: $holiday", color = Honey, fontWeight = FontWeight.Medium) }
+        val list = classes
+        when {
+            list == null -> Placeholder(2)
+            list.isEmpty() -> Text("No classes on this day.", color = Muted, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+            else -> list.forEach { c ->
+                val status = c.str("session_status")
+                val closed = status == "holiday" || status == "cancelled" || status == "rescheduled"
+                Sheet(onClick = if (closed) null else ({ state.screen = Screen.Roster(c.getString("id"), date) })) {
+                    Text(c.str("name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(c.str("start_time").take(5) + if (c.str("session_category") == "individual_attention") " · Individual Attention" else "", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    when (status) {
+                        "completed" -> Pill("Marked", PineSoft, Pine)
+                        "in_progress" -> Pill("Started, not finished", HoneySoft, Honey)
+                        "holiday" -> Pill("Holiday: change in full OS", HoneySoft, Honey)
+                        "cancelled" -> Pill("Cancelled: change in full OS", ClaySoft, Clay)
+                        "rescheduled" -> Pill("Moved: change in full OS", HoneySoft, Honey)
+                        else -> Pill("Not marked yet", HoneySoft, Honey)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row2("Parent messages to send", icon = Icons.AutoMirrored.Filled.Send) { state.screen = Screen.Queue }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable private fun SubjectDialog(state: AppState, editing: JSONObject?, onClose: () -> Unit, onSaved: (JSONObject) -> Unit) {
+    val run = rememberRunner(state)
+    var name by remember { mutableStateOf(editing?.str("name").orEmpty()) }
+    var code by remember { mutableStateOf(editing?.str("short_code").orEmpty()) }
+    fun save(body: JSONObject) = run.run {
+        val path = if (editing == null) state.api.post("os/subjects", body) else state.api.patch("os/subjects/${editing.getString("id")}", body)
+        onSaved(path.getJSONObject("subject"))
+    }
+    AlertDialog(
+        onDismissRequest = { if (!run.busy) onClose() }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+        title = { Text(if (editing == null) "Add a subject" else "Edit subject") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(name, { name = it }, label = { Text("Subject name") }, shape = RoundedCornerShape(14.dp), singleLine = true)
+                OutlinedTextField(code, { code = it.take(8).uppercase() }, label = { Text("Short code (optional)") }, shape = RoundedCornerShape(14.dp), singleLine = true)
+                if (editing != null) {
+                    val active = editing.optBoolean("is_active")
+                    TextButton({ save(JSONObject().put("is_active", !active)) }, enabled = !run.busy) {
+                        Text(if (active) "Archive this subject" else "Bring this subject back", color = if (active) Clay else Pine)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton({ save(JSONObject().put("name", name.trim()).put("short_code", code.trim())) }, enabled = !run.busy && name.trim().length >= 2) {
+                if (run.busy) CircularProgressIndicator(Modifier.size(18.dp), color = Pine, strokeWidth = 2.dp) else Text("Save")
+            }
+        },
+        dismissButton = { TextButton(onClose, enabled = !run.busy) { Text("Cancel", color = Muted) } },
+    )
+}
+
+@Composable private fun SubjectsScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Subjects") { state.back() }
+    var subjects by remember { mutableStateOf(state.store.cached("subjects")?.let { JSONArray(it).objects() }) }
+    var again by remember { mutableIntStateOf(0) }
+    var adding by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<JSONObject?>(null) }
+    LaunchedEffect(state.refresh, again) {
+        try {
+            val r = state.api.get("os/subjects").getJSONArray("subjects")
+            state.store.cache("subjects", r.toString())
+            subjects = r.objects()
+        } catch (e: ApiException) { state.error = e.message; if (subjects == null) subjects = emptyList() }
+    }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Header("Subjects", "Used in classes and attendance", { state.back() })
+            val list = subjects
+            if (list == null) Placeholder(4) else {
+                list.filter { it.optBoolean("is_active") }.forEach { SubjectRow(it) { editing = it } }
+                val archived = list.filter { !it.optBoolean("is_active") }
+                if (archived.isNotEmpty()) {
+                    Section("Archived")
+                    archived.forEach { SubjectRow(it) { editing = it } }
+                }
+            }
+            Spacer(Modifier.height(96.dp))
+        }
+        AddButton("Add subject", Modifier.align(Alignment.BottomEnd)) { adding = true }
+    }
+    if (adding) SubjectDialog(state, null, { adding = false }) {
+        adding = false
+        state.toast = "Subject added"
+        again++
+    }
+    editing?.let { e ->
+        SubjectDialog(state, e, { editing = null }) {
+            editing = null
+            state.toast = "Subject saved"
+            again++
+        }
+    }
+}
+
+private val DAYS = listOf("mon" to "Mon", "tue" to "Tue", "wed" to "Wed", "thu" to "Thu", "fri" to "Fri", "sat" to "Sat", "sun" to "Sun")
+private fun JSONArray?.strings() = if (this == null) emptyList() else List(length()) { getString(it) }
+
+@Composable private fun ClassesScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Classes")
+    var data by remember { mutableStateOf(state.store.cached("classes")?.let(::JSONObject)) }
+    LaunchedEffect(state.refresh) {
+        try {
+            val r = state.api.get("os/manage-classes")
+            state.store.cache("classes", r.toString())
+            data = r
+        } catch (e: ApiException) { state.error = e.message }
+    }
+    val d = data
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Header("Classes", "Add, change or remove classes")
+            Row2("Subjects", "Add or edit the subjects classes can use", Icons.AutoMirrored.Filled.List) { state.screen = Screen.Subjects }
+            Spacer(Modifier.height(6.dp))
+            if (d == null) Placeholder(3) else d.getJSONArray("classes").objects().forEach { c ->
+                val days = c.optJSONArray("days").strings()
+                val dayText = if (days.toSet() == setOf("mon", "tue", "wed", "thu", "fri")) "Mon to Fri" else DAYS.filter { it.first in days }.joinToString(", ") { it.second }
+                val individual = c.str("session_category") == "individual_attention"
+                val count = c.optJSONArray("student_ids")?.length() ?: 0
+                Sheet(onClick = { state.screen = Screen.ClassForm(c, d) }) {
+                    Text(c.str("name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(listOf(dayText, c.str("start_time").take(5) + "–" + c.str("end_time").take(5)).joinToString(" · "), color = Muted, fontSize = 14.sp)
+                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Pill(if (individual) "Individual Attention" else if (count == 1) "1 student" else "$count students", PineSoft, Pine)
+                        if (c.str("status") != "active") Pill("Paused", HoneySoft, Honey)
+                    }
+                }
+            }
+            Spacer(Modifier.height(96.dp))
+        }
+        if (d != null) AddButton("Add class", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.ClassForm(null, d) }
+    }
+}
+
+@Composable private fun TimeButton(label: String, value: String, modifier: Modifier, onPick: (String) -> Unit) {
+    val ctx = LocalContext.current
+    OutlinedButton({
+        val parts = value.split(":").mapNotNull { it.toIntOrNull() }
+        TimePickerDialog(ctx, { _, h, m -> onPick("%02d:%02d".format(h, m)) }, parts.getOrElse(0) { 17 }, parts.getOrElse(1) { 0 }, false).show()
+    }, modifier.heightIn(min = 54.dp), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, Line)) {
+        Text(if (value.isEmpty()) label else "$label  $value", color = if (value.isEmpty()) Muted else Ink)
+    }
+}
+
+@Composable private fun ClassFormScreen(state: AppState, s: Screen.ClassForm) {
+    val c = s.cls
+    val run = rememberRunner(state)
+    var name by remember { mutableStateOf(c?.str("name").orEmpty()) }
+    var grade by remember { mutableStateOf(c?.str("grade").orEmpty()) }
+    var board by remember { mutableStateOf(c?.str("board")?.takeIf { it.isNotEmpty() }) }
+    var category by remember { mutableStateOf(c?.str("session_category")?.takeIf { it.isNotEmpty() } ?: "combined_class") }
+    var start by remember { mutableStateOf(c?.str("start_time").orEmpty().take(5)) }
+    var end by remember { mutableStateOf(c?.str("end_time").orEmpty().take(5)) }
+    var room by remember { mutableStateOf(c?.str("room").orEmpty()) }
+    var active by remember { mutableStateOf(c == null || c.str("status") == "active") }
+    var individual by remember { mutableStateOf(c?.str("student_id")?.takeIf { it.isNotEmpty() }) }
+    val days = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("days").strings()) } }
+    val roster = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("student_ids").strings()) } }
+    val taught = remember { mutableStateListOf<String>().apply { addAll(c?.optJSONArray("subject_ids").strings()) } }
+    var subjects by remember { mutableStateOf(s.options.getJSONArray("subjects").objects()) }
+    var addingSubject by remember { mutableStateOf(false) }
+    var removing by remember { mutableStateOf(false) }
+    if (state.api.osUnlock == null) return OsPin(state, "Classes") { state.back() }
+    val students = s.options.getJSONArray("students").objects()
+    val isIndividual = category == "individual_attention"
+    val problem = when {
+        name.trim().length < 2 -> "Give this class a name"
+        grade.toIntOrNull() !in 1..12 -> "Enter a grade from 1 to 12"
+        days.isEmpty() -> "Pick at least one day"
+        start.isEmpty() || end.isEmpty() -> "Pick the start and end time"
+        end <= start -> "The end time must be after the start time"
+        isIndividual && individual == null -> "Choose the student this class is for"
+        else -> null
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(if (c == null) "Add a class" else "Edit class", onBack = { state.back() })
+        Field("Class name", name) { name = it }
+        Field("Grade (1-12)", grade, KeyboardType.Number) { grade = it.filter(Char::isDigit).take(2) }
+        Section("Board")
+        Chips(listOf("cbse" to "CBSE", "icse" to "ICSE", "state_board" to "State board"), board, enabled = !run.busy) { board = if (board == it) null else it }
+        Section("Type")
+        Tabs(listOf("combined_class" to "Combined class", "individual_attention" to "Individual"), category) { category = it }
+        Section("Days")
+        MultiChips(DAYS, days, !run.busy, { if (it in days) days.remove(it) else days.add(it) })
+        Section("Time")
+        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TimeButton("Start", start, Modifier.weight(1f)) { start = it }
+            TimeButton("End", end, Modifier.weight(1f)) { end = it }
+        }
+        if (isIndividual) {
+            Section("Student")
+            Chips(students.map { it.getString("id") to it.str("full_name") }, individual, enabled = !run.busy) { individual = it }
+        } else {
+            Section("Students")
+            if (students.isEmpty()) Text("No students yet.", color = Muted, modifier = Modifier.padding(horizontal = 20.dp))
+            MultiChips(students.map { it.getString("id") to it.str("full_name") }, roster, !run.busy, { if (it in roster) roster.remove(it) else roster.add(it) })
+        }
+        Section("Subjects")
+        MultiChips(subjects.map { it.getString("id") to it.str("name") }, taught, !run.busy, { if (it in taught) taught.remove(it) else taught.add(it) }) {
+            Text(
+                "+ New subject", color = Pine, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PineSoft).clickable(enabled = !run.busy) { addingSubject = true }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        Section("More")
+        Field("Room (optional)", room) { room = it }
+        if (c != null) {
+            Spacer(Modifier.height(6.dp))
+            Chips(listOf("active" to "Running", "inactive" to "Paused"), if (active) "active" else "inactive", enabled = !run.busy) { active = it == "active" }
+        }
+        Spacer(Modifier.height(12.dp))
+        problem?.let { Text(it, color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
+        Primary(if (c == null) "Save class" else "Save changes", enabled = problem == null, busy = run.busy) {
+            run.run {
+                // Everything this form doesn't show goes back as it was, so saving can't wipe it.
+                val body = JSONObject().put("name", name.trim()).put("grade", grade.toInt()).put("board", board ?: JSONObject.NULL)
+                    .put("category", category).put("student_id", if (isIndividual) individual else JSONObject.NULL)
+                    .put("days", JSONArray(days.toList())).put("start_time", start).put("end_time", end).put("room", room.trim())
+                    .put("student_ids", JSONArray(roster.toList())).put("subject_ids", JSONArray(taught.toList()))
+                    .put("status", if (active) "active" else "inactive")
+                    .put("capacity", c?.optInt("capacity", 8) ?: 8).put("notes", c?.str("notes").orEmpty())
+                    .put("academic_year_id", c?.str("academic_year_id")?.takeIf { it.isNotEmpty() } ?: s.options.opt("academic_year_id") ?: JSONObject.NULL)
+                if (c == null) state.api.post("os/manage-classes", body) else state.api.patch("os/manage-classes/${c.getString("id")}", body)
+                state.toast = if (c == null) "Class added" else "Class saved"
+                state.screen = Screen.Classes
+            }
+        }
+        if (c != null) Secondary("Remove class", Clay, enabled = !run.busy) { removing = true }
+        Spacer(Modifier.height(16.dp))
+    }
+    if (addingSubject) SubjectDialog(state, null, { addingSubject = false }) { made ->
+        addingSubject = false
+        subjects = (subjects + made).sortedBy { it.str("name") }
+        taught.add(made.getString("id"))
+        state.toast = "Subject added"
+    }
+    if (removing && c != null) AlertDialog(
+        onDismissRequest = { removing = false }, containerColor = Sheet, shape = RoundedCornerShape(24.dp),
+        title = { Text("Remove ${c.str("name")}?") },
+        text = { Text("It leaves the timetable and attendance. Attendance already marked is kept.", color = Muted) },
+        confirmButton = { TextButton({
+            removing = false
+            run.run {
+                state.api.post("os/manage-classes/${c.getString("id")}/archive")
+                state.toast = "Class removed"
+                state.screen = Screen.Classes
+            }
+        }) { Text("Remove", color = Clay) } },
+        dismissButton = { TextButton({ removing = false }) { Text("Cancel", color = Muted) } },
+    )
+}
+
+@Composable private fun SubjectRow(s: JSONObject, onClick: () -> Unit) {
+    val uses = s.optInt("in_use")
+    Row2(s.str("name"), listOf(s.str("short_code"), if (uses == 1) "In 1 class" else "In $uses classes").filter { it.isNotEmpty() }.joinToString(" · "), onClick = onClick)
+}
+
+@Composable private fun StudentsScreen(state: AppState) {
+    if (state.api.osUnlock == null) return OsPin(state, "Students")
+    val ctx = LocalContext.current
+    var students by remember { mutableStateOf(state.store.cached("students")?.let { JSONArray(it).objects() }) }
+    var q by remember { mutableStateOf("") }
+    var open by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(state.refresh) {
+        try {
+            val r = state.api.get("os/students").getJSONArray("students")
+            state.store.cache("students", r.toString())
+            students = r.objects()
+        } catch (e: ApiException) { state.error = e.message; if (students == null) students = emptyList() }
+    }
+    Box(Modifier.fillMaxSize()) {
+        val list = students?.filter { q.isBlank() || matches(q, it.str("full_name"), it.optJSONObject("parent")?.str("full_name"), it.optJSONObject("parent")?.str("phone")) }
+        Column(Modifier.fillMaxSize()) {
+            Header("Students", students?.let { if (it.size == 1) "1 student" else "${it.size} students" })
+            if (!students.isNullOrEmpty()) Field("Search student, parent or number", q) { q = it }
+            when {
+                list == null -> Placeholder(4)
+                list.isEmpty() -> Empty(Icons.Filled.Person, if (q.isBlank()) "No students yet" else "No one matches that")
+                else -> LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp), modifier = Modifier.fillMaxSize()) {
+                    items(list, key = { it.getString("id") }) { st ->
+                        val id = st.getString("id")
+                        val parent = st.optJSONObject("parent")
+                        val phone = parent?.str("whatsapp_number").orEmpty().ifEmpty { parent?.str("phone").orEmpty() }
+                        Sheet(onClick = { open = if (open == id) null else id }) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Avatar(st.str("full_name"))
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(st.str("full_name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                                    Text("Grade ${st.str("grade")} · ${st.str("board").replace("_", " ").uppercase()}", color = Muted, fontSize = 14.sp)
+                                }
+                            }
+                            AnimatedVisibility(open == id) {
+                                Column(Modifier.padding(top = 12.dp)) {
+                                    Text("Parent: " + parent?.str("full_name").orEmpty().ifEmpty { "not added" }, color = Ink, fontSize = 14.sp)
+                                    if (phone.isNotEmpty()) Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        TextButton({ dial(ctx, phone); Unit }) { Icon(Icons.Filled.Phone, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Call") }
+                                        TextButton({ if (!openWhatsApp(ctx, phone, "")) state.error = "WhatsApp Business isn't installed." }) {
+                                            Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("WhatsApp")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        AddButton("Add student", Modifier.align(Alignment.BottomEnd)) { state.screen = Screen.AddStudent }
+    }
+}
+
+/**
+ * The real OS website, with its own login, so the server applies the same roles and
+ * capabilities as on a computer. The phone holds no extra access for it.
+ */
+@Composable private fun FullOsScreen(state: AppState) {
+    var chooser by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+    var progress by remember { mutableIntStateOf(0) }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        chooser?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(r.resultCode, r.data))
+        chooser = null
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            CookieManager.getInstance().flush()
+            state.osPage = null
+        }
+    }
+    Column(Modifier.fillMaxSize()) {
+        Header("Chalkboard OS", onBack = { state.screen = Screen.Settings })
+        Box(Modifier.fillMaxWidth().height(2.dp)) { if (progress in 1..99) LinearProgressIndicator({ progress / 100f }, Modifier.fillMaxWidth(), color = Pine, trackColor = Color.Transparent) }
+        AndroidView(modifier = Modifier.fillMaxSize(), factory = { ctx ->
+            // A login left here must not carry over to whoever signs in next.
+            val cookies = CookieManager.getInstance()
+            if (state.store.osWebOwner != state.store.activeId) {
+                cookies.removeAllCookies(null)
+                state.store.osWebOwner = state.store.activeId
+            }
+            WebView(ctx).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                        if (request.url.host == OS_HOST) return false
+                        // wa.me, stored documents and the like belong in their own apps.
+                        runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, request.url)) }
+                        return true
+                    }
+                }
+                webChromeClient = object : WebChromeClient() {
+                    override fun onProgressChanged(view: WebView, newProgress: Int) { progress = newProgress }
+                    override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                        chooser?.onReceiveValue(null)
+                        chooser = callback
+                        return runCatching { pick.launch(params.createIntent()) }.onFailure {
+                            callback.onReceiveValue(null)
+                            chooser = null
+                        }.isSuccess
+                    }
+                }
+                state.osPage = this
+                loadUrl("https://$OS_HOST/admin")
+            }
+        })
+    }
+}
+
+@Composable private fun RosterScreen(state: AppState, s: Screen.Roster) {
+    val run = rememberRunner(state)
+    var data by remember { mutableStateOf<JSONObject?>(null) }
+    val marks = remember { mutableStateMapOf<String, String>() }
+    var topic by remember { mutableStateOf("") }
+    var homework by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    val picked = remember { mutableStateListOf<String>() }
+    var subjects by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
+    var addingSubject by remember { mutableStateOf(false) }
+    val unlocked = state.api.osUnlock != null
+    LaunchedEffect(s, unlocked) {
+        if (!unlocked || data != null) return@LaunchedEffect
+        try {
+            val d = state.api.get("os/classes/${s.classId}/roster?date=${s.date}")
+            data = d
+            subjects = d.getJSONArray("subjects").objects()
+            d.getJSONArray("selected_subjects").let { a -> repeat(a.length()) { picked.add(a.getString(it)) } }
+            d.getJSONArray("students").objects().forEach { marks[it.getString("id")] = it.str("status") }
+            d.optJSONObject("session")?.let { topic = it.str("topic_covered"); homework = it.str("homework_assigned"); notes = it.str("teacher_notes") }
+        } catch (e: ApiException) { state.error = e.message; state.back() }
+    }
+    // An expired PIN mid-way asks again here, so the marks already tapped are kept.
+    if (!unlocked) return OsPin(state, "Attendance") { state.back() }
+    val d = data ?: return Column(Modifier.fillMaxSize()) {
+        Header("Attendance", s.date, { state.back() })
+        Placeholder(3)
+    }
+    val batch = d.getJSONObject("batch")
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(batch.str("name"), s.date, { state.back() })
+        if (batch.str("start_time").isEmpty()) Text("This class has no time set. Add one in the full OS first.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+        Section("Subjects taught")
+        MultiChips(subjects.map { it.getString("id") to it.str("name") }, picked, !run.busy, { if (it in picked) picked.remove(it) else picked.add(it) }) {
+            Text(
+                "+ New subject", color = Pine, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PineSoft).clickable(enabled = !run.busy) { addingSubject = true }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+        val counts = marks.values.groupingBy { it }.eachCount()
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(listOf("present", "absent", "late", "excused").filter { (counts[it] ?: 0) > 0 }.joinToString(" · ") { "${counts[it]} $it" }, color = Muted, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            TextButton({ marks.keys.toList().forEach { marks[it] = "present" } }, enabled = !run.busy) { Text("Mark all present") }
+        }
+        d.getJSONArray("students").objects().forEach { st ->
+            val id = st.getString("id")
+            Sheet {
+                Text(st.str("full_name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Paper).padding(3.dp)) {
+                    listOf("present" to "Present", "absent" to "Absent", "late" to "Late", "excused" to "Excused").forEach { (k, label) ->
+                        val on = marks[id] == k
+                        Text(
+                            label, color = if (on) Paper else Muted, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) (if (k == "absent") Clay else Pine) else Color.Transparent)
+                                .clickable(enabled = !run.busy) { marks[id] = k }.padding(vertical = 9.dp),
+                        )
+                    }
+                }
+            }
+        }
+        Section("Class notes")
+        Field("Today's topic", topic) { topic = it }
+        Field("Homework", homework) { homework = it }
+        Field("Teacher notes", notes) { notes = it }
+        Spacer(Modifier.height(8.dp))
+        if (picked.isEmpty()) Text("Choose at least one subject to save.", color = Honey, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
+        Primary("Save attendance", enabled = marks.isNotEmpty() && picked.isNotEmpty() && batch.str("start_time").isNotEmpty(), busy = run.busy) {
+            run.run {
+                val arr = JSONArray()
+                marks.forEach { (k, v) -> arr.put(JSONObject().put("studentId", k).put("status", v)) }
+                val r = state.api.post("os/attendance", JSONObject().put("batchId", s.classId).put("sessionDate", s.date)
+                    .put("startTime", batch.str("start_time")).put("endTime", batch.str("end_time").ifEmpty { JSONObject.NULL })
+                    .put("subjectIds", JSONArray(picked.toList())).put("marks", arr).put("topic", topic).put("homework", homework).put("teacherNotes", notes))
+                if (r.optBoolean("ok")) {
+                    state.toast = "Attendance saved"
+                    state.screen = if (r.optInt("queued") > 0) Screen.Queue else Screen.Attendance
+                } else state.error = r.optString("error", "Couldn't save.")
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+    if (addingSubject) SubjectDialog(state, null, { addingSubject = false }) { made ->
+        addingSubject = false
+        subjects = (subjects + made).sortedBy { it.str("name") }
+        picked.add(made.getString("id"))
+        state.toast = "Subject added"
+    }
+}
+
+@Composable private fun AddStudentScreen(state: AppState) {
+    val run = rememberRunner(state)
+    val unlocked = state.api.osUnlock != null
+    var name by remember { mutableStateOf("") }
+    var grade by remember { mutableStateOf("") }
+    var board by remember { mutableStateOf<String?>(null) }
+    var parent by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var school by remember { mutableStateOf("") }
+    if (!unlocked) return OsPin(state, "Add a student") { state.back() }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Add a student", onBack = { state.back() })
+        Section("Student")
+        Field("Student's name", name) { name = it }
+        Field("Grade (1-12)", grade, KeyboardType.Number) { grade = it.filter(Char::isDigit).take(2) }
+        Spacer(Modifier.height(6.dp))
+        Chips(listOf("cbse" to "CBSE", "icse" to "ICSE", "state_board" to "State board"), board, enabled = !run.busy) { board = it }
+        Spacer(Modifier.height(6.dp))
+        Field("School (optional)", school) { school = it }
+        Section("Parent")
+        Field("Parent's name", parent) { parent = it }
+        Field("Parent's phone", phone, KeyboardType.Phone) { phone = it }
+        Spacer(Modifier.height(8.dp))
+        Primary("Save student", enabled = name.length >= 2 && grade.isNotEmpty() && board != null && parent.length >= 2 && normalise(phone).length >= 10, busy = run.busy) {
+            run.run {
+                state.api.post("os/students", JSONObject().put("full_name", name.trim()).put("grade", grade.toInt()).put("board", board)
+                    .put("school_name", school.trim()).put("parent_name", parent.trim()).put("parent_phone", "+" + normalise(phone)))
+                state.toast = "Student added"
+                state.screen = Screen.Students
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable private fun QueueScreen(state: AppState) {
+    val ctx = LocalContext.current
+    var messages by remember { mutableStateOf<List<JSONObject>?>(null) }
+    if (state.api.osUnlock == null) return OsPin(state, "Parent messages") { state.back() }
+    LaunchedEffect(state.refresh) {
+        try { messages = state.api.get("os/queue").getJSONArray("messages").objects() }
+        catch (e: ApiException) { state.error = e.message; if (messages == null) messages = emptyList() }
+    }
+    Column(Modifier.fillMaxSize()) {
+        Header("Parent messages", onBack = { state.back() })
+        val list = messages
+        when {
+            list == null -> Placeholder(3)
+            list.isEmpty() -> Empty(Icons.Filled.Check, "All sent", "Nothing waiting to go to parents.")
+            else -> LazyColumn(Modifier.fillMaxSize()) {
+                items(list, key = { it.getString("id") }) { m ->
+                    Sheet(onClick = {
+                        if (openWhatsApp(ctx, m.str("to_number"), m.str("body"))) {
+                            state.pending = PendingSend("To ${m.str("student_name")}'s parent.") { state.api.post("os/queue/${m.getString("id")}/sent") }
+                        } else state.error = "WhatsApp Business isn't installed."
+                    }) {
+                        Text(m.str("student_name"), color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        Text(m.str("body"), color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
+                        Pill("Tap to open in WhatsApp", PineSoft, Pine)
+                    }
+                }
+            }
+        }
+    }
+}

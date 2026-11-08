@@ -1,0 +1,621 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { ApiError, anonClient, loadStaff, requireOsUnlock, requireStaff, type Staff } from "@/lib/mobile/auth";
+import { followUpDays, isExhausted, lastTen, nextActionFields, nextAfterSend } from "@/lib/mobile/leads";
+import { capabilitiesFor } from "@/lib/os/permissions";
+import { routeNewLead, OPEN_STATUSES } from "@/lib/os/leads";
+import { saveAttendance } from "@/lib/os/attendance-save";
+import { archiveClassRecord, saveClassRecord } from "@/lib/os/class-save";
+import { createStudentRecord } from "@/lib/os/students";
+import { studentSchema } from "@/app/admin/(portal)/students/schema";
+import { TEMPLATES, type TemplateKey } from "@/lib/os/whatsapp";
+import { DEMO_RE, alertOverdueDemos, demoMessage } from "@/lib/mobile/demo";
+import { createServiceClient } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
+
+type Handler = (req: NextRequest, params: string[]) => Promise<unknown>;
+
+const LEAD_FIELDS =
+  "id, full_name, phone, status, contact_reason, notes, assigned_to, follow_up_at, follow_up_step, last_contacted_at, last_reply_at, created_at";
+const PHONE = /^\+?[0-9]{10,15}$/;
+const uuid = z.string().uuid();
+const SUBJECT_FIELDS = "id, name, short_code, is_active";
+const subjectBody = z.object({
+  name: z.string().trim().min(2, "Subject name is required"),
+  short_code: z.string().trim().max(8, "Keep the code to 8 letters").optional(),
+});
+
+async function body<T extends z.ZodTypeAny>(req: NextRequest, schema: T): Promise<z.infer<T>> {
+  const json = await req.json().catch(() => null);
+  const parsed = schema.safeParse(json);
+  if (!parsed.success) throw new ApiError(400, "invalid", parsed.error.issues[0].message);
+  return parsed.data;
+}
+
+async function profile(db: SupabaseClient, staff: Staff) {
+  const [{ data: hasPin }, { data: os }] = await Promise.all([
+    db.rpc("staff_pin_is_set"),
+    db.from("mobile_os_access").select("admin_id").eq("admin_id", staff.id).maybeSingle(),
+  ]);
+  return {
+    id: staff.id,
+    full_name: staff.full_name,
+    role: staff.role,
+    capabilities: capabilitiesFor(staff.role),
+    has_pin: hasPin === true,
+    os_access: !!os,
+  };
+}
+
+function sessionJson(s: { access_token: string; refresh_token: string; expires_at?: number }) {
+  return { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at ?? null };
+}
+
+function revalidateLeads(id?: string) {
+  revalidatePath("/admin/leads");
+  if (id) revalidatePath(`/admin/leads/${id}`);
+  revalidatePath("/admin");
+}
+
+async function leadFor(db: SupabaseClient, id: string) {
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Lead not found.");
+  const { data } = await db.from("crm_leads").select(LEAD_FIELDS).eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!data) throw new ApiError(404, "not_found", "Lead not found.");
+  return data;
+}
+
+async function reasonLabel(db: SupabaseClient, key: string | null) {
+  if (!key) return null;
+  const { data } = await db.from("crm_contact_reasons").select("label").eq("key", key).maybeSingle();
+  return data?.label ?? null;
+}
+
+async function logEvent(db: SupabaseClient, leadId: string, actor: string, action: string,
+  f: { from?: string | null; to?: string | null; note?: string | null } = {}) {
+  await db.from("crm_lead_events").insert({
+    lead_id: leadId, actor_id: actor, action, from_status: f.from ?? null, to_status: f.to ?? null, note: f.note ?? null,
+  });
+}
+
+const POST: Record<string, Handler> = {
+  "auth/login": async (req) => {
+    const { email, password } = await body(req, z.object({ email: z.string().email(), password: z.string().min(1) }));
+    const client = anonClient();
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error || !data.session || !data.user) throw new ApiError(401, "bad_login", "Wrong email or password.");
+    const db = anonClient(data.session.access_token);
+    const staff = await loadStaff(db, data.user.id, data.user.email);
+    if (staff.must_change_password) {
+      throw new ApiError(403, "must_change_password", "Set a new password on the Chalkboard OS website first.");
+    }
+    await db.from("activity_logs").insert({
+      actor_id: staff.id, entity_type: "auth", action: "login", summary: `${staff.full_name} signed in (Lead app)`,
+    });
+    return { session: sessionJson(data.session), profile: await profile(db, staff) };
+  },
+
+  "auth/refresh": async (req) => {
+    const { refresh_token } = await body(req, z.object({ refresh_token: z.string().min(1) }));
+    const { data, error } = await anonClient().auth.refreshSession({ refresh_token });
+    if (error || !data.session) throw new ApiError(401, "bad_token", "Your session has expired. Please sign in again.");
+    return { session: sessionJson(data.session) };
+  },
+
+  "pin/set": async (req) => {
+    const { db } = await requireStaff(req);
+    const v = await body(req, z.object({ new_pin: z.string().regex(/^[0-9]{4}$/, "PIN must be 4 digits"), current_pin: z.string().optional() }));
+    const { data, error } = await db.rpc("set_staff_pin", { new_pin: v.new_pin, current_pin: v.current_pin ?? null });
+    if (error) throw new ApiError(500, "server", "Couldn't save your PIN. Please try again.");
+    return data;
+  },
+
+  "pin/verify": async (req) => {
+    const { db } = await requireStaff(req);
+    const { pin } = await body(req, z.object({ pin: z.string().regex(/^[0-9]{4}$/, "PIN must be 4 digits") }));
+    const { data, error } = await db.rpc("verify_staff_pin", { pin });
+    if (error) throw new ApiError(500, "server", "Couldn't check your PIN. Please try again.");
+    return data;
+  },
+
+  // Saying yes to the prompt. A number we already know returns that lead instead.
+  leads: async (req) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const v = await body(req, z.object({
+      full_name: z.string().trim().min(1, "Name is required"),
+      phone: z.string().regex(PHONE, "Enter a valid phone number"),
+      reason: z.string().min(1, "Choose a reason"),
+      notes: z.string().max(2000).optional(),
+      source: z.enum(["whatsapp", "phone_call"]).default("whatsapp"),
+    }));
+    const { data: dupes } = await db.from("crm_leads").select(LEAD_FIELDS)
+      .like("phone", `%${lastTen(v.phone)}`).is("deleted_at", null).in("status", OPEN_STATUSES).limit(1);
+    if (dupes?.[0]) return { lead: dupes[0], duplicate: true };
+
+    const { data: branch } = await db.from("branches").select("id").eq("is_active", true).order("created_at").limit(1).maybeSingle();
+    const routing = await routeNewLead(db as never, "tuitions");
+    const now = new Date().toISOString();
+    const days = await followUpDays(db);
+    const { data: lead, error } = await db.from("crm_leads").insert({
+      branch_id: branch?.id ?? null,
+      vertical: "tuitions",
+      status: routing.status,
+      assigned_to: routing.assigned_to,
+      full_name: v.full_name,
+      phone: v.phone,
+      source: v.source,
+      notes: v.notes || null,
+      contact_reason: v.reason,
+      follow_up_at: now,
+      created_by: staff.id,
+      ...nextActionFields(0, days, now, await reasonLabel(db, v.reason)),
+    }).select(LEAD_FIELDS).single();
+    if (error || !lead) throw new ApiError(500, "server", "Couldn't save the lead. Please try again.");
+
+    await logEvent(db, lead.id, staff.id, "created", { to: routing.status, note: "From the Lead app" });
+    await db.from("activity_logs").insert({
+      actor_id: staff.id, entity_type: "lead", entity_id: lead.id, action: "lead_created",
+      summary: `${v.full_name} added as a Tuitions lead from ${v.source === "phone_call" ? "a phone call" : "WhatsApp"}`,
+    });
+    revalidateLeads();
+    return { lead, duplicate: false };
+  },
+
+  // A WhatsApp message that starts with DEMO: logged straight away, no prompt.
+  // `alert` is true only the first time, so a repeat message doesn't ring again.
+  "leads/demo": async (req) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const v = await body(req, z.object({
+      full_name: z.string().trim().max(120).optional(),
+      phone: z.string().regex(PHONE, "Enter a valid phone number"),
+      text: z.string().max(300).refine((t) => DEMO_RE.test(t), "Not a DEMO message"),
+    }));
+    const now = new Date().toISOString();
+    const message = await demoMessage(db);
+
+    const { data: dupes } = await db.from("crm_leads").select(LEAD_FIELDS)
+      .like("phone", `%${lastTen(v.phone)}`).is("deleted_at", null).in("status", OPEN_STATUSES).limit(1);
+    const existing = dupes?.[0];
+    if (existing) {
+      const { data: tracked } = await db.from("crm_leads").select("demo_requested_at").eq("id", existing.id).maybeSingle();
+      const first = !tracked?.demo_requested_at && !existing.last_contacted_at;
+      if (first) await db.from("crm_leads").update({ demo_requested_at: now }).eq("id", existing.id);
+      return { lead: existing, duplicate: true, alert: first, slots_message: message };
+    }
+
+    const { data: branch } = await db.from("branches").select("id").eq("is_active", true).order("created_at").limit(1).maybeSingle();
+    const routing = await routeNewLead(db as never, "tuitions");
+    const days = await followUpDays(db);
+    const { data: lead, error } = await db.from("crm_leads").insert({
+      branch_id: branch?.id ?? null,
+      vertical: "tuitions",
+      status: routing.status,
+      assigned_to: routing.assigned_to,
+      full_name: v.full_name || `WhatsApp +${lastTen(v.phone)}`,
+      phone: v.phone,
+      source: "meta_ad",
+      notes: `Meta ad DEMO message: ${v.text.trim()}`,
+      contact_reason: "demo_class",
+      follow_up_at: now,
+      demo_requested_at: now,
+      created_by: staff.id,
+      ...nextActionFields(0, days, now, await reasonLabel(db, "demo_class")),
+    }).select(LEAD_FIELDS).single();
+    if (error || !lead) throw new ApiError(500, "server", "Couldn't save the lead. Please try again.");
+
+    await logEvent(db, lead.id, staff.id, "created", { to: routing.status, note: "DEMO message from a Meta ad" });
+    await db.from("activity_logs").insert({
+      actor_id: staff.id, entity_type: "lead", entity_id: lead.id, action: "lead_created",
+      summary: "DEMO lead from a Meta ad added from WhatsApp",
+    });
+    revalidateLeads();
+    return { lead, duplicate: false, alert: true, slots_message: message };
+  },
+
+  // Which of these numbers are already with us, so the missed calls list only shows new ones.
+  "leads/known": async (req) => {
+    const { db } = await requireStaff(req, "leads.view");
+    const { phones } = await body(req, z.object({ phones: z.array(z.string().regex(PHONE)).max(50) }));
+    const tens = Array.from(new Set(phones.map(lastTen)));
+    if (!tens.length) return { known: [] };
+    const [{ data: leads }, { data: parents }] = await Promise.all([
+      db.from("crm_leads").select("phone, status").is("deleted_at", null).or(tens.map((t) => `phone.like.%${t}`).join(",")),
+      db.from("parents").select("phone, whatsapp_number").or(tens.flatMap((t) => [`phone.like.%${t}`, `whatsapp_number.like.%${t}`]).join(",")),
+    ]);
+    const found = new Set<string>();
+    for (const l of leads ?? []) if (l.status !== "lost") found.add(lastTen(l.phone));
+    for (const p of parents ?? []) {
+      if (p.phone) found.add(lastTen(p.phone));
+      if (p.whatsapp_number) found.add(lastTen(p.whatsapp_number));
+    }
+    return { known: tens.filter((t) => found.has(t)) };
+  },
+
+  "os/subjects": async (req) => {
+    const { db } = await requireOsUnlock(req, "subjects.manage");
+    const v = await body(req, subjectBody);
+    const { data, error } = await db.from("subjects")
+      .insert({ name: v.name, short_code: v.short_code?.toUpperCase() || null, colour: "#c9a227" })
+      .select(SUBJECT_FIELDS).single();
+    if (error?.code === "23505") throw new ApiError(400, "invalid", "A subject with that name or code already exists.");
+    if (error || !data) throw new ApiError(500, "server", "Couldn't save the subject. Please try again.");
+    revalidatePath("/admin/subjects");
+    return { subject: data };
+  },
+
+  "os/manage-classes": async (req) => {
+    const { db, staff } = await requireOsUnlock(req, "batches.manage");
+    return classResult(await saveClassRecord(db, staff, null, await req.json().catch(() => null)));
+  },
+
+  "os/attendance": async (req) => {
+    const { db, staff } = await requireOsUnlock(req, "attendance.mark");
+    return saveAttendance(db, staff, await req.json().catch(() => null));
+  },
+
+  "os/students": async (req) => {
+    const { db, staff } = await requireOsUnlock(req, "students.manage");
+    const v = await body(req, studentSchema);
+    const created = await createStudentRecord(db, staff.id, v);
+    if ("error" in created) throw new ApiError(400, "invalid", created.error);
+    revalidatePath("/admin/students");
+    return { student: created.student };
+  },
+};
+
+// Routes with an id in the middle: leads/:id/<action>, os/queue/:id/sent.
+const LEAD_ACTIONS: Record<string, Handler> = {
+  // The chat was opened with a message ready, and staff came back from sending.
+  sent: async (req, [id]) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const v = await body(req, z.object({ template_id: z.string().uuid().nullable().optional() }));
+    const lead = await leadFor(db, id);
+    const days = await followUpDays(db);
+    const next = nextAfterSend(lead.follow_up_step, days);
+    const status = lead.follow_up_step === 0 ? "contacted" : "follow_up";
+    const { data, error } = await db.from("crm_leads").update({
+      status, last_contacted_at: new Date().toISOString(), ...next,
+      ...nextActionFields(next.follow_up_step, days, next.follow_up_at, await reasonLabel(db, lead.contact_reason)),
+    }).eq("id", id).select(LEAD_FIELDS).single();
+    if (error || !data) throw new ApiError(403, "forbidden", "Couldn't update this lead.");
+    await logEvent(db, id, staff.id, "whatsapp_sent", { from: lead.status, to: status, note: v.template_id ? `Template ${v.template_id}` : "Own wording" });
+    revalidateLeads(id);
+    return { lead: data };
+  },
+
+  // Staff say the demo slots went out, which stops the 10 minute Telegram alert.
+  "demo-handled": async (req, [id]) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    await leadFor(db, id);
+    await db.from("crm_leads").update({ demo_handled_at: new Date().toISOString() }).eq("id", id).is("demo_handled_at", null);
+    await logEvent(db, id, staff.id, "demo_handled", { note: "Demo slots sent" });
+    return { ok: true };
+  },
+
+  // The phone's own 10 minute check. The server decides, so it is safe to call twice.
+  "demo-check": async (req, [id]) => {
+    const { db } = await requireStaff(req, "leads.manage");
+    await leadFor(db, id);
+    return { alerted: await alertOverdueDemos(createServiceClient(), id) };
+  },
+
+  // They answered, so the schedule stops and it's on us to reply now.
+  replied: async (req, [id]) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const lead = await leadFor(db, id);
+    if (!OPEN_STATUSES.includes(lead.status)) return { lead };
+    const now = new Date().toISOString();
+    const days = await followUpDays(db);
+    const { data, error } = await db.from("crm_leads").update({
+      last_reply_at: now, follow_up_at: now, follow_up_step: 0,
+      ...nextActionFields(0, days, now, await reasonLabel(db, lead.contact_reason)),
+    }).eq("id", id).select(LEAD_FIELDS).single();
+    if (error || !data) throw new ApiError(403, "forbidden", "Couldn't update this lead.");
+    await logEvent(db, id, staff.id, "replied", { note: "Lead replied on WhatsApp" });
+    revalidateLeads(id);
+    return { lead: data };
+  },
+};
+
+const GET: Record<string, Handler> = {
+  me: async (req) => {
+    const { db, staff } = await requireStaff(req);
+    return { profile: await profile(db, staff) };
+  },
+
+  bootstrap: async (req) => {
+    const { db } = await requireStaff(req, "leads.view");
+    const [reasons, templates, staffList, days] = await Promise.all([
+      db.from("crm_contact_reasons").select("key, label").eq("is_active", true).order("sort"),
+      db.from("crm_templates").select("id, reason_key, title, body").eq("is_active", true).order("sort"),
+      db.from("admins").select("id, full_name, role").eq("is_active", true).is("deleted_at", null).in("role", ["super_admin", "admin"]).order("full_name"),
+      followUpDays(db),
+    ]);
+    return { reasons: reasons.data ?? [], templates: templates.data ?? [], staff: staffList.data ?? [], follow_up_days: days };
+  },
+
+  // view=due: needs someone now. view=open: every open tuition lead.
+  leads: async (req) => {
+    const { db } = await requireStaff(req, "leads.view");
+    const view = req.nextUrl.searchParams.get("view") ?? "due";
+    let q = db.from("crm_leads").select(LEAD_FIELDS).eq("vertical", "tuitions").is("deleted_at", null).in("status", OPEN_STATUSES);
+    q = view === "due"
+      ? q.lte("follow_up_at", new Date().toISOString()).order("follow_up_at")
+      : q.order("follow_up_at", { nullsFirst: false });
+    const [{ data, error }, days] = await Promise.all([q.limit(200), followUpDays(db)]);
+    if (error) throw new ApiError(500, "server", "Couldn't load leads.");
+    return { leads: (data ?? []).map((l) => ({ ...l, exhausted: isExhausted(l.follow_up_step, days) })) };
+  },
+
+  // Does this number already have a lead? Decides whether the prompt shows.
+  "leads/lookup": async (req) => {
+    const { db } = await requireStaff(req, "leads.view");
+    const phone = req.nextUrl.searchParams.get("phone") ?? "";
+    if (!PHONE.test(phone)) throw new ApiError(400, "invalid", "Enter a valid phone number.");
+    const { data } = await db.from("crm_leads").select(LEAD_FIELDS).like("phone", `%${lastTen(phone)}`)
+      .is("deleted_at", null).order("created_at", { ascending: false }).limit(1);
+    // Parents already with us shouldn't be asked about as if they were new enquiries.
+    const ten = lastTen(phone);
+    const { data: parents } = await db.from("parents").select("id").or(`phone.like.%${ten},whatsapp_number.like.%${ten}`).limit(1);
+    return { lead: data?.[0] ?? null, known_customer: !!parents?.length };
+  },
+
+  "os/classes": async (req) => {
+    const { db } = await requireOsUnlock(req, "attendance.mark");
+    const date = req.nextUrl.searchParams.get("date") ?? "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new ApiError(400, "invalid", "Choose a date.");
+    const day = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(`${date}T00:00:00Z`).getUTCDay()];
+    const { data } = await db.from("batches")
+      .select("id, name, grade, start_time, end_time, days, session_category")
+      .eq("status", "active").is("deleted_at", null).contains("days", [day]).order("start_time");
+    const [{ data: sessions }, { data: holiday }] = await Promise.all([
+      db.from("sessions").select("batch_id, status").eq("session_date", date).in("batch_id", (data ?? []).map((c) => c.id)),
+      db.from("holidays").select("name").eq("holiday_date", date).maybeSingle(),
+    ]);
+    const stateOf = new Map((sessions ?? []).map((s) => [s.batch_id, s.status]));
+    return { holiday: holiday?.name ?? null, classes: (data ?? []).map((c) => ({ ...c, session_status: stateOf.get(c.id) ?? null })) };
+  },
+
+  "os/manage-classes": async (req) => {
+    const { db } = await requireOsUnlock(req, "batches.manage");
+    const [{ data, error }, { data: students }, { data: subjects }, { data: year }] = await Promise.all([
+      db.from("batches")
+        .select("id, name, grade, board, days, start_time, end_time, room, notes, capacity, status, session_category, student_id, academic_year_id, batch_students(student_id), batch_subjects(subject_id, deleted_at)")
+        .is("deleted_at", null).order("name"),
+      db.from("students").select("id, full_name, grade").is("deleted_at", null).not("status", "in", "(archived,dropped)").order("full_name"),
+      db.from("subjects").select("id, name").eq("is_active", true).order("name"),
+      db.from("academic_years").select("id").order("is_current", { ascending: false }).order("name", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (error) throw new ApiError(500, "server", "Couldn't load classes.");
+    return {
+      academic_year_id: year?.id ?? null,
+      students: students ?? [],
+      subjects: subjects ?? [],
+      classes: (data ?? []).map(({ batch_students, batch_subjects, ...c }) => ({
+        ...c,
+        student_ids: (batch_students ?? []).map((s) => s.student_id),
+        subject_ids: (batch_subjects ?? []).filter((s) => !s.deleted_at).map((s) => s.subject_id),
+      })),
+    };
+  },
+
+  "os/subjects": async (req) => {
+    const { db } = await requireOsUnlock(req, "subjects.manage");
+    const [{ data, error }, { data: usage }] = await Promise.all([
+      db.from("subjects").select(SUBJECT_FIELDS).order("name"),
+      db.from("batch_subjects").select("subject_id").is("deleted_at", null),
+    ]);
+    if (error) throw new ApiError(500, "server", "Couldn't load subjects.");
+    const uses = new Map<string, number>();
+    for (const u of usage ?? []) uses.set(u.subject_id, (uses.get(u.subject_id) ?? 0) + 1);
+    return { subjects: (data ?? []).map((s) => ({ ...s, in_use: uses.get(s.id) ?? 0 })) };
+  },
+
+  "os/students": async (req) => {
+    const { db } = await requireOsUnlock(req, "students.view");
+    const { data, error } = await db.from("students")
+      .select("id, full_name, grade, board, status, parent:parents(full_name, phone, whatsapp_number)")
+      .is("deleted_at", null).order("full_name").limit(500);
+    if (error) throw new ApiError(500, "server", "Couldn't load students.");
+    return { students: data ?? [] };
+  },
+
+  "os/queue": async (req) => {
+    const { db } = await requireOsUnlock(req, "communications.manage");
+    const { data } = await db.from("communication_queue")
+      .select("id, template_key, to_number, payload, created_at").eq("status", "pending").order("created_at").limit(100);
+    return {
+      messages: (data ?? []).map((m) => ({
+        id: m.id,
+        to_number: m.to_number,
+        student_name: m.payload?.student_name ?? null,
+        created_at: m.created_at,
+        body: TEMPLATES[m.template_key as TemplateKey]?.body(m.payload ?? {}) ?? "",
+      })),
+    };
+  },
+};
+
+async function roster(req: NextRequest, batchId: string) {
+  const { db } = await requireOsUnlock(req, "attendance.mark");
+  const date = req.nextUrl.searchParams.get("date") ?? "";
+  if (!uuid.safeParse(batchId).success || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new ApiError(400, "invalid", "Choose a class and date.");
+  const { data: batch } = await db.from("batches")
+    .select("id, name, start_time, end_time, session_category, student:students(id, full_name, admission_number)")
+    .eq("id", batchId).is("deleted_at", null).maybeSingle();
+  if (!batch) throw new ApiError(404, "not_found", "This class could not be found.");
+
+  type Person = { id: string; full_name: string; admission_number: string | null };
+  let students: Person[];
+  if (batch.session_category === "individual_attention") {
+    const one = batch.student as unknown as Person | null;
+    students = one ? [one] : [];
+  } else {
+    const { data: enrol } = await db.from("batch_students")
+      .select("student:students(id, full_name, admission_number, status)").eq("batch_id", batchId);
+    students = (enrol ?? [])
+      .map((e) => e.student as unknown as (Person & { status: string }) | null)
+      .filter((s): s is Person & { status: string } => !!s && s.status !== "archived" && s.status !== "dropped")
+      .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }
+
+  const { data: session } = await db.from("sessions").select("id, status, subject_ids, topic_covered, homework_assigned, teacher_notes")
+    .eq("batch_id", batchId).eq("session_date", date).order("start_time").limit(1).maybeSingle();
+  const [{ data: subjects }, { data: linked }] = await Promise.all([
+    db.from("subjects").select("id, name").eq("is_active", true).order("name"),
+    db.from("batch_subjects").select("subject_id").eq("batch_id", batchId).is("deleted_at", null),
+  ]);
+  const marks = session ? (await db.from("attendance").select("student_id, status").eq("session_id", session.id)).data ?? [] : [];
+  const byStudent = new Map(marks.map((m) => [m.student_id, m.status]));
+  return {
+    batch: { id: batch.id, name: batch.name, start_time: batch.start_time?.slice(0, 5) ?? null, end_time: batch.end_time?.slice(0, 5) ?? null },
+    session,
+    subjects: subjects ?? [],
+    // Same default as the website: what was saved, otherwise the class's own subjects.
+    selected_subjects: session?.subject_ids?.length ? session.subject_ids : (linked ?? []).map((l) => l.subject_id),
+    students: students.map((s) => ({ id: s.id, full_name: s.full_name, admission_number: s.admission_number, status: byStudent.get(s.id) ?? "present" })),
+  };
+}
+
+async function markQueueSent(req: NextRequest, id: string) {
+  const { db, staff } = await requireOsUnlock(req, "communications.manage");
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Message not found.");
+  const { data: row } = await db.from("communication_queue")
+    .update({ status: "sent", provider_id: `manual:${staff.id}`, processed_at: new Date().toISOString(), last_error: null })
+    .eq("id", id).eq("status", "pending")
+    .select("id, template_key, to_number, payload, student_id, parent_id").maybeSingle();
+  if (!row) throw new ApiError(404, "not_found", "This message was already handled.");
+  const text = TEMPLATES[row.template_key as TemplateKey]?.body(row.payload ?? {}) ?? "";
+  await Promise.all([
+    db.from("whatsapp_logs").insert({
+      parent_id: row.parent_id, student_id: row.student_id, to_number: row.to_number, template_key: row.template_key,
+      body: text, status: "sent", provider_id: `manual:${staff.id}`, sent_at: new Date().toISOString(),
+    }),
+    db.from("communications").insert({
+      student_id: row.student_id, parent_id: row.parent_id, type: "whatsapp", direction: "outgoing", status: "sent",
+      message: text, metadata: { template_key: row.template_key, sent_by: "manual", actor_id: staff.id },
+    }),
+  ]);
+  revalidatePath("/admin/whatsapp");
+  return { ok: true };
+}
+
+function classResult(r: { ok: boolean; error?: string; batchId?: string }) {
+  if (!r.ok) throw new ApiError(400, "invalid", r.error ?? "Couldn't save this class.");
+  return { id: r.batchId };
+}
+
+async function archiveClass(req: NextRequest, id: string) {
+  const { db, staff } = await requireOsUnlock(req, "batches.manage");
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Class not found.");
+  const { error } = await archiveClassRecord(db, staff, id);
+  if (error) throw new ApiError(500, "server", "Couldn't remove this class. Please try again.");
+  return { ok: true };
+}
+
+async function patchSubject(req: NextRequest, id: string) {
+  const { db } = await requireOsUnlock(req, "subjects.manage");
+  if (!uuid.safeParse(id).success) throw new ApiError(404, "not_found", "Subject not found.");
+  const v = await body(req, subjectBody.partial().extend({ is_active: z.boolean().optional() }));
+  const { data, error } = await db.from("subjects").update({
+    ...(v.name ? { name: v.name } : {}),
+    ...(v.short_code !== undefined ? { short_code: v.short_code.toUpperCase() || null } : {}),
+    ...(v.is_active !== undefined ? { is_active: v.is_active } : {}),
+  }).eq("id", id).select(SUBJECT_FIELDS).maybeSingle();
+  if (error?.code === "23505") throw new ApiError(400, "invalid", "A subject with that name or code already exists.");
+  if (error || !data) throw new ApiError(500, "server", "Couldn't update the subject. Please try again.");
+  revalidatePath("/admin/subjects");
+  return { subject: data };
+}
+
+async function patchLead(req: NextRequest, id: string) {
+  const { db, staff } = await requireStaff(req, "leads.manage");
+  const v = await body(req, z.object({
+    status: z.enum(["contacted", "follow_up", "converted", "lost"]).optional(),
+    note: z.string().max(2000).optional(),
+    lost_reason: z.string().max(500).optional(),
+    follow_up_at: z.string().datetime({ offset: true }).nullable().optional(),
+    assigned_to: z.string().uuid().optional(),
+  }));
+  const lead = await leadFor(db, id);
+  if (lead.status === "pending_approval") throw new ApiError(400, "invalid", "This lead still needs Super Admin approval.");
+
+  const days = await followUpDays(db);
+  const closing = v.status === "converted" || v.status === "lost";
+  const followUpAt = closing ? null : v.follow_up_at !== undefined ? v.follow_up_at : lead.follow_up_at;
+  const update: Record<string, unknown> = {
+    ...(v.status ? { status: v.status } : {}),
+    ...(v.assigned_to ? { assigned_to: v.assigned_to } : {}),
+    ...(v.status === "lost" ? { lost_reason: v.lost_reason || null } : {}),
+    ...(v.status === "converted" ? { converted_at: new Date().toISOString() } : {}),
+    follow_up_at: followUpAt,
+    ...nextActionFields(lead.follow_up_step, days, followUpAt, await reasonLabel(db, lead.contact_reason)),
+  };
+  const { data, error } = await db.from("crm_leads").update(update).eq("id", id).select(LEAD_FIELDS).single();
+  if (error || !data) throw new ApiError(403, "forbidden", "Couldn't update this lead.");
+
+  if (v.status) await logEvent(db, id, staff.id, "status_changed", { from: lead.status, to: v.status, note: v.note ?? v.lost_reason });
+  else if (v.assigned_to) await logEvent(db, id, staff.id, "assigned", { note: v.note });
+  else if (v.note) await logEvent(db, id, staff.id, "note", { note: v.note });
+  revalidateLeads(id);
+  return { lead: data };
+}
+
+async function dispatch(req: NextRequest, method: "GET" | "POST" | "PUT" | "PATCH", path: string[]) {
+  const key = path.join("/");
+  if (method === "GET") {
+    if (GET[key]) return GET[key](req, []);
+    if (path[0] === "os" && path[1] === "classes" && path.length === 4 && path[3] === "roster") return roster(req, path[2]);
+  }
+  if (method === "POST") {
+    if (POST[key]) return POST[key](req, []);
+    if (path[0] === "leads" && path.length === 3 && LEAD_ACTIONS[path[2]]) return LEAD_ACTIONS[path[2]](req, [path[1]]);
+    if (path[0] === "os" && path[1] === "queue" && path.length === 4 && path[3] === "sent") return markQueueSent(req, path[2]);
+    if (path[0] === "os" && path[1] === "manage-classes" && path.length === 4 && path[3] === "archive") return archiveClass(req, path[2]);
+  }
+  if (method === "PATCH" && path[0] === "leads" && path.length === 2) return patchLead(req, path[1]);
+  if (method === "PATCH" && path[0] === "os" && path[1] === "subjects" && path.length === 3) return patchSubject(req, path[2]);
+  if (method === "PATCH" && path[0] === "os" && path[1] === "manage-classes" && path.length === 3) {
+    const { db, staff } = await requireOsUnlock(req, "batches.manage");
+    if (!uuid.safeParse(path[2]).success) throw new ApiError(404, "not_found", "Class not found.");
+    return classResult(await saveClassRecord(db, staff, path[2], await req.json().catch(() => null)));
+  }
+  if (method === "PUT" && key === "settings/follow-ups") {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const { days } = await body(req, z.object({ days: z.array(z.number().int().min(1).max(365)).min(1).max(10) }));
+    const sorted = Array.from(new Set(days)).sort((a, b) => a - b);
+    const { data, error } = await db.from("crm_follow_up_settings")
+      .update({ days: sorted, updated_by: staff.id, updated_at: new Date().toISOString() }).eq("id", true).select("days").maybeSingle();
+    if (error || !data) throw new ApiError(403, "forbidden", "You can't change the follow-up schedule.");
+    return { follow_up_days: data.days };
+  }
+  if (method === "PUT" && key === "settings/demo-slots") {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const { message } = await body(req, z.object({ message: z.string().trim().max(1000) }));
+    const { data, error } = await db.from("crm_demo_settings")
+      .update({ message, updated_by: staff.id, updated_at: new Date().toISOString() }).eq("id", true).select("message").maybeSingle();
+    if (error || !data) throw new ApiError(403, "forbidden", "You can't change the demo slots.");
+    return { message: data.message };
+  }
+  throw new ApiError(404, "not_found", "Unknown route.");
+}
+
+function handler(method: "GET" | "POST" | "PUT" | "PATCH") {
+  return async (req: NextRequest, { params }: { params: { path: string[] } }) => {
+    try {
+      return NextResponse.json(await dispatch(req, method, params.path), { headers: { "Cache-Control": "no-store" } });
+    } catch (e) {
+      if (e instanceof ApiError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
+      console.error("mobile api", e);
+      return NextResponse.json({ error: "Something went wrong. Please try again.", code: "server" }, { status: 500 });
+    }
+  };
+}
+
+const getHandler = handler("GET");
+const postHandler = handler("POST");
+const putHandler = handler("PUT");
+const patchHandler = handler("PATCH");
+export { getHandler as GET, postHandler as POST, putHandler as PUT, patchHandler as PATCH };

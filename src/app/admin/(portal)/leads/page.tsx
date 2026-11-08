@@ -3,6 +3,7 @@ import { Plus, Search, Inbox, Phone, Clock, ShieldCheck } from "lucide-react";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
 import { can } from "@/lib/os/permissions";
+import { saveDemoSlots } from "./actions";
 import { LEAD_STATUS_META, VERTICAL_META, OPEN_STATUSES, type LeadStatus, type LeadVertical } from "@/lib/os/leads";
 
 export const dynamic = "force-dynamic";
@@ -47,9 +48,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: { q?: 
   if (filter === "converted") query = query.eq("status", "converted");
   if (q) query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`);
 
-  const [{ data: leads }, { count: awaiting }] = await Promise.all([
+  const canEditSlots = ["super_admin", "admin", "branch_admin"].includes(admin.role);
+  const [{ data: leads }, { count: awaiting }, { data: demo }] = await Promise.all([
     query,
     supabase.from("crm_leads").select("id", { count: "exact", head: true }).eq("status", "pending_approval").is("deleted_at", null),
+    canEditSlots ? supabase.from("crm_demo_settings").select("message").maybeSingle() : Promise.resolve({ data: null }),
   ]);
 
   const href = (f: Filter) => `/admin/leads${f === "open" && !q ? "" : `?${new URLSearchParams({ ...(q ? { q } : {}), filter: f })}`}`;
@@ -80,6 +83,31 @@ export default async function LeadsPage({ searchParams }: { searchParams: { q?: 
           </p>
           <span className="text-xs font-semibold" style={{ color: "#f4c430" }}>Review →</span>
         </Link>
+      )}
+
+      {canEditSlots && (
+        <details className="rounded-2xl p-4" style={{ background: "rgba(22,45,36,0.7)", border: "1px solid rgba(201,162,39,0.15)" }}>
+          <summary className="cursor-pointer text-sm font-semibold" style={{ color: "#f5f0e8" }}>
+            Demo slots message{demo?.message ? "" : " (not set yet)"}
+          </summary>
+          <form action={saveDemoSlots} className="mt-3 space-y-2">
+            <p className="text-xs" style={{ color: "rgba(245,240,232,0.5)" }}>
+              The Lead app pre-fills this when staff tap “Send demo slots” on a DEMO enquiry. Update it each week.
+            </p>
+            <textarea
+              name="message"
+              rows={4}
+              maxLength={1000}
+              defaultValue={demo?.message ?? ""}
+              aria-label="Demo slots message"
+              className="w-full rounded-xl px-3 py-2 text-sm outline-none border-0 focus:ring-2 focus:ring-[#c9a227]"
+              style={{ background: "rgba(22,45,36,0.9)", color: "#f5f0e8", border: "1px solid rgba(201,162,39,0.15)" }}
+            />
+            <button type="submit" className="rounded-xl px-4 py-2 font-bold text-sm" style={{ background: "#c9a227", color: "#162d24" }}>
+              Save
+            </button>
+          </form>
+        </details>
       )}
 
       <form method="GET" className="relative">

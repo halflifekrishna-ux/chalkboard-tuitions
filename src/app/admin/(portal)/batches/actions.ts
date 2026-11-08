@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { archiveClassRecord } from "@/lib/os/class-save";
 import { redirect } from "next/navigation";
 import { requireCapability } from "@/lib/os/auth";
 import { createServerSupabase } from "@/lib/os/supabase-server";
@@ -93,13 +94,7 @@ export async function updateBatch(batchId: string, _prev: ActionState, formData:
 export async function archiveBatch(batchId: string): Promise<void> {
   const admin = await requireCapability("batches.manage");
   const supabase = createServerSupabase();
-  const { data: batch } = await supabase.from("batches").select("name").eq("id", batchId).single();
-  await supabase.from("batches").update({ deleted_at: new Date().toISOString(), status: "archived" }).eq("id", batchId);
-  await supabase.from("activity_logs").insert({
-    actor_id: admin.id, entity_type: "batch", entity_id: batchId,
-    action: "archived", summary: `Batch "${batch?.name ?? ""}" was archived`,
-  });
-  revalidatePath("/admin/batches");
+  await archiveClassRecord(supabase, admin, batchId);
   redirect("/admin/batches");
 }
 

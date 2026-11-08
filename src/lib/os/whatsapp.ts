@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabase } from "./supabase-server";
 
 /**
@@ -81,9 +82,9 @@ export interface QueueItem {
 }
 
 /** Insert queue rows only — never talks to Meta. Safe inside the save transaction path. */
-export async function enqueueMessages(items: QueueItem[]) {
+export async function enqueueMessages(items: QueueItem[], client?: SupabaseClient) {
   if (!items.length) return;
-  const supabase = createServerSupabase();
+  const supabase = client ?? createServerSupabase();
   await supabase.from("communication_queue").insert(
     items.map((i) => ({
       template_key: i.template_key,
@@ -144,10 +145,10 @@ const MAX_RETRIES = 3;
  * attendance saves; also callable from a retry button or future cron worker.
  * Without Meta credentials, rows simply stay pending — nothing is lost.
  */
-export async function processQueue(limit = 25): Promise<{ sent: number; failed: number; skipped: boolean }> {
+export async function processQueue(limit = 25, client?: SupabaseClient): Promise<{ sent: number; failed: number; skipped: boolean }> {
   if (!isConfigured()) return { sent: 0, failed: 0, skipped: true };
 
-  const supabase = createServerSupabase();
+  const supabase = client ?? createServerSupabase();
   const { data: rows } = await supabase
     .from("communication_queue")
     .select("id, template_key, to_number, payload, student_id, parent_id")
@@ -210,7 +211,7 @@ export async function processQueue(limit = 25): Promise<{ sent: number; failed: 
         .from("communication_queue")
         .update({
           status: "failed",
-          retry_count: (await currentRetryCount(row.id)) + 1,
+          retry_count: (await currentRetryCount(supabase, row.id)) + 1,
           last_error: (e as Error).message,
           processed_at: new Date().toISOString(),
         })
@@ -222,8 +223,7 @@ export async function processQueue(limit = 25): Promise<{ sent: number; failed: 
   return { sent, failed, skipped: false };
 }
 
-async function currentRetryCount(id: string): Promise<number> {
-  const supabase = createServerSupabase();
+async function currentRetryCount(supabase: SupabaseClient, id: string): Promise<number> {
   const { data } = await supabase.from("communication_queue").select("retry_count").eq("id", id).single();
   return data?.retry_count ?? 0;
 }
