@@ -67,6 +67,16 @@ const schema = {
       },
     },
 
+    // Home > Tuitions, matching the breadcrumbs the Studio pages already emit.
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${SITE_URL}/tuitions#breadcrumb`,
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Chalkboard", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Tuitions", item: `${SITE_URL}/tuitions` },
+      ],
+    },
+
     // Mirrors the FAQ section rendered on this same page — Google requires the
     // answers to be visible on the page carrying this markup.
     {
