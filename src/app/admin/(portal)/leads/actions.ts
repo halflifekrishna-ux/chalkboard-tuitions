@@ -94,6 +94,18 @@ export async function createLead(_prev: LeadActionState, formData: FormData): Pr
   redirect(`/admin/leads/${lead.id}`);
 }
 
+/** The wording the Lead app pre-fills when staff tap "Send demo slots". RLS limits writes to the admin tier. */
+export async function saveDemoSlots(formData: FormData): Promise<void> {
+  const admin = await requireCapability("leads.manage");
+  const message = String(formData.get("message") ?? "").trim().slice(0, 1000);
+  const supabase = createServerSupabase();
+  await supabase
+    .from("crm_demo_settings")
+    .update({ message, updated_by: admin.id, updated_at: new Date().toISOString() })
+    .eq("id", true);
+  revalidatePath("/admin/leads");
+}
+
 /** Super Admin releases a studio lead to the studio's BD. */
 export async function approveLead(leadId: string): Promise<void> {
   const admin = await requireCapability("leads.approve");

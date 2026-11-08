@@ -10,6 +10,8 @@ import { archiveClassRecord, saveClassRecord } from "@/lib/os/class-save";
 import { createStudentRecord } from "@/lib/os/students";
 import { studentSchema } from "@/app/admin/(portal)/students/schema";
 import { TEMPLATES, type TemplateKey } from "@/lib/os/whatsapp";
+import { DEMO_RE, alertOverdueDemos, demoMessage } from "@/lib/mobile/demo";
+import { createServiceClient } from "@/lib/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -161,6 +163,57 @@ const POST: Record<string, Handler> = {
     return { lead, duplicate: false };
   },
 
+  // A WhatsApp message that starts with DEMO: logged straight away, no prompt.
+  // `alert` is true only the first time, so a repeat message doesn't ring again.
+  "leads/demo": async (req) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const v = await body(req, z.object({
+      full_name: z.string().trim().max(120).optional(),
+      phone: z.string().regex(PHONE, "Enter a valid phone number"),
+      text: z.string().max(300).refine((t) => DEMO_RE.test(t), "Not a DEMO message"),
+    }));
+    const now = new Date().toISOString();
+    const message = await demoMessage(db);
+
+    const { data: dupes } = await db.from("crm_leads").select(LEAD_FIELDS)
+      .like("phone", `%${lastTen(v.phone)}`).is("deleted_at", null).in("status", OPEN_STATUSES).limit(1);
+    const existing = dupes?.[0];
+    if (existing) {
+      const { data: tracked } = await db.from("crm_leads").select("demo_requested_at").eq("id", existing.id).maybeSingle();
+      const first = !tracked?.demo_requested_at && !existing.last_contacted_at;
+      if (first) await db.from("crm_leads").update({ demo_requested_at: now }).eq("id", existing.id);
+      return { lead: existing, duplicate: true, alert: first, slots_message: message };
+    }
+
+    const { data: branch } = await db.from("branches").select("id").eq("is_active", true).order("created_at").limit(1).maybeSingle();
+    const routing = await routeNewLead(db as never, "tuitions");
+    const days = await followUpDays(db);
+    const { data: lead, error } = await db.from("crm_leads").insert({
+      branch_id: branch?.id ?? null,
+      vertical: "tuitions",
+      status: routing.status,
+      assigned_to: routing.assigned_to,
+      full_name: v.full_name || `WhatsApp +${lastTen(v.phone)}`,
+      phone: v.phone,
+      source: "meta_ad",
+      notes: `Meta ad DEMO message: ${v.text.trim()}`,
+      contact_reason: "demo_class",
+      follow_up_at: now,
+      demo_requested_at: now,
+      created_by: staff.id,
+      ...nextActionFields(0, days, now, await reasonLabel(db, "demo_class")),
+    }).select(LEAD_FIELDS).single();
+    if (error || !lead) throw new ApiError(500, "server", "Couldn't save the lead. Please try again.");
+
+    await logEvent(db, lead.id, staff.id, "created", { to: routing.status, note: "DEMO message from a Meta ad" });
+    await db.from("activity_logs").insert({
+      actor_id: staff.id, entity_type: "lead", entity_id: lead.id, action: "lead_created",
+      summary: "DEMO lead from a Meta ad added from WhatsApp",
+    });
+    revalidateLeads();
+    return { lead, duplicate: false, alert: true, slots_message: message };
+  },
+
   // Which of these numbers are already with us, so the missed calls list only shows new ones.
   "leads/known": async (req) => {
     const { db } = await requireStaff(req, "leads.view");
@@ -230,6 +283,22 @@ const LEAD_ACTIONS: Record<string, Handler> = {
     await logEvent(db, id, staff.id, "whatsapp_sent", { from: lead.status, to: status, note: v.template_id ? `Template ${v.template_id}` : "Own wording" });
     revalidateLeads(id);
     return { lead: data };
+  },
+
+  // Staff say the demo slots went out, which stops the 10 minute Telegram alert.
+  "demo-handled": async (req, [id]) => {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    await leadFor(db, id);
+    await db.from("crm_leads").update({ demo_handled_at: new Date().toISOString() }).eq("id", id).is("demo_handled_at", null);
+    await logEvent(db, id, staff.id, "demo_handled", { note: "Demo slots sent" });
+    return { ok: true };
+  },
+
+  // The phone's own 10 minute check. The server decides, so it is safe to call twice.
+  "demo-check": async (req, [id]) => {
+    const { db } = await requireStaff(req, "leads.manage");
+    await leadFor(db, id);
+    return { alerted: await alertOverdueDemos(createServiceClient(), id) };
   },
 
   // They answered, so the schedule stops and it's on us to reply now.
@@ -521,6 +590,14 @@ async function dispatch(req: NextRequest, method: "GET" | "POST" | "PUT" | "PATC
       .update({ days: sorted, updated_by: staff.id, updated_at: new Date().toISOString() }).eq("id", true).select("days").maybeSingle();
     if (error || !data) throw new ApiError(403, "forbidden", "You can't change the follow-up schedule.");
     return { follow_up_days: data.days };
+  }
+  if (method === "PUT" && key === "settings/demo-slots") {
+    const { db, staff } = await requireStaff(req, "leads.manage");
+    const { message } = await body(req, z.object({ message: z.string().trim().max(1000) }));
+    const { data, error } = await db.from("crm_demo_settings")
+      .update({ message, updated_by: staff.id, updated_at: new Date().toISOString() }).eq("id", true).select("message").maybeSingle();
+    if (error || !data) throw new ApiError(403, "forbidden", "You can't change the demo slots.");
+    return { message: data.message };
   }
   throw new ApiError(404, "not_found", "Unknown route.");
 }

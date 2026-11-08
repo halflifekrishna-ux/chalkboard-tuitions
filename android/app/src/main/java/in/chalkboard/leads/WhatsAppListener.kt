@@ -59,8 +59,16 @@ class WhatsAppListener : NotificationListenerService() {
         val chat = n.shortcutId ?: title
 
         scope.launch {
-            if (store.isDeclined(phone.ifEmpty { chat })) return@launch
             val api = Api(store)
+            // DEMO from a Meta ad: logged with no prompt, then the full-screen alert. A number
+            // staff once declined still counts, because the customer is asking for a demo now.
+            if (phone.isNotEmpty() && DEMO_REGEX.containsMatchIn(text)) {
+                val found = runCatching { api.get("leads/lookup?phone=${Uri.encode(phone)}") }.getOrNull()
+                if (found?.optBoolean("known_customer") == true) return@launch
+                if (handleDemoMessage(applicationContext, api, if (titleIsPhone) "" else title, phone, text)) return@launch
+                // Offline or error: fall through to the normal prompt so the enquiry isn't lost.
+            }
+            if (store.isDeclined(phone.ifEmpty { chat })) return@launch
             var known: JSONObject? = null
             if (phone.isNotEmpty()) {
                 // Offline or failed lookup: prompt anyway. The server drops duplicates.
