@@ -7,7 +7,7 @@ export const contentType = "image/png";
 export default function Image() {
   return studioOgImage({
     eyebrow: "For companies",
-    title: "Corporate training built around the work your team does.",
-    line: "AI at work, sales, customer support and leadership. Courses built from your own material.",
+    title: "Corporate training for teams in India and abroad.",
+    line: "AI at work, POSH, data, communication and eLearning.",
   });
 }

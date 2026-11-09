@@ -18,13 +18,13 @@ import { StudioEnquire } from "@/components/marketing/learning-studio/StudioPart
 const PAGE = STUDIO_PAGES.companies;
 
 export const metadata: Metadata = {
-  title: { absolute: "Corporate Training Programs for Teams | Chalkboard Learning Studio" },
+  title: { absolute: "Corporate Training: AI, POSH, Data, Communication | Chalkboard" },
   description:
-    "Corporate training built around the work your team does: AI at work, sales, customer support and leadership, plus courses built from your own material. On site in Bengaluru or online.",
+    "Corporate training and eLearning for teams in Bengaluru, across India and abroad. AI at work, POSH, Excel and Power BI, communication and custom courses, on site or live online.",
   alternates: studioAlternates(PAGE.path),
   openGraph: {
-    title: "Corporate training built around the work your team does",
-    description: "AI at work, sales, customer support and leadership, plus courses built from your own material.",
+    title: "Corporate training for teams in India and abroad",
+    description: "AI at work, POSH, data, communication and eLearning, built around the work your team does.",
     url: studioAlternates(PAGE.path).canonical,
     type: "website",
     siteName: "Chalkboard Learning Studio",
@@ -36,45 +36,53 @@ const TRACKS = [
     id: "ai-at-work",
     kicker: "Most asked",
     title: "AI at work",
-    service: "AI training for teams",
+    service: "AI capability training for teams",
     body: "Your team writes the first draft, then uses AI to make it better. Generative AI, prompt writing and checking what comes back.",
     pills: ["Generative AI", "Prompt writing", "AI-assisted work"],
     href: STUDIO_PAGES.aiTraining.path,
     cta: "AI training for teams",
   },
   {
-    id: "sales",
-    kicker: "Revenue",
-    title: "Sales",
-    service: "Sales training",
-    body: "Discovery that earns the second meeting, handling the objection that stalls the deal, and the call after a no.",
-    pills: ["Discovery", "Objection handling", "Follow-up"],
+    id: "posh",
+    kicker: "Compliance",
+    title: "POSH awareness",
+    service: "POSH awareness training",
+    body: "Awareness sessions under the POSH Act, 2013, built on situations your people will recognise from their own workplace.",
+    pills: ["POSH Act, 2013", "Case discussion", "Managers and staff"],
   },
   {
-    id: "support",
-    kicker: "Customers",
-    title: "Customer support",
-    service: "Customer support training",
-    body: "De-escalation and first-contact resolution, practised on tickets that look like yours.",
-    pills: ["De-escalation", "First-contact resolution", "Tone"],
+    id: "data",
+    kicker: "Numbers",
+    title: "Data and Excel",
+    service: "Excel and Power BI training",
+    body: "Excel, Power BI and dashboards, practised on your own reports so the first thing people build is something they need.",
+    pills: ["Excel", "Power BI", "Dashboards"],
   },
   {
-    id: "leadership",
-    kicker: "Managers",
-    title: "How a team runs",
-    service: "Team effectiveness and leadership training",
-    body: "Feedback that lands, clean handoffs, and decisions that still hold after the meeting.",
-    pills: ["Feedback", "Handoffs", "Decisions"],
+    id: "communication",
+    kicker: "People",
+    title: "Communication",
+    service: "Business communication training",
+    body: "Emails that get answered, updates that do not run long, and the difficult conversation with a client or a manager.",
+    pills: ["Writing", "Presenting", "Difficult conversations"],
   },
   {
     id: "custom-courses",
     kicker: "Your material",
-    title: "Courses built for you",
-    service: "Custom course development",
-    body: "A deck, an SOP or one expert's knowledge, built into scenarios and practice people can do on their own.",
+    title: "eLearning built for you",
+    service: "Custom eLearning development",
+    body: "A deck, an SOP or one expert's knowledge, built into scenarios and practice people can do on their own. Packaged as SCORM or xAPI for your LMS.",
     pills: ["Storyline", "Rise", "SCORM / xAPI"],
     href: STUDIO_PAGES.customCourses.path,
     cta: "Custom course development",
+  },
+  {
+    id: "other",
+    kicker: "Something else",
+    title: "Sales, support, leadership, onboarding",
+    service: "Team effectiveness and onboarding training",
+    body: "If your team needs it and it is not listed, tell us. We design it around the gap, then bring in the right trainer.",
+    pills: ["Sales", "Customer support", "Onboarding"],
   },
 ];
 
@@ -88,27 +96,27 @@ const STEPS = [
 const FAQS: Faq[] = [
   {
     q: "What corporate training does Chalkboard Learning Studio offer?",
-    a: "AI at work, sales, customer support, and team effectiveness and leadership, plus custom courses built from your own material. Each program is designed around what your team needs to be able to do, so no two are the same.",
+    a: "AI at work, POSH awareness, Excel and Power BI, business communication, and custom eLearning built from your own material. If your team needs something else, tell us and we design it around the gap.",
   },
   {
     q: "Can you train our team to use AI well?",
     a: "Yes. Our AI training is built on one rule: people write the first draft themselves, then use AI to improve it. It covers prompt writing, AI-assisted work and checking what AI gets wrong, in the tools your team is allowed to use.",
   },
   {
-    q: "How long is a program?",
-    a: "It depends on the gap. One skill can be a focused workshop; a change in how a team works usually runs as sessions over several weeks, each built on the work done since the last.",
+    q: "Do you run POSH awareness sessions?",
+    a: "Yes. We run them as case-based sessions for managers and staff, built around the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013. We name the trainer in the proposal before you commit.",
   },
   {
-    q: "Do you run training online?",
-    a: "Yes. Live online sessions run the same way as on-site sessions in Bengaluru, with exercises on each person's own work.",
+    q: "Do you train teams outside India?",
+    a: "Yes, online. Sessions run live in your team's working hours, with exercises on their own work. Courses we build as eLearning are packaged as SCORM or xAPI for any LMS.",
   },
   {
-    q: "Can you build a course from our own material?",
-    a: "Yes. We storyboard it with you, then build it as scenarios and practice in your authoring tool, packaged for your LMS with completion and score reporting.",
+    q: "Who delivers the training?",
+    a: "A trainer matched to the topic. Once you tell us the subject and the audience, the proposal says who will run it.",
   },
   {
     q: "How does it start?",
-    a: "A short call about the outcome you need and who it's for. We reply with a proposed outline and what it costs before anything is built.",
+    a: "A short call about the outcome you need and who it is for. We reply with a proposed outline and a quote before anything is built. You can also write to connect@chalkboardlearning.in.",
   },
 ];
 
@@ -135,11 +143,11 @@ export default function CompaniesPage() {
         <Inner className="relative">
           <Kicker tone="dark">For companies</Kicker>
           <h1 className="mt-7 max-w-5xl break-words font-playfair font-bold leading-[1.03] tracking-tight text-[clamp(2.5rem,8.6vw,6rem)]">
-            Corporate training built around the work your team does <span className="font-playfair text-chalk-yellow">every week.</span>
+            Corporate training for teams in India and abroad, built around <span className="font-playfair text-chalk-yellow">their actual work.</span>
           </h1>
           <span aria-hidden className="sx-hero-line mt-9 block h-px w-full max-w-md bg-gradient-to-r from-chalk-yellow/80 to-transparent" />
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75 sm:text-xl">
-            AI at work, sales, customer support and leadership. We find the gap first, then design the training around it.
+            AI at work, POSH, data, communication and eLearning. We find the gap first, then design the training around it.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
             <Link
@@ -159,7 +167,7 @@ export default function CompaniesPage() {
         <Inner>
           <Kicker tone="cream">What we train</Kicker>
           <h2 id="tracks-heading" className="sx-focus mt-8 max-w-3xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
-            Teams get stuck in the same places.
+            Pick the problem. We build the program.
           </h2>
           <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {TRACKS.map((t) => (
@@ -199,11 +207,25 @@ export default function CompaniesPage() {
         </Inner>
       </Scene>
 
+      <Scene tone="dark" labelledBy="reach">
+        <Inner>
+          <Kicker tone="dark">India and abroad</Kicker>
+          <Statement id="reach" className="mt-8">
+            Same program.
+            <br />
+            Wherever the team sits.
+          </Statement>
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75">
+            Bengaluru teams can train on site. Teams elsewhere in India, the Middle East, the UK, Europe, the US and Australia train live online, in their own working hours, with the same exercises on their own work.
+          </p>
+        </Inner>
+      </Scene>
+
       <StudioFaq faqs={FAQS} />
 
       <StudioEnquire
         title={<>What should your team be able to do next quarter?</>}
-        line="Tell us who it's for and what needs to change. We reply by email with a proposed outline and what it costs."
+        line="Tell us who it's for and what needs to change. We reply by email with a proposed outline and a quote."
         defaultAudience="Corporate team"
         elsewhere={["colleges", "trainers"]}
       />
