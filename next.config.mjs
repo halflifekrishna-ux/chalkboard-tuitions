@@ -29,7 +29,14 @@ const nextConfig = {
     const destination = "https://www.chalkboardlearning.in";
     return [
       { source: "/:path((?!admin|api|_next).+)", has, destination: `${destination}/:path`, permanent: true },
+      // Short link for outreach emails: /work?ref=<lead-slug> keeps its query.
+      { source: "/work", destination: "/learning-studio/work/lessons", permanent: false },
     ];
+  },
+  // The sample lessons are one self-contained static page (its own styles and
+  // script), served from public/ under a clean URL.
+  async rewrites() {
+    return [{ source: "/learning-studio/work/lessons", destination: "/learning-studio/sample-lessons.html" }];
   },
   async headers() {
     return [

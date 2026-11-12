@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import { STUDIO_PAGES, studioUrl } from "@/lib/studio";
+import { STUDIO_PAGES, SAMPLE_LESSONS, studioUrl } from "@/lib/studio";
 import { POSTS, postPath } from "@/lib/insights";
 
 /**
@@ -35,6 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: p.path === STUDIO_PAGES.hub.path ? 0.9 : 0.7,
     })),
+    { url: studioUrl(SAMPLE_LESSONS.path), lastModified: new Date(SAMPLE_LESSONS.updated), changeFrequency: "monthly", priority: 0.6 },
     ...POSTS.map((p) => ({
       url: studioUrl(postPath(p.slug)),
       lastModified: new Date(p.updated),

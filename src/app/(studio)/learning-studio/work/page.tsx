@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { STUDIO_PAGES, STUDIO_ID, studioAlternates, studioGraph, studioUrl, breadcrumbs } from "@/lib/studio";
+import { STUDIO_PAGES, SAMPLE_LESSONS, STUDIO_ID, studioAlternates, studioGraph, studioUrl, breadcrumbs } from "@/lib/studio";
 import { PROGRAMS, FIRST_YEAR } from "@/lib/portfolio";
 import { Scene, Inner, Kicker } from "@/components/marketing/learning-studio/Scene";
 import { ProgramGrid, StatBand } from "@/components/marketing/learning-studio/Portfolio";
@@ -82,6 +82,25 @@ export default function WorkPage() {
             Results across our programs
           </h2>
           <StatBand tone="cream" />
+        </Inner>
+      </Scene>
+
+      <Scene tone="dark" labelledBy="lessons" className="py-20 sm:py-24">
+        <Inner>
+          <Kicker tone="dark">Sample lessons</Kicker>
+          <h2 id="lessons" className="sx-focus mt-6 max-w-3xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
+            Play three short lessons.
+          </h2>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-chalk/75">
+            Using AI at work, POSH basics and spotting a phishing email. Two minutes each, and each one has its own look.
+          </p>
+          {/* A plain link: the lessons are a static page, outside the app router. */}
+          <a
+            href={SAMPLE_LESSONS.path}
+            className="sx-rise mt-9 inline-flex items-center gap-2 rounded-full bg-chalk-yellow px-6 py-3.5 text-sm font-semibold text-board transition-transform hover:-translate-y-0.5"
+          >
+            Open the lessons <ArrowRight size={15} aria-hidden />
+          </a>
         </Inner>
       </Scene>
 
