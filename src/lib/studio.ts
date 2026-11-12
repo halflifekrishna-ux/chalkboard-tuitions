@@ -28,7 +28,7 @@ export const STUDIO_PAGES = {
   colleges: { path: `${STUDIO_PATH}/colleges`, name: "Programs for colleges", updated: "2026-10-28", nav: "Colleges" },
   aiTraining: { path: `${STUDIO_PATH}/ai-training`, name: "AI training", updated: "2026-10-28", nav: "AI training" },
   customCourses: { path: `${STUDIO_PATH}/custom-courses`, name: "Custom courses", updated: "2026-10-28", nav: "Custom courses" },
-  work: { path: `${STUDIO_PATH}/work`, name: "Our work", updated: "2026-10-28", nav: "Our work" },
+  work: { path: `${STUDIO_PATH}/work`, name: "Our work", updated: "2026-11-13", nav: "Our work" },
   insights: { path: `${STUDIO_PATH}/insights`, name: "Insights", updated: "2026-10-28", nav: "Insights" },
   trainers: { path: `${STUDIO_PATH}/trainers`, name: "Trainers", updated: "2026-10-28" },
 } satisfies Record<string, StudioPage>;
@@ -46,6 +46,9 @@ export function linkTo(key: keyof typeof STUDIO_PAGES | PlannedPage): { href: st
 }
 
 export const studioUrl = (path: string) => `${SITE_URL}${path}`;
+
+/** The playable sample lessons: a static page in public/, rewritten to this URL in next.config.mjs. */
+export const SAMPLE_LESSONS = { path: `${STUDIO_PATH}/work/lessons`, updated: "2026-11-13" };
 
 /* ── Country versions (hreflang) ───────────────────────────────────────────
  * Country pages live as subfolders of the Studio: /learning-studio/us/…,

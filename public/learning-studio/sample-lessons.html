@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sample Lessons | Chalkboard Learning Studio</title>
+<meta name="description" content="Play three short sample lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
+<link rel="canonical" href="https://www.chalkboardlearning.in/learning-studio/work/lessons">
+<meta property="og:title" content="Three lessons. Two minutes each.">
+<meta property="og:description" content="Play three short sample lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
+<meta property="og:url" content="https://www.chalkboardlearning.in/learning-studio/work/lessons">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chalkboard Learning Studio">
+<meta property="og:image" content="https://www.chalkboardlearning.in/opengraph-image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one lesson screen at a time, centred column, big tap targets, one action per screen. Each lesson owns a look: Pop (AI), Calm (POSH), Paper (phishing). */
+:root{
+  --bg:#F7F6F1;--ink:#14231C;--muted:#5C6A62;--line:#E3E1D7;--card:#FFFFFF;
+  --gold:#C9A227;--green:#1E3A2F;--rust:#B0431E;--ok:#1F8A5B;--soft:#EFEDE4;
+  --display:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,sans-serif;
+  --hand:'Caveat','Comic Sans MS',cursive;
+  --spring:cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1914;--ink:#EDEFE9;--muted:#9BA9A1;--line:#22332A;--card:#16231C;--soft:#1B2B23;--green:#CFE3D6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1914;--ink:#EDEFE9;--muted:#9BA9A1;--line:#22332A;--card:#16231C;--soft:#1B2B23;--green:#CFE3D6;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:17px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,a:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:10px}
+.wrap{max-width:640px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 8px}
+.brand{font:800 18px var(--display);letter-spacing:-.02em;display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit}
+.brand i{font-style:normal;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--bg);font-size:16px}
+.back{font-size:15px;color:var(--muted);padding:8px 12px;border-radius:999px;background:var(--soft)}
+.dots{display:flex;gap:6px}.dots b{width:22px;height:6px;border-radius:9px;background:var(--line);transition:background .4s,width .4s var(--spring)}
+.dots b.on{background:var(--gold);width:34px}.dots b.done{background:var(--ok)}
+
+/* shared lesson parts */
+.step{padding-block:22px 10px}
+.step.enter>*{animation:rise .6s var(--spring) both}
+.step.enter>*:nth-child(2){animation-delay:.07s}.step.enter>*:nth-child(3){animation-delay:.14s}.step.enter>*:nth-child(4){animation-delay:.21s}.step.enter>*:nth-child(5){animation-delay:.28s}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}}
+.big{font-size:64px;line-height:1;display:block;margin-bottom:10px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-4deg)}}
+h1,h2{font-family:var(--display);letter-spacing:-.03em;text-wrap:balance;margin:0 0 10px}
+h1{font-size:clamp(32px,7vw,46px);line-height:1.05;font-weight:800}
+h2{font-size:clamp(26px,6vw,36px);line-height:1.1;font-weight:800}
+.lead{color:var(--muted);margin:0 0 20px;font-size:18px}
+.go{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);font-weight:700;padding:15px 24px;border-radius:999px;transition:transform .25s var(--spring)}
+.go:hover{transform:translateY(-2px) scale(1.02)}.go:active{transform:scale(.97)}
+.go[disabled]{opacity:.35;pointer-events:none}
+.go span{transition:transform .3s var(--spring)}.go:hover span{transform:translateX(4px)}
+.note{font-size:13px;color:var(--muted);margin-top:26px}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pop{animation:pop .5s var(--spring)}
+@keyframes pop{40%{transform:scale(1.06)}}
+.bit{position:fixed;pointer-events:none;font-size:24px;z-index:50;animation:fly .9s var(--spring) forwards}
+@keyframes fly{to{transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(.6);opacity:0}}
+
+/* HOME */
+.hero{padding-block:30px 10px}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,color-mix(in srgb,var(--gold) 55%,transparent) 62%)}
+.lessons{display:grid;gap:12px;margin-top:22px}
+.lesson{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;transition:transform .35s var(--spring),border-color .3s}
+.lesson:hover{transform:translateY(-3px);border-color:var(--gold)}
+.lesson .ic{width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-size:34px}
+.lesson:hover .ic{animation:wiggle .5s}
+@keyframes wiggle{30%{transform:rotate(-10deg) scale(1.08)}70%{transform:rotate(6deg)}}
+.lesson strong{display:block;font:700 19px var(--display);letter-spacing:-.02em}
+.lesson small{color:var(--muted);font-size:15px;display:block;min-width:0}
+.tag{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.ic.a{background:#FFF1C9}.ic.b{background:#1E3A2F}.ic.c{background:#F3E6D3}
+.foot{margin-top:34px;border-top:1px solid var(--line);padding-top:18px;display:grid;gap:12px;font-size:15px;color:var(--muted)}
+.mail{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--ink)}
+.mail code{font:500 15px var(--body);background:var(--soft);padding:6px 10px;border-radius:8px;user-select:all}
+.mail button{font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
+
+/* AI: Pop */
+.facts{display:grid;gap:10px;margin:8px 0 14px}
+.fact{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;font-size:17px;transition:transform .3s var(--spring),border-color .3s,background .3s}
+.fact:hover{transform:scale(1.015);border-color:var(--gold)}
+.fact .e{font-size:26px;line-height:1}
+.fact.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--card))}
+.fact.wrong{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 9%,var(--card))}
+.fact.fake{border-color:var(--rust);border-style:dashed}
+.timer{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.timer i{display:block;height:100%;background:var(--gold);transform-origin:left;animation:tick 20s linear forwards}
+.timer.stop i{animation-play-state:paused}
+@keyframes tick{to{transform:scaleX(0)}}
+.reveal{margin-top:6px}
+.chips{display:grid;gap:8px;margin:12px 0 18px}
+.chip{display:flex;align-items:center;gap:12px;background:var(--soft);border-radius:14px;padding:12px 14px;animation:rise .5s var(--spring) both}
+.chip:nth-child(2){animation-delay:.25s}.chip:nth-child(3){animation-delay:.5s}
+.chip b{font-size:22px}
+.meter{position:sticky;top:8px;z-index:20;display:flex;align-items:center;gap:14px;margin:6px 0 12px;padding:16px 18px;border-radius:22px;border:3px solid var(--rust);background:color-mix(in srgb,var(--rust) 14%,var(--card));box-shadow:0 14px 30px -18px rgba(0,0,0,.5);transition:background .4s,border-color .4s}
+.meter.safe{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--card))}
+.meter .face{font-size:54px;line-height:1;animation:bob 1.2s ease-in-out infinite}
+.meter.safe .face{animation:none}
+.meter .mid{flex:1;min-width:0}
+.meter .lbl{display:block;font:800 clamp(22px,5.6vw,30px)/1.1 var(--display);letter-spacing:-.02em;margin-bottom:8px}
+.meter .bar{display:block;height:18px;border-radius:9px;background:var(--line);overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--rust);transition:width .6s var(--spring),background .4s}
+.meter.safe .bar i{background:var(--ok)}
+.kinds{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.kind{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;font-weight:700;font-size:15px;background:var(--soft);color:var(--muted);transition:background .3s,color .3s}
+.kind.leak{background:color-mix(in srgb,var(--rust) 22%,transparent);color:var(--ink);animation:throb 1.4s ease-in-out infinite}
+.kind.hid{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ink)}
+@keyframes throb{50%{transform:scale(1.04)}}
+.editor{position:relative}
+.editor .hl,.editor textarea{display:block;width:100%;margin:0;font:18px/1.7 var(--body);letter-spacing:0;padding:14px 16px;border:2px solid var(--line);border-radius:16px;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal}
+.editor .hl{position:absolute;inset:0;color:transparent;background:var(--card);pointer-events:none;overflow:hidden}
+.editor textarea{position:relative;color:var(--ink);background:transparent;resize:none;overflow:hidden;min-height:120px}
+.hl mark{color:transparent;background:color-mix(in srgb,var(--rust) 30%,transparent);border-radius:4px;box-shadow:0 0 0 2px color-mix(in srgb,var(--rust) 30%,transparent)}
+.hl .ph{background:color-mix(in srgb,var(--ok) 26%,transparent);border-radius:4px;box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 26%,transparent)}
+.go.wide{display:flex;width:100%;justify-content:center;font-size:20px;padding:18px 24px;animation:throb 1.4s ease-in-out infinite}
+.go.wand{background:var(--gold);color:#14231C}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.ghost{padding:13px 20px;border-radius:999px;border:2px solid var(--ink);font-weight:700;transition:transform .25s var(--spring)}
+.ghost:hover{transform:translateY(-2px)}.ghost[disabled]{opacity:.3;pointer-events:none}
+.ai-out{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;min-height:0}
+.ai-out .who{font-size:13px;color:var(--muted);margin-bottom:4px}
+.caret::after{content:"▍";animation:blink 1s steps(1) infinite;color:var(--gold)}
+@keyframes blink{50%{opacity:0}}
+.pair{display:grid;gap:10px;margin:6px 0 14px}
+.reply{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;transition:transform .3s var(--spring),border-color .3s}
+.reply:hover{transform:scale(1.015);border-color:var(--gold)}
+.reply .who{font:700 13px var(--body);letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+.reply.right{border-color:var(--ok)}.reply.wrong{border-color:var(--rust)}
+.msg{border-radius:14px;padding:12px 14px;margin:10px 0 16px;font-weight:500}
+.msg.ok{background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.msg.no{background:color-mix(in srgb,var(--rust) 13%,transparent)}
+.habits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 22px}
+.habit{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;animation:rise .6s var(--spring) both}
+.habit:nth-child(2){animation-delay:.12s}.habit:nth-child(3){animation-delay:.24s}.habit:nth-child(4){animation-delay:.36s}
+.habit b{font-size:30px;display:block;margin-bottom:6px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#14231C;font-weight:700;border-radius:999px;padding:8px 14px;animation:pop .7s var(--spring) .5s both}
+
+/* POSH: Calm (always dark, slow fades) */
+[data-view="posh"]{--pbg:#0E1A15;--pink:#F3E8DA;--pmut:#A9B8AF;--pline:#24382E;--pcard:#15261E;--pacc:#E9B949}
+body.calm{background:#0E1A15;color:#F3E8DA}
+body.calm .brand i{background:#F3E8DA;color:#0E1A15}
+body.calm .back{background:#15261E;color:#A9B8AF}
+body.calm .dots b{background:#24382E}body.calm .dots b.on{background:#E9B949}
+[data-view="posh"] .lead,[data-view="posh"] .note{color:var(--pmut)}
+[data-view="posh"] .go{background:var(--pink);color:var(--pbg)}
+[data-view="posh"] .step.enter>*{animation:calm 1s ease both}
+@keyframes calm{from{opacity:0;filter:blur(6px)}}
+.stack{position:relative;height:250px;margin:10px 0 14px}
+.pcard{position:absolute;inset:0;background:var(--pcard);border:1px solid var(--pline);border-radius:26px;padding:24px;display:flex;flex-direction:column;justify-content:center;gap:12px;transition:transform .7s var(--spring),opacity .6s;font-size:20px;line-height:1.4}
+.pcard .e{font-size:44px}
+.pcard:nth-last-child(2){transform:translateY(12px) scale(.96);opacity:.6}
+.pcard:nth-last-child(3){transform:translateY(24px) scale(.92);opacity:.3}
+.pcard:nth-last-child(n+4){opacity:0}
+.pcard.out-l{transform:translateX(-120%) rotate(-12deg)!important;opacity:0!important}
+.pcard.out-r{transform:translateX(120%) rotate(12deg)!important;opacity:0!important}
+.votes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vote{background:var(--pcard);border:1px solid var(--pline);border-radius:18px;padding:14px 6px;display:grid;justify-items:center;gap:4px;font-weight:600;font-size:15px;transition:transform .3s var(--spring),border-color .3s}
+.vote b{font-size:28px}.vote:hover{transform:translateY(-3px);border-color:var(--pacc)}
+.vote[disabled]{pointer-events:none}.vote[disabled]:not(.right):not(.wrong){opacity:.3}
+.vote.right{border-color:#6FCF97;background:rgba(111,207,151,.2);transform:scale(1.06)}
+.vote.wrong{border-color:#F0806A;background:rgba(240,128,106,.2)}
+.pcard.right{border-color:#6FCF97;box-shadow:0 0 0 4px rgba(111,207,151,.25)}
+.pcard.wrong{border-color:#F0806A;box-shadow:0 0 0 4px rgba(240,128,106,.25)}
+.pcard .stamp{position:absolute;top:14px;right:16px;font-size:44px;animation:stamp .5s var(--spring) both}
+@keyframes stamp{from{transform:scale(2.4) rotate(-20deg);opacity:0}}
+.pfeed .v.good,.pfeed .v.bad{font-size:20px;text-transform:none;letter-spacing:0}
+.pfeed .v.bad{color:#F0806A}.pfeed .v.good{color:#6FCF97}
+.pfeed{min-height:84px;margin:14px 0 6px;color:var(--pink)}
+.pfeed p{margin:0;animation:calm .8s ease both}
+.pfeed .v{font:700 14px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--pacc);margin-bottom:4px}
+.doors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 14px}
+.door{background:var(--pcard);border:1px solid var(--pline);border-radius:22px;padding:20px 16px;text-align:left;transition:transform .5s var(--spring),border-color .4s}
+.door b{font-size:40px;display:block;margin-bottom:8px}
+.door strong{display:block;font:700 18px var(--display)}
+.door:hover,.door.open{border-color:var(--pacc);transform:translateY(-3px)}
+.door .ans{display:block;margin-top:10px;color:var(--pmut);font-size:15px;max-height:0;overflow:hidden;transition:max-height .8s ease}
+.door.open .ans{max-height:200px;color:var(--pink)}
+.opts{display:grid;gap:8px;margin:8px 0 14px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;background:var(--pcard);border:1px solid var(--pline);border-radius:18px;padding:14px 16px;transition:border-color .4s,transform .4s var(--spring)}
+.opt b{font-size:26px}.opt:hover{transform:translateX(4px)}
+.opt.good{border-color:#6FCF97}.opt.meh{border-color:var(--pacc)}
+.calm-list{display:grid;gap:12px;margin:10px 0 22px}
+.calm-list div{display:flex;gap:14px;align-items:center;font-size:19px;animation:calm 1.2s ease both}
+.calm-list div:nth-child(2){animation-delay:.4s}.calm-list div:nth-child(3){animation-delay:.8s}
+.calm-list b{font-size:30px}
+
+/* Phishing: Paper (always light, marker annotations) */
+[data-view="phish"]{--paper:#FBF6EC;--pink2:#1D1A16;--marker:#D2361F;--pm:#6E655A}
+body.paper{background:#EFE7D8;color:#1D1A16}
+body.paper .brand i{background:#1D1A16;color:#FBF6EC}
+body.paper .back{background:#E4DAC8;color:#6E655A}
+body.paper .dots b{background:#DCCFB9}body.paper .dots b.on{background:#D2361F}
+[data-view="phish"] .lead,[data-view="phish"] .note{color:var(--pm)}
+[data-view="phish"] .go{background:#1D1A16;color:#FBF6EC}
+.email{background:var(--paper);border-radius:6px;padding:20px;box-shadow:0 1px 0 #d9ccb4,0 18px 40px -24px rgba(60,40,10,.45);transform:rotate(-.6deg);font-size:16px}
+.email .hd{display:grid;gap:4px;border-bottom:1px dashed #d8c9ae;padding-bottom:12px;margin-bottom:12px;font-size:15px}
+.email .hd span{color:var(--pm)}
+.flag{position:relative;cursor:pointer;border-radius:4px;transition:background .3s}
+.flag:hover{background:#F6E3C6}
+.flag svg{position:absolute;left:-10px;top:-8px;width:calc(100% + 20px);height:calc(100% + 16px);overflow:visible;pointer-events:none}
+.flag ellipse{fill:none;stroke:var(--marker);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw .7s ease-out forwards;vector-effect:non-scaling-stroke}
+@keyframes draw{to{stroke-dashoffset:0}}
+.flag.hint{animation:pop .6s var(--spring) 2}
+.btnfake{display:inline-block;background:#2B5BD7;color:#fff;border-radius:6px;padding:8px 14px;margin:8px 0 4px;font-weight:600}
+.urlbar{font-size:13px;color:var(--pm)}
+.scraps{display:grid;gap:8px;margin:18px 0 6px;min-height:30px}
+.scrap{font:600 22px/1.15 var(--hand);color:var(--marker);background:#FFF9E8;border-left:3px solid var(--marker);padding:8px 12px;transform:rotate(-1deg);animation:rise .5s var(--spring) both}
+.scrap:nth-child(even){transform:rotate(.8deg)}
+.count{font:600 26px var(--hand);color:var(--marker)}
+.steps3{display:grid;gap:10px;margin:10px 0 20px}
+.s3{display:flex;align-items:center;gap:14px;background:var(--paper);border-radius:6px;padding:16px;font-size:18px;box-shadow:0 10px 26px -20px rgba(60,40,10,.5);animation:rise .6s var(--spring) both}
+.s3:nth-child(2){animation-delay:.2s;transform:rotate(.6deg)}.s3:nth-child(3){animation-delay:.4s}
+.s3 b{font-size:30px}
+.s3 i{font:600 24px var(--hand);color:var(--marker);font-style:normal;margin-left:auto}
+
+@media (max-width:440px){.lesson{grid-template-columns:52px 1fr}.lesson .ic{width:52px;height:52px;font-size:28px}.tag{display:none}.habits,.doors{grid-template-columns:minmax(0,1fr)}.votes .vote{font-size:13px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.flag ellipse{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#home"><i>C</i>Chalkboard</a>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <a class="back" id="back" href="#home" hidden>← All lessons</a>
+  </header>
+
+  <!-- HOME -->
+  <section data-view="home">
+    <div class="hero step enter">
+      <h1>Three lessons. <em>Two minutes</em> each.</h1>
+      <p class="lead">Tap one and play. Each one looks different.</p>
+      <div class="lessons">
+        <button class="lesson" data-open="ai"><span class="ic a">🤖</span><span><strong>Using AI at work</strong><small>An AI said 3 things. One is made up. Can you spot it?</small></span><span class="tag">Pop · 2 min</span></button>
+        <button class="lesson" data-open="posh"><span class="ic b">🤝</span><span><strong>POSH basics</strong><small>Five things that happen at work. Okay or not okay?</small></span><span class="tag">Calm · 2 min</span></button>
+        <button class="lesson" data-open="phish"><span class="ic c">🎣</span><span><strong>Spot the phish</strong><small>This email is a trick. Find the 4 clues.</small></span><span class="tag">Paper · 90 sec</span></button>
+      </div>
+      <div class="foot">
+        <div>We build in your stack: Storyline, Rise, Captivate, iSpring, Elucidat, H5P, Vyond. SCORM 1.2, SCORM 2004 or xAPI, for any LMS.</div>
+        <div class="mail">Want one made for your team? <code id="addr">connect@chalkboardlearning.in</code><button id="copy">Copy</button></div>
+        <div><a href="/learning-studio/work" style="color:inherit">See the training programs we have run →</a></div>
+        <div style="font-size:13px">Sample lessons by Chalkboard Learning Studio. People and companies in them are made up.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI AT WORK -->
+  <section data-view="ai" hidden>
+    <div class="step">
+      <span class="big">🤖</span>
+      <h2>An AI said these. One is made up.</h2>
+      <p class="lead">Tap the made-up one. You have 20 seconds.</p>
+      <div class="timer" id="timer"><i></i></div>
+      <div class="facts" id="facts">
+        <button class="fact" data-k="t"><span class="e">🐙</span><span>An octopus has 3 hearts.</span></button>
+        <button class="fact" data-k="f"><span class="e">🧱</span><span>You can see the Great Wall of China from the Moon.</span></button>
+        <button class="fact" data-k="t"><span class="e">🦈</span><span>Sharks are older than trees.</span></button>
+      </div>
+      <div class="reveal" id="reveal" hidden>
+        <div class="msg" id="verdict"></div>
+        <p style="margin:0 0 4px;font-weight:700">Lots of people believe the wall one. AI says wrong things in the same sure voice. So check:</p>
+        <div class="chips">
+          <div class="chip"><b>🔎</b>Look it up.</div>
+          <div class="chip"><b>📄</b>Find where it came from.</div>
+          <div class="chip"><b>✂️</b>Can't find it? Leave it out.</div>
+        </div>
+        <button class="go" data-next>Next <span>→</span></button>
+      </div>
+    </div>
+
+    <div class="step" hidden>
+      <h2>🙈 Is your message spilling secrets?</h2>
+      <p class="lead">Someone is about to send this to an AI. Hide the secrets first.</p>
+      <div class="meter" id="meter" aria-live="polite"><span class="face" id="face">🚨</span><span class="mid"><strong class="lbl" id="mlbl"></strong><span class="bar"><i id="mbar"></i></span></span></div>
+      <div class="kinds" id="kinds"></div>
+      <div class="editor"><div class="hl" id="hl" aria-hidden="true"></div><textarea id="prompt" aria-label="The message" spellcheck="false">Help me reply to Ravi Kumar. His phone is 98450 11223. His email is ravi.k@example.com. He paid ₹4,500. My password is Mango#42.</textarea></div>
+      <div class="row">
+        <button class="go wide wand" id="swap">🪄 Hide the secrets</button>
+        <button class="go wide" id="ask" hidden>Now ask the AI <span>→</span></button>
+      </div>
+      <div class="ai-out" id="aiout" hidden><div class="who">AI reply</div><div id="aitext"></div></div>
+      <div id="leakdone" hidden>
+        <div class="msg ok">The AI still helped. Your secrets stayed with you. ✅</div>
+        <button class="go" data-next>Next <span>→</span></button>
+      </div>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big">✍️</span>
+      <h2>Your boss asks: "Why were the orders late?"</h2>
+      <p class="lead">Two answers. One got a 👍. Which one?</p>
+      <div class="pair" id="pair">
+        <button class="reply" data-k="no"><div class="who">ANSWER A</div>Orders can be late for many reasons. We should look at all of them carefully.</button>
+        <button class="reply" data-k="yes"><div class="who">ANSWER B</div>3 orders were late. All on Tuesday. The van came at 4 pm. Fix: send it at noon.</button>
+      </div>
+      <div id="draftmsg" hidden>
+        <div class="msg ok" id="dmsg"></div>
+        <button class="go" data-next>Finish <span>→</span></button>
+      </div>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big">🎉</span>
+      <h2>4 rules for using AI</h2>
+      <div class="habits">
+        <div class="habit"><b>✍️</b>Write your own notes first.</div>
+        <div class="habit"><b>🙈</b>Hide names, numbers and passwords.</div>
+        <div class="habit"><b>🔎</b>Look it up before you trust it.</div>
+        <div class="habit"><b>🙋</b>Say when AI helped you.</div>
+      </div>
+      <span class="badge">✅ AI at work: done</span>
+      <p class="note">Sample. A real one uses your company's own AI rules.</p>
+      <p><a class="go" href="#home" style="text-decoration:none">More lessons <span>→</span></a></p>
+    </div>
+  </section>
+
+  <!-- POSH -->
+  <section data-view="posh" hidden>
+    <div class="step">
+      <span class="big" style="animation-duration:5s">🤝</span>
+      <h2>Five things that happen at work.</h2>
+      <p class="lead">Okay or not okay? Go with your gut.</p>
+      <div class="stack" id="stack"></div>
+      <div class="votes">
+        <button class="vote" data-v="ok"><b>👍</b>Okay</button>
+        <button class="vote" data-v="dep"><b>🤔</b>Depends</button>
+        <button class="vote" data-v="no"><b>🚫</b>Not okay</button>
+      </div>
+      <div class="pfeed" id="pfeed" aria-live="polite"></div>
+      <button class="go" id="pnext" hidden>Next one <span>→</span></button>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big" style="animation-duration:5s">🚪</span>
+      <h2>Where do you go for help?</h2>
+      <p class="lead">Tap the door that fits your office.</p>
+      <div class="doors">
+        <button class="door"><b>🏢</b><strong>10 or more people</strong><span class="ans">The Internal Committee. Every office this big must have one.</span></button>
+        <button class="door"><b>🏛️</b><strong>Fewer than 10</strong><span class="ans">The Local Committee. The District Officer sets it up.</span></button>
+      </div>
+      <p class="note">Source: The Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013.</p>
+      <button class="go" data-next>Next <span>→</span></button>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big" style="animation-duration:5s">👀</span>
+      <h2>You saw it happen to someone.</h2>
+      <p class="lead">What do you do first?</p>
+      <div class="opts" id="opts">
+        <button class="opt" data-g="1"><b>🗣️</b>Speak up: "Hey, that's not okay."</button>
+        <button class="opt" data-g="1"><b>🤝</b>Ask them later: "Are you okay?"</button>
+        <button class="opt" data-g="1"><b>📝</b>Write down what you saw and when.</button>
+        <button class="opt" data-g="0"><b>🙈</b>Do nothing.</button>
+      </div>
+      <div class="pfeed" id="ofeed" aria-live="polite"></div>
+      <button class="go" data-next hidden id="onext">Finish <span>→</span></button>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big" style="animation-duration:5s">🌿</span>
+      <h2>Three things to remember</h2>
+      <div class="calm-list">
+        <div><b>🛑</b>They said stop and it kept going? Not okay.</div>
+        <div><b>🚪</b>Know where to go for help.</div>
+        <div><b>📝</b>Saw it? Write down what and when.</div>
+      </div>
+      <p class="note">Sample. A real one uses your company's own rules and contacts.</p>
+      <p><a class="go" href="#home" style="text-decoration:none">More lessons <span>→</span></a></p>
+    </div>
+  </section>
+
+  <!-- PHISHING -->
+  <section data-view="phish" hidden>
+    <div class="step">
+      <span class="big">🎣</span>
+      <h2>This email is a trick. Find 4 clues.</h2>
+      <p class="lead">Tap anything that looks odd. <span class="count" id="pcount">0 / 4</span></p>
+      <div class="email">
+        <div class="hd">
+          <div><span>From:</span> Pay Team &lt;<span class="flag" data-tip="Wrong address. Real Nimbus Foods mail ends in nimbusfoods.in.">pay@nimbus-hr-pay.co</span>&gt;</div>
+          <div><span>Subject:</span> Hurry: your pay is stuck</div>
+        </div>
+        <p style="margin:0 0 10px">Hi,</p>
+        <p style="margin:0 0 10px">Your pay is stuck. <span class="flag" data-tip="They want you to rush so you don't think.">Fix it in 2 hours</span> or you get it next month.</p>
+        <p style="margin:0 0 10px">Please <span class="flag" data-tip="A real pay team never asks for bank details by email.">type your bank details</span> below.</p>
+        <span class="btnfake">Fix now</span>
+        <div class="urlbar">Link goes to: <span class="flag" data-tip="Look close. payro11 ends in two number 1s.">nimbus-payro11.co/login</span></div>
+      </div>
+      <div class="scraps" id="scraps"></div>
+      <div class="row"><button class="ghost" id="hint">💡 Hint</button><button class="go" data-next id="phnext" disabled>Next <span>→</span></button></div>
+    </div>
+
+    <div class="step" hidden>
+      <span class="big">🧯</span>
+      <h2>Got a trick email? Do 3 things.</h2>
+      <div class="steps3">
+        <div class="s3"><b>🚫</b>Don't click.<i>1</i></div>
+        <div class="s3"><b>📣</b>Tell IT.<i>2</i></div>
+        <div class="s3"><b>🗑️</b>Delete it.<i>3</i></div>
+      </div>
+      <p class="note">Sample. The company and email are made up. A real one uses your own IT contact.</p>
+      <p><a class="go" href="#home" style="text-decoration:none">More lessons <span>→</span></a></p>
+    </div>
+  </section>
+</div>
+
+<script>
+/* Tracking. A shared link can carry ?ref=<lead-slug> (or #ai?ref= on hosts that keep only the hash).
+   Events: opened, module_start, screen, answer, complete. When hosted, set TRACK_URL to the site's
+   collector; each event also goes to a SCORM/xAPI wrapper in a client build. */
+const TRACK_URL = '/api/lesson-event';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const params = new URLSearchParams(location.search);
+let REF = params.get('ref') || null;
+const SID = Math.random().toString(36).slice(2, 10);
+try { if (REF) localStorage.setItem('cb_ref', REF); else REF = localStorage.getItem('cb_ref'); } catch (e) {}
+function track(ev, data = {}) {
+  const p = { ev, ref: REF, sid: SID, ts: new Date().toISOString(), ...data };
+  try { if (TRACK_URL && navigator.sendBeacon) navigator.sendBeacon(TRACK_URL, JSON.stringify(p)); } catch (e) {}
+  console.debug('[track]', p);
+}
+
+function burst(el, set = ['✨','🎉','⭐','✅']) {
+  if (RM || !el) return;
+  const r = el.getBoundingClientRect();
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('span'); b.className = 'bit';
+    b.textContent = set[i % set.length];
+    b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
+    const a = Math.random() * Math.PI * 2, d = 80 + Math.random() * 90;
+    b.style.setProperty('--x', Math.cos(a) * d + 'px'); b.style.setProperty('--y', Math.sin(a) * d - 40 + 'px');
+    b.style.setProperty('--r', (Math.random() * 120 - 60) + 'deg');
+    document.body.appendChild(b); setTimeout(() => b.remove(), 950);
+  }
+}
+function shake(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+/* routing */
+const MODS = ['ai', 'posh', 'phish'];
+let cur = { mod: 'home', i: 0 };
+function route() {
+  const h = location.hash.slice(1).split('?')[0];
+  const hq = location.hash.split('?')[1];
+  if (hq && !REF) { REF = new URLSearchParams(hq).get('ref'); try { REF && localStorage.setItem('cb_ref', REF) } catch (e) {} }
+  const mod = MODS.includes(h) ? h : 'home';
+  $$('[data-view]').forEach(v => v.hidden = v.dataset.view !== mod);
+  document.body.className = mod === 'posh' ? 'calm' : mod === 'phish' ? 'paper' : '';
+  $('#back').hidden = mod === 'home';
+  cur.mod = mod;
+  if (mod !== 'home') { track('module_start', { mod }); go(0); } else { $('#dots').innerHTML = ''; }
+  scrollTo(0, 0);
+}
+function go(i) {
+  const steps = $$(`[data-view="${cur.mod}"] .step`);
+  steps.forEach((s, j) => { s.hidden = j !== i; s.classList.remove('enter'); });
+  const s = steps[i]; void s.offsetWidth; s.classList.add('enter');
+  cur.i = i;
+  $('#dots').innerHTML = steps.map((_, j) => `<b class="${j < i ? 'done' : j === i ? 'on' : ''}"></b>`).join('');
+  (INIT[cur.mod + i] || (() => {}))();
+  track('screen', { mod: cur.mod, i });
+  if (i === steps.length - 1) track('complete', { mod: cur.mod });
+  scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
+}
+document.addEventListener('click', e => {
+  const n = e.target.closest('[data-next]'); if (n) { go(cur.i + 1); return; }
+  const o = e.target.closest('[data-open]'); if (o) location.hash = o.dataset.open;
+});
+addEventListener('hashchange', route);
+
+/* AI 0: spot the fake */
+let tmr;
+function aiSpot() {
+  const t = $('#timer'); t.classList.remove('stop'); t.innerHTML = '<i></i>';
+  $('#reveal').hidden = true;
+  $$('#facts .fact').forEach(f => { f.className = 'fact'; f.disabled = false; });
+  clearTimeout(tmr); tmr = setTimeout(() => answerFact(null), 20000);
+}
+function answerFact(btn) {
+  clearTimeout(tmr); $('#timer').classList.add('stop');
+  const facts = $$('#facts .fact'); facts.forEach(f => f.disabled = true);
+  const fake = facts.find(f => f.dataset.k === 'f');
+  const v = $('#verdict');
+  if (btn && btn === fake) { btn.classList.add('right', 'pop'); v.className = 'msg ok'; v.textContent = 'You got it! That one is made up.'; burst(btn); }
+  else {
+    if (btn) { btn.classList.add('wrong'); shake(btn); }
+    fake.classList.add('fake');
+    v.className = 'msg no'; v.textContent = btn ? 'That one is true! The made-up one has the dotted line.' : 'Time is up. The made-up one has the dotted line.';
+  }
+  track('answer', { mod: 'ai', q: 'spot-fake', correct: !!btn && btn === fake });
+  $('#reveal').hidden = false;
+}
+$('#facts').addEventListener('click', e => { const f = e.target.closest('.fact'); if (f && !f.disabled) answerFact(f); });
+
+/* AI 1: leak meter. One box: the highlight layer sits behind the textarea. */
+const RULES = [
+  { k: 'PASSWORD', re: /(?<=\b(?:password|passcode|pwd|pin)\s*(?:is|[:=])\s*)\S*[^\s.,;!?]/gi },
+  { k: 'PHONE', re: /(?:\+91[\s-]?)?\b[6-9]\d{4}[\s-]?\d{5}\b/g },
+  { k: 'EMAIL', re: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g },
+  { k: 'MONEY', re: /₹\s?[\d,.]*\d(?:\s?(?:cr|crore|lakh|L|k)\b)?/gi },
+  { k: 'NAME', re: /(?<=\b(?:to|from|Mr\.?|Ms\.?|Mrs\.?|customer)\s)[A-Z][a-z]+(?:\s[A-Z][a-z]+)?/g },
+];
+const KINDS = { NAME: '🧑 Name', PHONE: '📞 Phone', EMAIL: '📧 Email', MONEY: '💰 Money', PASSWORD: '🔑 Password' };
+const PH = /\[(NAME|PHONE|EMAIL|MONEY|PASSWORD)\]/g;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function findLeaks(t) {
+  const safe = [...t.matchAll(PH)].map(m => ({ s: m.index, e: m.index + m[0].length }));
+  let hits = [];
+  RULES.forEach(r => { for (const m of t.matchAll(r.re)) hits.push({ s: m.index, e: m.index + m[0].length, k: r.k }); });
+  hits = hits.filter(h => !safe.some(p => h.s < p.e && p.s < h.e)).sort((a, b) => a.s - b.s);
+  const out = []; hits.forEach(h => { if (!out.length || h.s >= out[out.length - 1].e) out.push(h); });
+  return out;
+}
+const PROMPT0 = $('#prompt').value;
+let asked = false;
+function renderLeak() {
+  const ta = $('#prompt'), t = ta.value, hits = findLeaks(t), n = hits.length;
+  const plain = x => esc(x).replace(PH, '<span class="ph">$&</span>');
+  let html = '', last = 0;
+  hits.forEach(h => { html += plain(t.slice(last, h.s)) + `<mark>${esc(t.slice(h.s, h.e))}</mark>`; last = h.e; });
+  $('#hl').innerHTML = html + plain(t.slice(last)) + '\n';
+  ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px';
+  const hidden = new Set([...t.matchAll(PH)].map(m => m[1])), leaking = new Set(hits.map(h => h.k));
+  $('#kinds').innerHTML = Object.keys(KINDS).map(k => `<span class="kind ${leaking.has(k) ? 'leak' : hidden.has(k) ? 'hid' : ''}">${KINDS[k]}${leaking.has(k) ? '' : hidden.has(k) ? ' ✓' : ''}</span>`).join('');
+  const safe = n === 0, empty = !t.trim();
+  $('#meter').classList.toggle('safe', safe);
+  $('#mbar').style.width = safe ? '100%' : Math.min(100, n * 20) + '%';
+  $('#face').textContent = safe ? '😌' : n < 3 ? '😬' : '🚨';
+  $('#mlbl').textContent = empty ? 'Type a message' : safe ? 'All hidden. Safe to send!' : `${n} secret${n > 1 ? 's' : ''} showing`;
+  $('#swap').hidden = safe;
+  $('#ask').hidden = !safe || empty || asked;
+  return n;
+}
+$('#prompt').addEventListener('input', renderLeak);
+$('#swap').addEventListener('click', () => {
+  const ta = $('#prompt'); let t = ta.value;
+  findLeaks(t).reverse().forEach(h => { t = t.slice(0, h.s) + `[${h.k}]` + t.slice(h.e); });
+  ta.value = t; renderLeak();
+  const m = $('#meter'); m.classList.remove('pop'); void m.offsetWidth; m.classList.add('pop'); burst($('#face'), ['🪄', '✨', '🙈']);
+  track('answer', { mod: 'ai', q: 'leak-swap' });
+});
+$('#ask').addEventListener('click', () => {
+  asked = true; $('#ask').hidden = true; $('#aiout').hidden = false;
+  const out = $('#aitext'), msg = 'Here is a reply: "Hi [NAME], sorry for the trouble. We got your [MONEY] payment. We will call you on [PHONE] today."';
+  if (RM) { out.textContent = msg; $('#leakdone').hidden = false; return; }
+  let i = 0; out.className = 'caret';
+  const iv = setInterval(() => { out.textContent = msg.slice(0, ++i); if (i >= msg.length) { clearInterval(iv); out.className = ''; $('#leakdone').hidden = false; } }, 18);
+});
+function aiLeak() { asked = false; $('#prompt').value = PROMPT0; $('#aiout').hidden = true; $('#leakdone').hidden = true; renderLeak(); }
+
+/* AI 2: draft first */
+$('#pair').addEventListener('click', e => {
+  const r = e.target.closest('.reply'); if (!r || r.disabled) return;
+  $$('#pair .reply').forEach(x => x.disabled = true);
+  const good = r.dataset.k === 'yes', m = $('#dmsg');
+  if (good) { r.classList.add('right', 'pop'); burst(r, ['👍', '✨', '🎉']); m.className = 'msg ok'; m.textContent = 'Yes! B has real facts. The writer wrote 3 short notes first. The AI only tidied them.'; }
+  else { r.classList.add('wrong'); shake(r); $('#pair [data-k="yes"]').classList.add('right'); m.className = 'msg no'; m.textContent = 'A sounds nice but tells you nothing. That happens when the AI does all the thinking. B began with 3 notes the writer wrote first.'; }
+  track('answer', { mod: 'ai', q: 'draft-first', correct: good });
+  $('#draftmsg').hidden = false;
+});
+function aiDraft() { $$('#pair .reply').forEach(x => { x.disabled = false; x.className = 'reply'; }); $('#draftmsg').hidden = true; }
+
+/* POSH 0: card stack */
+const CARDS = [
+  { e: '💬', t: 'Your boss says "Great work!" in front of the team.', a: 'ok', why: 'Kind words about your work, said in the open.' },
+  { e: '👗', t: 'Someone keeps talking about your clothes. You asked them to stop.', a: 'no', why: 'You said stop. They kept going. Not okay.' },
+  { e: '🌙', t: 'A boss keeps texting a new worker late at night: "just checking on you 😉".', a: 'no', why: 'It is personal. It keeps happening. And the boss has power over them.' },
+  { e: '😂', t: 'The team chat keeps making jokes about one woman on the team.', a: 'no', why: 'A joke that hurts someone is still not okay.' },
+  { e: '☕', t: 'Someone asks you for coffee once. You say no. They never ask again.', a: 'dep', why: 'One ask. A clear no. It stopped. If they had kept asking, it would not be okay.' },
+];
+let pc = 0, pscore = 0;
+function poshCards() {
+  pc = 0; pscore = 0;
+  $('#stack').innerHTML = CARDS.slice().reverse().map(c => `<div class="pcard"><span class="e">${c.e}</span>${esc(c.t)}</div>`).join('');
+  $('#pfeed').innerHTML = ''; $('#pnext').hidden = true; $$('.vote').forEach(v => { v.disabled = false; v.className = 'vote'; });
+}
+const LABEL = { ok: 'Okay', no: 'Not okay', dep: 'It depends' };
+$$('.vote').forEach(v => v.addEventListener('click', () => {
+  const c = CARDS[pc], right = v.dataset.v === c.a; if (right) pscore++;
+  $$('.vote').forEach(x => x.disabled = true);
+  const top = $('#stack').lastElementChild, win = $(`.vote[data-v="${c.a}"]`);
+  win.classList.add('right'); top.classList.add(right ? 'right' : 'wrong');
+  top.insertAdjacentHTML('beforeend', `<span class="stamp">${right ? '✅' : '❌'}</span>`);
+  if (right) { burst(v, ['✅', '✨', '🎉']); } else { v.classList.add('wrong'); shake(v); }
+  $('#pfeed').innerHTML = `<p class="v ${right ? 'good' : 'bad'}">${right ? '✅ You got it!' : '❌ Not quite. The answer is: ' + LABEL[c.a]}</p><p>${esc(c.why)}</p>`;
+  track('answer', { mod: 'posh', q: 'card-' + pc, correct: right });
+  $('#pnext').hidden = false;
+  $('#pnext').innerHTML = pc === CARDS.length - 1 ? `You got ${pscore} of 5. Next <span>→</span>` : 'Next one <span>→</span>';
+}));
+$('#pnext').addEventListener('click', () => {
+  const top = $('#stack').lastElementChild;
+  if (pc === CARDS.length - 1) { go(1); return; }
+  top.classList.add(CARDS[pc].a === 'ok' ? 'out-r' : 'out-l');
+  setTimeout(() => top.remove(), RM ? 0 : 600);
+  pc++; $('#pfeed').innerHTML = ''; $('#pnext').hidden = true; $$('.vote').forEach(x => { x.disabled = false; x.className = 'vote'; });
+});
+document.addEventListener('click', e => { const d = e.target.closest('.door'); if (d) { d.classList.toggle('open'); track('answer', { mod: 'posh', q: 'door' }); } });
+$('#opts').addEventListener('click', e => {
+  const o = e.target.closest('.opt'); if (!o) return;
+  const good = o.dataset.g === '1';
+  $$('#opts .opt').forEach(x => x.classList.toggle('good', x.dataset.g === '1'));
+  if (!good) o.classList.add('meh');
+  $('#ofeed').innerHTML = good ? '<p class="v">Good choice</p><p>All three green ones help. Pick the one that feels safe.</p>' : '<p class="v">We get it</p><p>Doing nothing feels safe. But asking "Are you okay?" later is easy and helps a lot.</p>';
+  $('#onext').hidden = false; track('answer', { mod: 'posh', q: 'bystander', correct: good });
+});
+function poshOpts() { $$('#opts .opt').forEach(x => x.className = 'opt'); $('#ofeed').innerHTML = ''; $('#onext').hidden = true; }
+function poshDoors() { $$('.door').forEach(d => d.classList.remove('open')); }
+
+/* PHISH 0: find the clues */
+let found = 0;
+function phishInit() {
+  found = 0; $('#pcount').textContent = '0 / 4'; $('#scraps').innerHTML = ''; $('#phnext').disabled = true;
+  $$('.flag').forEach(f => { f.classList.remove('got', 'hint'); f.querySelector('svg')?.remove(); });
+}
+$$('.flag').forEach(f => f.addEventListener('click', () => {
+  if (f.classList.contains('got')) return;
+  f.classList.add('got'); found++;
+  f.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="48" ry="18" transform="rotate(-2 50 20)"/></svg>');
+  $('#scraps').insertAdjacentHTML('beforeend', `<div class="scrap">${esc(f.dataset.tip)}</div>`);
+  $('#pcount').textContent = `${found} / 4`;
+  track('answer', { mod: 'phish', q: 'clue', n: found });
+  if (found === 4) { $('#phnext').disabled = false; burst($('#pcount'), ['🎣', '✨', '🎉']); }
+}));
+$('#hint').addEventListener('click', () => {
+  const f = $$('.flag').find(x => !x.classList.contains('got')); if (!f) return;
+  f.classList.remove('hint'); void f.offsetWidth; f.classList.add('hint');
+  f.style.background = '#F6E3C6'; setTimeout(() => f.style.background = '', 1400);
+});
+
+const INIT = { ai0: aiSpot, ai1: aiLeak, ai2: aiDraft, posh0: poshCards, posh1: poshDoors, posh2: poshOpts, phish0: phishInit };
+
+/* copy address */
+$('#copy').addEventListener('click', () => {
+  const t = $('#addr').textContent, b = $('#copy');
+  const ok = () => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); track('cta_copy'); };
+  try { navigator.clipboard.writeText(t).then(ok, () => { getSelection().selectAllChildren($('#addr')); }); } catch (e) { getSelection().selectAllChildren($('#addr')); }
+});
+
+try { if (!sessionStorage.getItem('cb_open')) { sessionStorage.setItem('cb_open', '1'); track('opened', { path: location.hash || '#home' }); } } catch (e) { track('opened', { path: location.hash || '#home' }); }
+route();
+</script>
+</body>
+</html>
