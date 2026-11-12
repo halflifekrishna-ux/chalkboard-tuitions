@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { PROGRAMS, FIRST_YEAR, type Program } from "@/lib/portfolio";
+import { ENROLMENTS, FIRST_YEAR, type Program } from "@/lib/portfolio";
 import { Pills, CountUp } from "@/components/marketing/learning-studio/Scene";
 
 /**
@@ -45,6 +45,36 @@ export function ProgramCard({ p, tone }: { p: Program; tone: Tone }) {
   );
 }
 
+/** The short card for /work: when it ran, what it was, and its number. */
+export function ProgramTile({ p, tone }: { p: Program; tone: Tone }) {
+  const dark = tone === "dark";
+  return (
+    <article className={cn("sx-rise flex h-full flex-col rounded-2xl border p-6", dark ? "border-chalk/15 bg-white/[0.03]" : "border-board/15 bg-white")}>
+      <p className={cn("text-[11px] font-semibold uppercase tracking-[0.2em]", dark ? "text-chalk-yellow" : "text-gold-ink")}>{p.period}</p>
+      <h3 className="mt-3 font-playfair text-xl font-bold leading-tight">{p.title}</h3>
+      <p className={cn("mt-2 text-sm", dark ? "text-chalk/65" : "text-sage-deep")}>{p.topics.slice(0, 3).join(" · ")}</p>
+      {p.result && (
+        <p className="mt-auto flex items-baseline gap-3 pt-6">
+          <span className={cn("font-playfair text-5xl font-black leading-none lining-nums", dark ? "text-chalk-yellow" : "text-board")}>
+            <CountUp value={p.result.value} />
+          </span>
+          <span className="text-sm font-semibold">{p.result.label}</span>
+        </p>
+      )}
+    </article>
+  );
+}
+
+export function ProgramTiles({ programs, tone }: { programs: Program[]; tone: Tone }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {programs.map((p) => (
+        <ProgramTile key={p.id} p={p} tone={tone} />
+      ))}
+    </div>
+  );
+}
+
 export function ProgramGrid({ programs, tone }: { programs: Program[]; tone: Tone }) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -57,10 +87,10 @@ export function ProgramGrid({ programs, tone }: { programs: Program[]; tone: Ton
 
 /** The headline numbers, each with where it comes from. */
 export const PORTFOLIO_STATS = [
-  { value: String(PROGRAMS.length), label: "programs run", basis: `Since ${FIRST_YEAR}` },
+  { value: ENROLMENTS, label: "student enrolments", basis: `Counted from program records, ${FIRST_YEAR} to 2026` },
+  { value: "98%", label: "positive feedback", basis: "Advanced Excel, 2026 and 2023 surveys" },
   { value: "97%", label: "rated 4 or 5 out of 5", basis: "Advanced Excel 2025, 77 responses" },
-  { value: "100%", label: "said sessions were engaging", basis: "Cybersecurity 2023, 22 responses" },
-  { value: "0", label: "sessions missed", basis: "2026 programs, 80 students" },
+  { value: "100%", label: "said sessions were engaging", basis: "Cybersecurity 2023 survey" },
 ];
 
 export function StatBand({ tone }: { tone: Tone }) {

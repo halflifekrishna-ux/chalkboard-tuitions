@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
-import { PROGRAMS, FIRST_YEAR } from "@/lib/portfolio";
+import { RECORD } from "@/lib/portfolio";
 import { Scene, Inner, Kicker, Statement, Steps, Pills, TrackCard } from "@/components/marketing/learning-studio/Scene";
 import { CourseBuildLazy } from "@/components/marketing/learning-studio/CourseBuildLazy";
 import { CourseBuildStatic } from "@/components/marketing/learning-studio/CourseBuildStatic";
@@ -237,7 +237,7 @@ export default function CustomCoursesPage() {
             Built by the people <span className="font-playfair text-chalk-yellow">who teach it.</span>
           </Statement>
           <p className="sx-rise mt-8 max-w-xl text-lg leading-relaxed text-chalk/75">
-            The team that designs your course has run {PROGRAMS.length} programs since {FIRST_YEAR} and measured every one. You
+            The team that designs your course has {RECORD}, and has measured every program. You
             work directly with the people designing it, not an account manager.
           </p>
           <Link

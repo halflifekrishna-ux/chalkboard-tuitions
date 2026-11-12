@@ -2,7 +2,8 @@
  * The Studio's portfolio: programs our team has designed and run. Every
  * entry comes from a delivery report or a running program; every number is a
  * figure from that program's own feedback survey or schedule. Nothing here is
- * rounded up, summed across cohorts or estimated.
+ * estimated. The one total (ENROLMENTS, at the bottom) adds up only the
+ * headcounts that are on file and is shown as a floor.
  *
  * Sources (kept by the team): East Point executive summaries, issued under
  * the SkillZen Consulting name by the same team, dated
@@ -41,7 +42,7 @@ export const PROGRAMS: Program[] = [
     year: 2026,
     summary: "The tools technical rounds test, learned hands-on alongside the degree, under an MOU with the college.",
     topics: ["SQL", "Python", "Git & GitHub", "Excel", "Power BI"],
-    result: { value: "0", label: "sessions missed", basis: "Across this program and the B.Com Industry Accelerator, 80 students in all. Continuing next semester." },
+    result: { value: "80", label: "students, no session missed", basis: "Across this program and the B.Com Industry Accelerator. Continuing next semester." },
   },
   {
     id: "bcom-industry-accelerator-2026",
@@ -105,4 +106,17 @@ export const PROGRAMS: Program[] = [
 ];
 
 export const FIRST_YEAR = Math.min(...PROGRAMS.map((p) => p.year));
+
+/**
+ * Student enrolments we can count from records: 64 (Cybersecurity 2023),
+ * 77 (Advanced Excel 2025: survey respondents, so the real cohort is at least
+ * this) and 80 (the two 2026 MOU programs). The headcounts of Advanced Excel
+ * 2023 and 2026 are not on file, so they are left out and the total is shown
+ * rounded down with a plus. Enrolments, not unique people: a student who took
+ * two programs counts twice. Add a headcount here only from a delivery report.
+ */
+const COUNTED_ENROLMENTS = 64 + 77 + 80;
+export const ENROLMENTS = `${Math.floor(COUNTED_ENROLMENTS / 10) * 10}+`;
+/** The one-line record used in headings and descriptions across the Studio. */
+export const RECORD = `${ENROLMENTS} student enrolments since ${FIRST_YEAR}`;
 export const programsFor = (a: Audience) => PROGRAMS.filter((p) => p.audience === a);
