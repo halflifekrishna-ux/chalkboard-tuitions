@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import Image from "next/image";
+import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { login, type LoginState } from "./actions";
 
@@ -84,6 +85,11 @@ export default function AdminLoginPage() {
           )}
 
           <SubmitButton />
+          <p className="text-center text-xs">
+            <Link href="/admin/forgot" className="hover:underline" style={{ color: "rgba(245,240,232,0.6)" }}>
+              Forgot password?
+            </Link>
+          </p>
         </form>
 
         <p className="text-center text-[11px] mt-6" style={{ color: "rgba(245,240,232,0.3)" }}>

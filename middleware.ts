@@ -36,8 +36,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === "/admin/login";
+  // Pre-auth pages for the password-reset flow.
+  const isPublicAuth = pathname === "/admin/forgot" || pathname === "/admin/auth/callback";
 
-  if (!user && !isLoginPage) {
+  if (!user && !isLoginPage && !isPublicAuth) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
