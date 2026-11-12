@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { STUDIO_PAGES, studioAlternates, studioGraph, breadcrumbs } from "@/lib/studio";
-import { PROGRAMS, FIRST_YEAR } from "@/lib/portfolio";
+import { PROGRAMS, RECORD } from "@/lib/portfolio";
 import { Scene, Inner, Kicker, Statement, Steps, Pills } from "@/components/marketing/learning-studio/Scene";
 import { ProgramGrid, StatBand } from "@/components/marketing/learning-studio/Portfolio";
 import { ProgrammeMarquee } from "@/components/marketing/learning-studio/ProgrammeMarquee";
@@ -20,15 +20,14 @@ import { StudioEnquire } from "@/components/marketing/learning-studio/StudioPart
  */
 
 const PAGE = STUDIO_PAGES.hub;
-const COUNT = PROGRAMS.length;
 
 export const metadata: Metadata = {
   title: { absolute: "Chalkboard Learning Studio | Training for Companies and Colleges" },
-  description: `Custom training built around what your people need to be able to do. Corporate training in AI, sales, support and leadership, and placement programs for colleges. ${COUNT} programs since ${FIRST_YEAR}.`,
+  description: `Custom training built around what your people need to be able to do. Corporate training in AI, sales, support and leadership, and placement programs for colleges. ${RECORD}.`,
   alternates: studioAlternates(PAGE.path),
   openGraph: {
     title: "Custom training built around what your people need to be able to do",
-    description: `Corporate training and college placement programs. ${COUNT} programs since ${FIRST_YEAR}, every one measured.`,
+    description: `Corporate training and college placement programs. ${RECORD}, every program measured.`,
     url: studioAlternates(PAGE.path).canonical,
     type: "website",
     siteName: "Chalkboard Learning Studio",
@@ -120,7 +119,7 @@ export default function LearningStudioHub() {
           </h1>
           <span aria-hidden className="sx-hero-line mt-9 block h-px w-full max-w-md bg-gradient-to-r from-chalk-yellow/80 to-transparent" />
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-chalk/75 sm:text-xl">
-            {COUNT} programs since {FIRST_YEAR}, every one measured. Tell us who you&rsquo;re training.
+            {RECORD}, every program measured. Tell us who you&rsquo;re training.
           </p>
 
           {/* The split, straight away: two buyers, two doors. */}
@@ -182,7 +181,7 @@ export default function LearningStudioHub() {
         <Inner>
           <Kicker tone="cream">Our record</Kicker>
           <h2 id="record" className="sx-focus mt-8 max-w-4xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
-            {COUNT} programs since {FIRST_YEAR}. Every one measured.
+            {RECORD}. Every program measured.
           </h2>
           <div className="mt-12">
             <StatBand tone="cream" />
@@ -200,7 +199,7 @@ export default function LearningStudioHub() {
             href={STUDIO_PAGES.work.path}
             className="sx-rise mt-12 inline-flex items-center gap-2 text-sm font-semibold text-board underline decoration-gold-deep/50 underline-offset-4 hover:decoration-gold-deep"
           >
-            See all {COUNT} programs <ArrowRight size={15} aria-hidden />
+            See all our programs <ArrowRight size={15} aria-hidden />
           </Link>
         </Inner>
       </Scene>

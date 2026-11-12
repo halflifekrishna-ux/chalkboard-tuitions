@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { STUDIO_PAGES, studioAlternates, studioGraph, studioService, breadcrumbs } from "@/lib/studio";
-import { programsFor, FIRST_YEAR } from "@/lib/portfolio";
+import { programsFor, RECORD } from "@/lib/portfolio";
 import { ProgramGrid } from "@/components/marketing/learning-studio/Portfolio";
 import { Scene, Inner, Kicker, Statement, BigStat, Steps } from "@/components/marketing/learning-studio/Scene";
 import { TransformBoring } from "@/components/marketing/learning-studio/TransformBoring";
@@ -168,7 +168,7 @@ export default function CollegesPage() {
         <Inner>
           <Kicker tone="cream">Programs we&rsquo;ve run</Kicker>
           <h2 id="programs-heading" className="sx-focus mt-8 max-w-3xl font-playfair text-[clamp(2.2rem,6vw,4rem)] font-bold leading-[1.06] tracking-tight">
-            {COLLEGE_PROGRAMS.length} college programs since {FIRST_YEAR}.
+            {RECORD}, all in college programs.
           </h2>
           <div className="mt-12">
             <ProgramGrid programs={COLLEGE_PROGRAMS} tone="cream" />

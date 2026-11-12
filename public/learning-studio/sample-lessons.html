@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Sample Lessons | Chalkboard Learning Studio</title>
-<meta name="description" content="Play three short sample lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
+<title>Sample eLearning Lessons: AI at Work, POSH, Phishing | Chalkboard Learning Studio</title>
+<meta name="description" content="Play three short sample eLearning lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
 <link rel="canonical" href="https://www.chalkboardlearning.in/learning-studio/work/lessons">
 <meta property="og:title" content="Three lessons. Two minutes each.">
-<meta property="og:description" content="Play three short sample lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
+<meta property="og:description" content="Play three short sample eLearning lessons from Chalkboard Learning Studio: using AI at work, POSH basics and spotting a phishing email. Two minutes each.">
 <meta property="og:url" content="https://www.chalkboardlearning.in/learning-studio/work/lessons">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Chalkboard Learning Studio">
 <meta property="og:image" content="https://www.chalkboardlearning.in/opengraph-image">
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <style>
@@ -221,12 +222,16 @@ body.paper .dots b{background:#DCCFB9}body.paper .dots b.on{background:#D2361F}
 
 @media (max-width:440px){.lesson{grid-template-columns:52px 1fr}.lesson .ic{width:52px;height:52px;font-size:28px}.tag{display:none}.habits,.doors{grid-template-columns:minmax(0,1fr)}.votes .vote{font-size:13px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.flag ellipse{stroke-dashoffset:0}}
+.brand img{display:block;width:34px;height:34px;object-fit:contain}
+html.embed,html.embed body{min-height:0}
+html.embed body{padding-block:0 20px}
+html.embed .site-only{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="#home"><i>C</i>Chalkboard</a>
+    <a class="brand" href="#home"><img src="/studio-emblem.png" alt="" width="34" height="34">Chalkboard</a>
     <div class="dots" id="dots" aria-hidden="true"></div>
     <a class="back" id="back" href="#home" hidden>← All lessons</a>
   </header>
@@ -244,7 +249,7 @@ body.paper .dots b{background:#DCCFB9}body.paper .dots b.on{background:#D2361F}
       <div class="foot">
         <div>We build in your stack: Storyline, Rise, Captivate, iSpring, Elucidat, H5P, Vyond. SCORM 1.2, SCORM 2004 or xAPI, for any LMS.</div>
         <div class="mail">Want one made for your team? <code id="addr">connect@chalkboardlearning.in</code><button id="copy">Copy</button></div>
-        <div><a href="/learning-studio/work" style="color:inherit">See the training programs we have run →</a></div>
+        <div class="site-only"><a href="/learning-studio/work" style="color:inherit">See the training programs we have run →</a></div>
         <div style="font-size:13px">Sample lessons by Chalkboard Learning Studio. People and companies in them are made up.</div>
       </div>
     </div>
@@ -442,6 +447,15 @@ function burst(el, set = ['✨','🎉','⭐','✅']) {
 }
 function shake(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
 
+/* embed mode: report height to the page that frames us (same origin only) */
+const EMBED = params.get('embed') === '1' && parent !== window;
+function tellParent(step) {
+  if (!EMBED) return;
+  const h = document.querySelector('.wrap').getBoundingClientRect().height + 24;
+  try { parent.postMessage(step ? { cbLessonHeight: h, cbLessonStep: 1 } : { cbLessonHeight: h }, location.origin); } catch (e) {}
+}
+if (EMBED && 'ResizeObserver' in window) new ResizeObserver(() => tellParent(false)).observe(document.querySelector('.wrap'));
+
 /* routing */
 const MODS = ['ai', 'posh', 'phish'];
 let cur = { mod: 'home', i: 0 };
@@ -454,7 +468,7 @@ function route() {
   document.body.className = mod === 'posh' ? 'calm' : mod === 'phish' ? 'paper' : '';
   $('#back').hidden = mod === 'home';
   cur.mod = mod;
-  if (mod !== 'home') { track('module_start', { mod }); go(0); } else { $('#dots').innerHTML = ''; }
+  if (mod !== 'home') { track('module_start', { mod }); go(0); } else { $('#dots').innerHTML = ''; tellParent(true); }
   scrollTo(0, 0);
 }
 function go(i) {
@@ -464,7 +478,7 @@ function go(i) {
   cur.i = i;
   $('#dots').innerHTML = steps.map((_, j) => `<b class="${j < i ? 'done' : j === i ? 'on' : ''}"></b>`).join('');
   (INIT[cur.mod + i] || (() => {}))();
-  track('screen', { mod: cur.mod, i });
+  track('screen', { mod: cur.mod, i }); tellParent(true);
   if (i === steps.length - 1) track('complete', { mod: cur.mod });
   scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
 }

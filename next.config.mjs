@@ -30,7 +30,7 @@ const nextConfig = {
     return [
       { source: "/:path((?!admin|api|_next).+)", has, destination: `${destination}/:path`, permanent: true },
       // Short link for outreach emails: /work?ref=<lead-slug> keeps its query.
-      { source: "/work", destination: "/learning-studio/work/lessons", permanent: false },
+      { source: "/work", destination: "/learning-studio/work#lessons", permanent: false },
     ];
   },
   // The sample lessons are one self-contained static page (its own styles and
@@ -47,6 +47,12 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
+      },
+      // The sample lessons are framed by /learning-studio/work (LessonPlayer),
+      // so this one file may be framed by our own origin. Later rules win.
+      {
+        source: "/learning-studio/sample-lessons.html",
+        headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }],
       },
     ];
   },
