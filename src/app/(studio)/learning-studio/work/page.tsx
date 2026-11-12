@@ -43,7 +43,7 @@ const LESSONS = [
   },
 ];
 
-const DESCRIPTION = `${RECORD}, with 97% to 100% positive feedback. Play three sample eLearning lessons on this page: AI at work, POSH basics and phishing awareness.`;
+const DESCRIPTION = `${RECORD} and 97% to 100% positive feedback. Play three sample eLearning lessons here: AI at work, POSH basics, phishing.`;
 
 export const metadata: Metadata = {
   title: { absolute: "Our Work: Sample eLearning Lessons and Training Results | Chalkboard Learning Studio" },
