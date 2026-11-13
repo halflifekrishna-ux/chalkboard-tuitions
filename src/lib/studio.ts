@@ -24,7 +24,7 @@ export type StudioPage = {
 // Insertion order is nav order.
 export const STUDIO_PAGES = {
   hub: { path: STUDIO_PATH, name: "Learning Studio", updated: "2026-10-28" },
-  companies: { path: `${STUDIO_PATH}/companies`, name: "Training for companies", updated: "2026-10-28", nav: "Companies" },
+  companies: { path: `${STUDIO_PATH}/companies`, name: "Training for companies", updated: "2026-11-10", nav: "Companies" },
   colleges: { path: `${STUDIO_PATH}/colleges`, name: "Programs for colleges", updated: "2026-10-28", nav: "Colleges" },
   aiTraining: { path: `${STUDIO_PATH}/ai-training`, name: "AI training", updated: "2026-10-28", nav: "AI training" },
   customCourses: { path: `${STUDIO_PATH}/custom-courses`, name: "Custom courses", updated: "2026-10-28", nav: "Custom courses" },
@@ -116,6 +116,9 @@ const ORG_NODES = [
     knowsAbout: [
       "Generative AI at work",
       "Prompt writing",
+      "POSH awareness training",
+      "Excel and Power BI training",
+      "Business communication training",
       "Sales training",
       "Customer support training",
       "Leadership development",
